@@ -1,3 +1,9 @@
+# evaluacion-tecnica-por-especificacion Specification
+
+## Purpose
+
+Define la evaluación técnica del Cuadro Comparativo por característica y proveedor: veredicto C, NC, DA o ? por característica, cálculo automático del veredicto de renglón, dudas y respuestas entre Residente y Compras, avance de la revisión del cuadro y registro de la revisión de cierre en la Requisición.
+
 ## Requirements
 
 ### Requirement: El Residente SHALL evaluar cada característica individual con su propio veredicto C/NC/DA/?

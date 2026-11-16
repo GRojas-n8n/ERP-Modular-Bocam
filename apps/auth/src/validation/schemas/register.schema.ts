@@ -3,7 +3,7 @@
  *
  * Contrato replicado del chequeo manual existente: email/password/nombre/
  * tenant_id obligatorios; roles y proyecto_ids opcionales (el handler sigue
- * aplicando su propio default `roles || ['resident']` tras el parseo — ese
+ * aplicando su propio default `roles || ['residencia']` tras el parseo — ese
  * fallback es lógica de negocio, no forma, y se deja intacto).
  */
 import { z } from 'zod';

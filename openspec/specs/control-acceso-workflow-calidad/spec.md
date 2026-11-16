@@ -10,9 +10,7 @@ el arreglo de roles real del usuario autenticado.
 ## Requirements
 
 ### Requirement: Las acciones exclusivas de admin en el workflow de Calidad SHALL verificarse contra roles[]
-Las acciones que el workflow de No Conformidad y de Auditoría Interna
-restringen a usuarios con rol `admin` (reapertura de una NC cerrada,
-cancelación de una auditoría) SHALL verificar el permiso comprobando que
+Las acciones que el workflow de No Conformidad y de Auditoría Interna restringen a usuarios con rol `admin` (reapertura de una NC cerrada, cancelación de una auditoría) SHALL verificar el permiso comprobando que
 `securityContext.roles` incluya `'admin'`, no un campo `rol` singular.
 
 #### Scenario: Admin reabre una NC cerrada

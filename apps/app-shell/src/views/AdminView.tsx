@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import api, { ventasApi } from '../lib/api';
 import { useTenant } from '../context/TenantContext';
 import { useNotification } from '../context/NotificationContext';
@@ -57,6 +57,12 @@ interface UserModalProps {
 }
 const UserModal: React.FC<UserModalProps> = ({ user, proyectos, onClose, onSaved }) => {
   const isEdit = !!user;
+  const { currentProjectId } = useTenant();
+  // Ver openspec/changes/modal-confirmacion-antes-de-subir-archivos — alta
+  // de Usuario confirma el proyecto activo antes de crear (patrón
+  // confirmacion-proyecto-en-altas); editar un usuario existente no cambia.
+  const nombreProyectoActivo = proyectos.find(p => p.id_proyecto === currentProjectId)?.nombre_oficial || 'Sin proyecto';
+  const [confirmarAlta, setConfirmarAlta] = useState(false);
   const [form, setForm] = useState({
     nombre: user?.nombre ?? '', email: user?.email ?? '',
     password: '', roles: user?.roles ?? [],
@@ -73,14 +79,20 @@ const UserModal: React.FC<UserModalProps> = ({ user, proyectos, onClose, onSaved
     setForm(f => ({ ...f, proyecto_ids: f.proyecto_ids.includes(id) ? f.proyecto_ids.filter(x => x !== id) : [...f.proyecto_ids, id] }));
 
   const handleSubmit = async () => {
-    if (!form.nombre.trim() || (!isEdit && !form.email.trim())) { setError('Nombre y email son obligatorios.'); return; }
+    if (!form.nombre.trim() || !form.email.trim()) { setError('Nombre y email son obligatorios.'); return; }
     if (!isEdit && !form.password) { setError('La contraseña es obligatoria para nuevos usuarios.'); return; }
     if (form.roles.length === 0) { setError('Asigna al menos un rol.'); return; }
+    if (!isEdit) { setConfirmarAlta(true); return; }
+    await guardarUsuario();
+  };
+
+  const guardarUsuario = async () => {
     setSaving(true); setError(null);
     try {
       if (isEdit) {
         const body: Record<string, unknown> = {
           nombre: form.nombre,
+          email: form.email,
           roles: form.roles,
           activo: form.activo,
           limite_aprobacion: form.limite_aprobacion,
@@ -110,13 +122,13 @@ const UserModal: React.FC<UserModalProps> = ({ user, proyectos, onClose, onSaved
             <div className="col-span-2">
               <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Nombre *</label>
               <input className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:border-primary/50 focus:outline-none"
-                value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} placeholder="Juan Pérez" />
+                maxLength={150} value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} placeholder="Juan Pérez" />
             </div>
-            {!isEdit && <div className="col-span-2">
+            <div className="col-span-2">
               <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Email *</label>
               <input type="email" className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:border-primary/50 focus:outline-none"
-                value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="usuario@empresa.com" />
-            </div>}
+                maxLength={255} value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="usuario@empresa.com" />
+            </div>
             <div className="col-span-2">
               <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                 {isEdit ? 'Nueva Contraseña (dejar vacío para no cambiar)' : 'Contraseña *'}
@@ -187,6 +199,16 @@ const UserModal: React.FC<UserModalProps> = ({ user, proyectos, onClose, onSaved
           </button>
         </div>
       </div>
+
+      <ConfirmCriticalActionDialog
+        open={confirmarAlta}
+        title="¿Crear este usuario?"
+        projectName={nombreProyectoActivo}
+        confirmLabel="Crear Usuario"
+        confirmDisabled={saving}
+        onConfirm={() => { setConfirmarAlta(false); void guardarUsuario(); }}
+        onCancel={() => setConfirmarAlta(false)}
+      />
     </div>
   );
 };
@@ -210,8 +232,8 @@ const AgregarClienteModal: React.FC<AgregarClienteModalProps> = ({ onClose, onCr
       onCreated(res.data.data as ClienteVentas);
       onClose();
     } catch (e: unknown) {
-      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      setError(msg ?? 'Error al crear el cliente.');
+      const data = (e as { response?: { data?: { message?: string; error?: { message?: string } } } })?.response?.data;
+      setError(data?.message ?? data?.error?.message ?? 'Error al crear el cliente.');
     } finally { setSaving(false); }
   };
 
@@ -283,42 +305,121 @@ const ProyectoModal: React.FC<ProyectoModalProps> = ({ proyecto, onClose, onSave
   const [clientes, setClientes] = useState<ClienteVentas[]>([]);
   const [showAgregarCliente, setShowAgregarCliente] = useState(false);
 
+  // Consecutivo del código (openspec/changes/centro-costos-confirmar-y-editar-consecutivo):
+  // el sistema lo sugiere, el usuario lo acepta o lo cambia y confirma ANTES de guardar.
+  const [consecutivo, setConsecutivo] = useState('');
+  const [avisoConsecutivo, setAvisoConsecutivo] = useState<string | null>(null);
+  const [confirmando, setConfirmando] = useState(false);
+  const [enfocarConsecutivo, setEnfocarConsecutivo] = useState(false);
+  const consecutivoRef = useRef<HTMLInputElement>(null);
+  const consecutivoEditadoRef = useRef(false);
+
   useEffect(() => {
     if (isEdit) return; // el cliente/empresa/año ya no son editables tras crear
-    ventasApi.getClientes().then(res => setClientes((res.data.data ?? []) as ClienteVentas[])).catch(() => {});
+    ventasApi.getClientes()
+      .then(res => setClientes((res.data.data ?? []) as ClienteVentas[]))
+      .catch((e: any) => setError(e?.response?.data?.message ?? e?.response?.data?.error?.message ?? 'No se pudieron cargar los clientes.'));
   }, [isEdit]);
 
   const clienteSeleccionado = clientes.find(c => c.id_cliente === form.cliente_id);
-  const codigoPreview = form.es_especial
-    ? (form.codigo_especial || '—')
-    : (form.empresa_grupo && form.anio_centro_costos && clienteSeleccionado?.codigo_cliente)
-      ? `${form.empresa_grupo}${form.anio_centro_costos}${clienteSeleccionado.codigo_cliente.padStart(3, '0')}···`
-      : '—';
+  const codigoClienteSel = clienteSeleccionado?.codigo_cliente ?? null;
+
+  // Prefijo fijo del código: EMPRESA + AÑO + CLIENTE (los 10 primeros caracteres).
+  const prefijoCodigo = (form.empresa_grupo && form.anio_centro_costos >= 1900 && codigoClienteSel)
+    ? `${form.empresa_grupo}${form.anio_centro_costos}${codigoClienteSel.padStart(3, '0')}`
+    : '';
+  const consecutivoNumero = consecutivo === '' ? NaN : Number(consecutivo);
+  const consecutivoValido = Number.isInteger(consecutivoNumero) && consecutivoNumero >= 1 && consecutivoNumero <= 999;
+  const codigoCompleto = prefijoCodigo && consecutivoValido
+    ? `${prefijoCodigo}${String(consecutivoNumero).padStart(3, '0')}`
+    : '';
+
+  // Sugerencia del siguiente consecutivo al cambiar empresa, año o cliente (con debounce;
+  // una respuesta que llega después de otro cambio se descarta).
+  useEffect(() => {
+    if (isEdit || form.es_especial) return undefined;
+    if (!form.empresa_grupo || !(form.anio_centro_costos >= 1900) || !form.cliente_id || !codigoClienteSel) {
+      setConsecutivo('');
+      return undefined;
+    }
+    let vigente = true;
+    const timer = setTimeout(() => {
+      api.get('/api/v1/auth/admin/proyectos/siguiente-consecutivo', {
+        params: {
+          empresa_grupo: form.empresa_grupo,
+          anio_centro_costos: form.anio_centro_costos,
+          cliente_id: form.cliente_id,
+          codigo_cliente: codigoClienteSel,
+        },
+      }).then(res => {
+        if (!vigente) return;
+        setConsecutivo(String(res.data.data.consecutivo));
+        if (consecutivoEditadoRef.current) {
+          setAvisoConsecutivo('El consecutivo que habías escrito se descartó porque cambió la empresa, el año o el cliente. Revisa el nuevo sugerido.');
+        }
+        consecutivoEditadoRef.current = false;
+      }).catch((e: unknown) => {
+        if (!vigente) return;
+        const msg = (e as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message;
+        setConsecutivo('');
+        setAvisoConsecutivo(msg ?? 'No se pudo obtener el consecutivo sugerido. Captúralo manualmente (1–999).');
+      });
+    }, 300);
+    return () => { vigente = false; clearTimeout(timer); };
+  }, [isEdit, form.es_especial, form.empresa_grupo, form.anio_centro_costos, form.cliente_id, codigoClienteSel]);
+
+  // "Modificar" en la confirmación: al cerrarla, el foco vuelve al consecutivo.
+  useEffect(() => {
+    if (enfocarConsecutivo && !confirmando) {
+      consecutivoRef.current?.focus();
+      setEnfocarConsecutivo(false);
+    }
+  }, [enfocarConsecutivo, confirmando]);
 
   const fechasInvalidas = !!(form.fecha_programada_inicio && form.fecha_programada_fin
     && form.fecha_programada_fin < form.fecha_programada_inicio);
 
-  const handleSubmit = async () => {
-    if (!form.nombre_oficial.trim()) { setError('El nombre oficial es obligatorio.'); return; }
-    if (fechasInvalidas) { setError('La fecha programada de fin no puede ser anterior a la de inicio.'); return; }
+  const validar = (): boolean => {
+    if (!form.nombre_oficial.trim()) { setError('El nombre oficial es obligatorio.'); return false; }
+    if (fechasInvalidas) { setError('La fecha programada de fin no puede ser anterior a la de inicio.'); return false; }
     if (!isEdit) {
       if (form.es_especial) {
         if (!form.tipo_especial || !form.codigo_especial.trim()) {
           setError('Tipo especial y código son obligatorios para un Centro de Costos especial.');
-          return;
+          return false;
         }
       } else {
         if (!form.empresa_grupo || !form.anio_centro_costos || !form.cliente_id) {
           setError('Empresa, año y cliente son obligatorios.');
-          return;
+          return false;
         }
         if (!clienteSeleccionado?.codigo_cliente) {
           setError('El cliente seleccionado no tiene código asignado — edítalo desde "+ Agregar Cliente" o el catálogo de Ventas.');
-          return;
+          return false;
+        }
+        if (!consecutivoValido) {
+          setError('El consecutivo debe ser un número entero entre 1 y 999.');
+          return false;
         }
       }
     }
+    return true;
+  };
 
+  // Alta normal: primero se muestra el código final y se pide confirmación
+  // ("Aceptar y guardar" / "Modificar"); nada se envía hasta aceptar. Los
+  // Centros de Costos especiales y la edición se envían directo, como antes.
+  const handleSubmit = () => {
+    if (!validar()) return;
+    if (!isEdit && !form.es_especial) {
+      setError(null);
+      setConfirmando(true);
+      return;
+    }
+    void enviar();
+  };
+
+  const enviar = async () => {
     setSaving(true); setError(null);
     try {
       const body: Record<string, unknown> = {
@@ -346,14 +447,30 @@ const ProyectoModal: React.FC<ProyectoModalProps> = ({ proyecto, onClose, onSave
           body.anio_centro_costos = Number(form.anio_centro_costos);
           body.cliente_id = form.cliente_id;
           body.codigo_cliente = clienteSeleccionado!.codigo_cliente;
+          // Siempre el consecutivo confirmado: lo que el usuario ve es lo que se guarda.
+          body.consecutivo_centro_costos = consecutivoNumero;
         }
       }
       if (isEdit) await api.patch(`/api/v1/auth/admin/proyectos/${proyecto!.id_proyecto}`, body);
       else await api.post('/api/v1/auth/admin/proyectos', body);
+      setConfirmando(false);
       onSaved(); onClose();
     } catch (e: unknown) {
-      const msg = (e as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message;
-      setError(msg ?? 'Error al guardar.');
+      const err = (e as { response?: { data?: { error?: { code?: string; message?: string; consecutivo_sugerido?: number | null } } } })?.response?.data?.error;
+      if (err?.code === 'ADMIN_CODIGO_DUPLICADO') {
+        // Otro usuario tomó ese consecutivo entre la vista previa y el guardado:
+        // NO se guarda otro valor en silencio; se actualiza el sugerido y se pide confirmar de nuevo.
+        const sugerido = err.consecutivo_sugerido ?? null;
+        consecutivoEditadoRef.current = false;
+        if (sugerido !== null) setConsecutivo(String(sugerido));
+        setAvisoConsecutivo(sugerido !== null
+          ? `El consecutivo ${String(consecutivoNumero).padStart(3, '0')} ya fue tomado por otro Centro de Costos. Se sugiere ${String(sugerido).padStart(3, '0')}; revisa y confirma de nuevo.`
+          : `El consecutivo ${String(consecutivoNumero).padStart(3, '0')} ya fue tomado y no quedan consecutivos libres para esta empresa, año y cliente.`);
+        setConfirmando(sugerido !== null);
+      } else {
+        setConfirmando(false);
+        setError(err?.message ?? 'Error al guardar.');
+      }
     } finally { setSaving(false); }
   };
 
@@ -407,7 +524,7 @@ const ProyectoModal: React.FC<ProyectoModalProps> = ({ proyecto, onClose, onSave
                     </div>
                     <div>
                       <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Año *</label>
-                      <input type="number" className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:border-primary/50 focus:outline-none"
+                      <input type="number" aria-label="Año" className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:border-primary/50 focus:outline-none"
                         value={form.anio_centro_costos} onChange={e => setForm(f => ({ ...f, anio_centro_costos: Number(e.target.value) }))} />
                     </div>
                   </div>
@@ -430,9 +547,28 @@ const ProyectoModal: React.FC<ProyectoModalProps> = ({ proyecto, onClose, onSave
                     </div>
                   </div>
                   <div>
-                    <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Código (vista previa)</label>
-                    <div className="w-full rounded-xl border border-dashed border-border/40 bg-muted/30 px-3 py-2 text-sm font-mono tracking-widest">{codigoPreview}</div>
-                    <p className="mt-1 text-[10px] text-muted-foreground">El consecutivo (últimos 3 dígitos) lo asigna el sistema al guardar.</p>
+                    <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Código del Centro de Costos</label>
+                    <div className="flex items-center gap-2">
+                      <span className="flex-1 rounded-xl border border-dashed border-border/40 bg-muted/30 px-3 py-2 text-sm font-mono tracking-widest">{prefijoCodigo || '—'}</span>
+                      <input
+                        ref={consecutivoRef}
+                        aria-label="Consecutivo"
+                        type="number" min={1} max={999} step={1}
+                        disabled={!prefijoCodigo}
+                        className="w-24 rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm font-mono focus:border-primary/50 focus:outline-none disabled:opacity-50"
+                        value={consecutivo}
+                        onChange={e => { consecutivoEditadoRef.current = true; setAvisoConsecutivo(null); setConsecutivo(e.target.value); }}
+                      />
+                    </div>
+                    <p className="mt-1 text-[10px] text-muted-foreground">
+                      Consecutivo sugerido por el sistema (1–999). Puedes aceptarlo o cambiarlo; se te pedirá confirmar el código antes de guardar.
+                    </p>
+                    {codigoCompleto && (
+                      <p className="mt-1 text-xs">Código final: <span data-testid="codigo-vista-previa" className="font-mono font-bold tracking-widest">{codigoCompleto}</span></p>
+                    )}
+                    {avisoConsecutivo && !confirmando && (
+                      <p role="status" className="mt-1 text-[10px] font-semibold text-amber-500">{avisoConsecutivo}</p>
+                    )}
                   </div>
                 </div>
               )}
@@ -542,6 +678,33 @@ const ProyectoModal: React.FC<ProyectoModalProps> = ({ proyecto, onClose, onSave
         </div>
       </div>
 
+      {confirmando && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="confirmar-cc-titulo">
+          <div className="mx-4 w-full max-w-sm rounded-2xl border border-border/40 bg-card p-6 shadow-2xl">
+            <h3 id="confirmar-cc-titulo" className="text-sm font-black uppercase tracking-widest">¿Crear este Centro de Costos?</h3>
+            <p className="mt-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Código final</p>
+            <p data-testid="codigo-final" className="mt-1 rounded-xl border border-border/40 bg-muted/40 px-3 py-2 text-center font-mono text-lg font-bold tracking-widest">{codigoCompleto}</p>
+            <p className="mt-2 text-xs text-muted-foreground">{form.nombre_oficial.trim()}</p>
+            {avisoConsecutivo ? (
+              <p role="status" className="mt-3 text-xs font-semibold text-amber-500">{avisoConsecutivo}</p>
+            ) : (
+              <p className="mt-3 text-xs text-muted-foreground">Revisa el código. Puedes aceptarlo tal cual o modificar el consecutivo antes de guardar; una vez creado no se puede cambiar.</p>
+            )}
+            <div className="mt-5 flex gap-3">
+              <button type="button" disabled={saving}
+                onClick={() => { setConfirmando(false); setEnfocarConsecutivo(true); }}
+                className="flex-1 rounded-xl border border-border/40 px-4 py-2 text-xs font-black uppercase tracking-widest hover:bg-muted/50 disabled:opacity-50">
+                Modificar
+              </button>
+              <button type="button" disabled={saving} onClick={() => void enviar()}
+                className="flex-1 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-black uppercase tracking-widest text-white hover:bg-emerald-700 disabled:opacity-50">
+                {saving ? 'Guardando...' : 'Aceptar y guardar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showAgregarCliente && (
         <AgregarClienteModal
           onClose={() => setShowAgregarCliente(false)}
@@ -570,6 +733,10 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
   const currentProjectName = user?.projects?.find(p => p.id === currentProjectId)?.name || 'proyecto activo';
   const currentProjectColor = getProjectColor(currentProjectId);
   const activeTab = (activeSubView as 'usuarios' | 'proyectos' | 'categorias') || 'usuarios';
+  // Alta/edición de Proyectos: mismos roles que ROLES_ALTA_CENTRO_COSTOS en
+  // apps/auth. control_obra puede ver esta pestaña (menú) pero no crear ni
+  // editar. Ver openspec/changes/acceso-proyectos-gt-control-obra.
+  const puedeEditarProyectos = (user?.role ?? []).some(r => ['admin', 'gerencia_tecnica', 'control_proyectos'].includes(r));
   const [helpOpen, setHelpOpen] = useState(false);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
@@ -579,6 +746,12 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
   const [showProyectoModal, setShowProyectoModal] = useState(false);
   const [editingUser, setEditingUser] = useState<AdminUser | undefined>();
   const [editingProyecto, setEditingProyecto] = useState<Proyecto | undefined>();
+  const [confirmArchivarUsuario, setConfirmArchivarUsuario] = useState<AdminUser | null>(null);
+  const [confirmReactivarUsuario, setConfirmReactivarUsuario] = useState<AdminUser | null>(null);
+  const [savingUserActivo, setSavingUserActivo] = useState(false);
+  const [confirmArchivarProyecto, setConfirmArchivarProyecto] = useState<Proyecto | null>(null);
+  const [confirmReactivarProyecto, setConfirmReactivarProyecto] = useState<Proyecto | null>(null);
+  const [savingProyectoActivo, setSavingProyectoActivo] = useState(false);
 
   // ── Categorías de gasto ───────────────────────────────────────────────────
   const [categorias, setCategorias] = useState<CategoriaAdmin[]>([]);
@@ -657,17 +830,74 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
     finally { setActivandoProyecto(false); }
   };
 
+  const handleArchivarUsuario = async (id: string) => {
+    setSavingUserActivo(true);
+    try {
+      await api.patch(`/api/v1/auth/admin/users/${id}`, { activo: false });
+      await loadAll();
+    } catch (e: any) {
+      notify({ type: 'error', title: e.response?.data?.error?.message || 'Error al archivar el usuario' });
+    } finally {
+      setSavingUserActivo(false);
+      setConfirmArchivarUsuario(null);
+    }
+  };
+
+  const handleReactivarUsuario = async (id: string) => {
+    setSavingUserActivo(true);
+    try {
+      await api.patch(`/api/v1/auth/admin/users/${id}`, { activo: true });
+      await loadAll();
+    } catch (e: any) {
+      notify({ type: 'error', title: e.response?.data?.error?.message || 'Error al reactivar el usuario' });
+    } finally {
+      setSavingUserActivo(false);
+      setConfirmReactivarUsuario(null);
+    }
+  };
+
+  const handleArchivarProyecto = async (id: string) => {
+    setSavingProyectoActivo(true);
+    try {
+      await api.patch(`/api/v1/auth/admin/proyectos/${id}`, { activo: false });
+      await loadAll();
+    } catch (e: any) {
+      notify({ type: 'error', title: e.response?.data?.error?.message || 'Error al archivar el proyecto' });
+    } finally {
+      setSavingProyectoActivo(false);
+      setConfirmArchivarProyecto(null);
+    }
+  };
+
+  const handleReactivarProyecto = async (id: string) => {
+    setSavingProyectoActivo(true);
+    try {
+      await api.patch(`/api/v1/auth/admin/proyectos/${id}`, { activo: true });
+      await loadAll();
+    } catch (e: any) {
+      notify({ type: 'error', title: e.response?.data?.error?.message || 'Error al reactivar el proyecto' });
+    } finally {
+      setSavingProyectoActivo(false);
+      setConfirmReactivarProyecto(null);
+    }
+  };
+
+  // Independiente por endpoint: GET /admin/users exige rol admin
+  // exclusivamente, pero /admin/proyectos también acepta gerencia_tecnica/
+  // control_proyectos/control_obra (ROLES_VER_CENTRO_COSTOS) — un 403 en
+  // usuarios no debe tumbar la carga de proyectos para esos roles.
   const loadAll = useCallback(async () => {
     setLoading(true); setError(null);
-    try {
-      const [ur, pr] = await Promise.all([
-        api.get('/api/v1/auth/admin/users'),
-        api.get('/api/v1/auth/admin/proyectos'),
-      ]);
-      setUsers((ur.data as { data: AdminUser[] }).data);
-      setProyectos((pr.data as { data: Proyecto[] }).data);
-    } catch { setError('Error al cargar datos de administración.'); }
-    finally { setLoading(false); }
+    const [ur, pr] = await Promise.allSettled([
+      api.get('/api/v1/auth/admin/users'),
+      api.get('/api/v1/auth/admin/proyectos'),
+    ]);
+    if (ur.status === 'fulfilled') setUsers((ur.value.data as { data: AdminUser[] }).data);
+    if (pr.status === 'fulfilled') setProyectos((pr.value.data as { data: Proyecto[] }).data);
+    if (ur.status === 'rejected' && pr.status === 'rejected') {
+      setError('Error al cargar datos de administración.');
+    }
+    setLoading(false);
   }, []);
 
   useEffect(() => { void loadAll(); }, [loadAll]);
@@ -685,7 +915,7 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <HelpButton onClick={() => setHelpOpen(true)} />
-          {activeTab !== 'categorias' && (
+          {activeTab !== 'categorias' && !(activeTab === 'proyectos' && !puedeEditarProyectos) && (
             <button
               onClick={() => activeTab === 'usuarios' ? (setEditingUser(undefined), setShowUserModal(true)) : (setEditingProyecto(undefined), setShowProyectoModal(true))}
               className="rounded-xl bg-primary px-4 py-2 text-xs font-black uppercase tracking-widest text-primary-foreground hover:bg-primary/90"
@@ -730,10 +960,25 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
                       </p>
                     )}
                   </div>
-                  <button onClick={() => { setEditingUser(u); setShowUserModal(true); }}
-                    className="flex-shrink-0 rounded-lg border border-border/40 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-muted/50">
-                    Editar
-                  </button>
+                  <div className="flex flex-shrink-0 items-center gap-2">
+                    <button onClick={() => { setEditingUser(u); setShowUserModal(true); }}
+                      className="rounded-lg border border-border/40 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-muted/50">
+                      Editar
+                    </button>
+                    {u.activo ? (
+                      <button onClick={() => setConfirmArchivarUsuario(u)}
+                        disabled={u.id === user?.id}
+                        title={u.id === user?.id ? 'No puedes archivar tu propia cuenta.' : undefined}
+                        className="rounded-lg border border-red-500/30 bg-red-500/5 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-red-600 hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-30">
+                        Archivar
+                      </button>
+                    ) : (
+                      <button onClick={() => setConfirmReactivarUsuario(u)}
+                        className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-emerald-600 hover:bg-emerald-500/10">
+                        Reactivar
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -884,10 +1129,25 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
                       {p.tipo_contrato} · {p.moneda_base} · {p.estatus}
                     </p>
                   </div>
-                  <button onClick={() => { setEditingProyecto(p); setShowProyectoModal(true); }}
-                    className="flex-shrink-0 rounded-lg border border-border/40 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-muted/50">
-                    Editar
-                  </button>
+                  {puedeEditarProyectos && (
+                    <div className="flex flex-shrink-0 gap-2">
+                      <button onClick={() => { setEditingProyecto(p); setShowProyectoModal(true); }}
+                        className="rounded-lg border border-border/40 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-muted/50">
+                        Editar
+                      </button>
+                      {p.activo ? (
+                        <button onClick={() => setConfirmArchivarProyecto(p)}
+                          className="rounded-lg border border-border/40 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-destructive hover:bg-destructive/10">
+                          Archivar
+                        </button>
+                      ) : (
+                        <button onClick={() => setConfirmReactivarProyecto(p)}
+                          className="rounded-lg border border-border/40 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-emerald-600 hover:bg-emerald-500/10">
+                          Reactivar
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -938,6 +1198,52 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
         confirmDisabled={savingCat}
         onConfirm={() => confirmEliminarCategoria && handleEliminarCategoria(confirmEliminarCategoria.id_categoria)}
         onCancel={() => setConfirmEliminarCategoria(null)}
+      />
+
+      <ConfirmCriticalActionDialog
+        open={!!confirmArchivarUsuario}
+        title={`¿Archivar a "${confirmArchivarUsuario?.nombre ?? ''}"?`}
+        projectName={currentProjectName}
+        projectColorDot={currentProjectColor.dot}
+        confirmLabel="Archivar usuario"
+        variant="destructive"
+        confirmDisabled={savingUserActivo}
+        onConfirm={() => confirmArchivarUsuario && handleArchivarUsuario(confirmArchivarUsuario.id)}
+        onCancel={() => setConfirmArchivarUsuario(null)}
+      />
+
+      <ConfirmCriticalActionDialog
+        open={!!confirmReactivarUsuario}
+        title={`¿Reactivar a "${confirmReactivarUsuario?.nombre ?? ''}"?`}
+        projectName={currentProjectName}
+        projectColorDot={currentProjectColor.dot}
+        confirmLabel="Reactivar usuario"
+        confirmDisabled={savingUserActivo}
+        onConfirm={() => confirmReactivarUsuario && handleReactivarUsuario(confirmReactivarUsuario.id)}
+        onCancel={() => setConfirmReactivarUsuario(null)}
+      />
+
+      <ConfirmCriticalActionDialog
+        open={!!confirmArchivarProyecto}
+        title={`¿Archivar el proyecto "${confirmArchivarProyecto?.nombre_oficial ?? ''}"?`}
+        projectName={currentProjectName}
+        projectColorDot={currentProjectColor.dot}
+        confirmLabel="Archivar proyecto"
+        variant="destructive"
+        confirmDisabled={savingProyectoActivo}
+        onConfirm={() => confirmArchivarProyecto && handleArchivarProyecto(confirmArchivarProyecto.id_proyecto)}
+        onCancel={() => setConfirmArchivarProyecto(null)}
+      />
+
+      <ConfirmCriticalActionDialog
+        open={!!confirmReactivarProyecto}
+        title={`¿Reactivar el proyecto "${confirmReactivarProyecto?.nombre_oficial ?? ''}"?`}
+        projectName={currentProjectName}
+        projectColorDot={currentProjectColor.dot}
+        confirmLabel="Reactivar proyecto"
+        confirmDisabled={savingProyectoActivo}
+        onConfirm={() => confirmReactivarProyecto && handleReactivarProyecto(confirmReactivarProyecto.id_proyecto)}
+        onCancel={() => setConfirmReactivarProyecto(null)}
       />
 
       {showUserModal && (

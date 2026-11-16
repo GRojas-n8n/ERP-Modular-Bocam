@@ -24,6 +24,8 @@ import {
   ContabilidadConsumedEvents,
   ContabilidadEvents,
   EstimacionAprobadaPayload,
+  EgresoOcRegistradoPayload,
+  CobroRegistradoPayload,
   FondosComprometidosPayload,
   FondosLiberadosPayload,
   NominaAutorizadaPayload,
@@ -42,7 +44,7 @@ import {
   createApiError,
   createApiResponse,
 } from './types';
-import { buildMovimientosForPoliza, persistMovimientos, TipoPoliza } from './mapper';
+import { buildMovimientosEgresoOc, buildMovimientosForPoliza, MovimientoDef, persistMovimientos, TipoPoliza } from './mapper';
 import { getSatCallbackSecret, safeSecretEquals, requireSatCallbackSecret } from './sat-callback-auth';
 import { createAuthMiddleware, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
 import { createRateLimiter } from '../../../packages/rate-limiter/src';
@@ -102,9 +104,18 @@ async function persistMovimientosIfEligible(
   descripcion: string,
   fechaPoliza?: Date | string,
 ): Promise<void> {
+  await persistDefsIfEligible(asientoId, context, buildMovimientosForPoliza(tipoPoliza, monto, descripcion), fechaPoliza);
+}
+
+/** Persiste líneas ya construidas (p. ej. una por OC del egreso). Idempotente por asiento. */
+async function persistDefsIfEligible(
+  asientoId: string,
+  context: { tenant_id: string; proyecto_id: string; user_id: string },
+  defs: MovimientoDef[],
+  fechaPoliza?: Date | string,
+): Promise<void> {
   const fecha = fechaPoliza ? new Date(fechaPoliza as string) : new Date();
   if (fecha < PARTIDA_DOBLE_CUTOFF) return;
-  const defs = buildMovimientosForPoliza(tipoPoliza, monto, descripcion);
   if (defs.length === 0) return;
   await createTenantContext(
     { tenantId: context.tenant_id, proyectoId: context.proyecto_id, userId: context.user_id },
@@ -1049,7 +1060,8 @@ async function ensureFiscalReconciliationPlaceholder(
   event: BocamEvent<PagoRegistradoPayload>,
   asientoId: string,
   pagoId: string,
-  montoPagado: number
+  montoPagado: number,
+  origen: string = ContabilidadConsumedEvents.PAGO_REGISTRADO,
 ) {
   const result = await createOrRecoverInTenantContext({
     context: {
@@ -1075,7 +1087,7 @@ async function ensureFiscalReconciliationPlaceholder(
           monto_pagado: montoPagado,
           estatus_fiscal: 'PENDIENTE_CFDI',
           fuente: 'EVENTO_FINANZAS',
-          notas: `Conciliacion fiscal abierta desde ${ContabilidadConsumedEvents.PAGO_REGISTRADO}.`,
+          notas: `Conciliacion fiscal abierta desde ${origen}.`,
         },
       });
     },
@@ -1118,7 +1130,8 @@ async function ensureFiscalReconciliationPlaceholder(
 async function ensureBankReconciliationPlaceholder(
   event: BocamEvent<PagoRegistradoPayload>,
   asientoId: string,
-  payload: PagoRegistradoPayload
+  payload: PagoRegistradoPayload,
+  origen: string = ContabilidadConsumedEvents.PAGO_REGISTRADO,
 ) {
   const result = await createOrRecoverInTenantContext({
     context: {
@@ -1149,7 +1162,7 @@ async function ensureBankReconciliationPlaceholder(
           fecha_pago_real: new Date(payload.fecha_pago_real),
           estatus_bancario: 'PENDIENTE_MOVIMIENTO',
           fuente: 'EVENTO_FINANZAS',
-          notas: `Conciliacion bancaria abierta desde ${ContabilidadConsumedEvents.PAGO_REGISTRADO}.`,
+          notas: `Conciliacion bancaria abierta desde ${origen}.`,
         },
       });
     },
@@ -1512,10 +1525,132 @@ export async function handleFondosComprometidosEvent(event: BocamEvent<FondosCom
   });
 }
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Póliza de egreso multiproveedor y póliza de cobro (openspec: poliza-egreso-oc-y-cobro)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const esNumeroPositivo = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v) && v > 0;
+
+/**
+ * finanzas.egreso_oc_registrado: un egreso liquida OCs de N proveedores del mismo proyecto. Una póliza EGRESO por
+ * egreso con un cargo a Cuentas por Pagar por OC y su abono a Bancos; abre la conciliación bancaria (por referencia)
+ * y la fiscal (CFDI). Idempotente por pago_id. Rechaza (sin póliza) un payload cuyo detalle no suma el total.
+ */
+export async function handleEgresoOcRegistradoEvent(event: BocamEvent<EgresoOcRegistradoPayload>): Promise<void> {
+  const p = event.payload || ({} as EgresoOcRegistradoPayload);
+  const detalles = Array.isArray(p.detalles) ? p.detalles : [];
+  const sumaDetalles = Math.round(detalles.reduce((s, d) => s + Number(d?.monto_aplicado ?? 0), 0) * 100) / 100;
+  const valido = !!p.pago_id && !!p.referencia && !!p.fecha_pago && esNumeroPositivo(p.monto_total)
+    && detalles.length > 0 && detalles.every((d) => d && d.oc_codigo && esNumeroPositivo(d.monto_aplicado))
+    && Math.abs(sumaDetalles - p.monto_total) < 0.01;
+  if (!valido) {
+    console.warn(JSON.stringify({
+      action: 'contabilidad.event.finanzas.egreso_oc_registrado.invalid_payload',
+      event_type: event.event_type,
+      correlation_id: event.context?.correlation_id,
+      tenant_id: event.context?.tenant_id,
+      proyecto_id: event.context?.proyecto_id,
+      pago_id: p.pago_id,
+      monto_total: p.monto_total,
+      suma_detalles: sumaDetalles,
+    }));
+    return;
+  }
+
+  const proveedores = [...new Set(detalles.map((d) => d.proveedor_nombre || d.proveedor_id))];
+  const beneficiario = (proveedores.length === 1 ? proveedores[0] : `${proveedores.length} proveedores`).slice(0, 250);
+  const concepto = `Egreso ${p.tipo_pago} ${p.referencia}: ${detalles.map((d) => d.oc_codigo).join(', ')}`.slice(0, 500);
+
+  const result = await persistAsientoFromEvent(event, {
+    externalEventKey: `${ContabilidadConsumedEvents.EGRESO_OC_REGISTRADO}:${p.pago_id}`,
+    tipoPoliza: 'EGRESO',
+    folioPoliza: buildFolioPoliza(p.pago_id, p.fecha_pago),
+    concepto,
+    montoTotal: p.monto_total,
+    fechaPoliza: p.fecha_pago,
+    beneficiario,
+    referenciaModulo: 'finanzas',
+    referenciaEntidad: 'PagoOC',
+    referenciaId: p.pago_id,
+    pagoId: p.pago_id,
+    estatus: 'REGISTRADO',
+    cfdiStatus: 'PENDIENTE',
+    bancarioStatus: 'PENDIENTE',
+    notas: `Asiento generado desde ${ContabilidadConsumedEvents.EGRESO_OC_REGISTRADO}. Fuente: ${p.fuente}. OCs: ${detalles.length}.`,
+    createdAction: 'contabilidad.event.finanzas.egreso_oc_registrado.created',
+    idempotentAction: 'contabilidad.event.finanzas.egreso_oc_registrado.idempotent',
+  });
+
+  if (!result.idempotent) {
+    await persistDefsIfEligible(result.asiento.id_asiento, event.context, buildMovimientosEgresoOc(p.referencia, detalles), p.fecha_pago);
+  }
+  const comoPago = {
+    ...event,
+    payload: {
+      id_pago: p.pago_id,
+      presupuesto_id: '',
+      monto_pagado: p.monto_total,
+      moneda: p.moneda || 'MXN',
+      fecha_pago_real: p.fecha_pago,
+      referencia_bancaria: p.referencia,
+      metodo_pago: p.tipo_pago,
+      concepto,
+      beneficiario,
+    },
+  } as BocamEvent<PagoRegistradoPayload>;
+  await ensureFiscalReconciliationPlaceholder(comoPago, result.asiento.id_asiento, p.pago_id, p.monto_total, ContabilidadConsumedEvents.EGRESO_OC_REGISTRADO);
+  await ensureBankReconciliationPlaceholder(comoPago, result.asiento.id_asiento, comoPago.payload, ContabilidadConsumedEvents.EGRESO_OC_REGISTRADO);
+}
+
+/**
+ * finanzas.cobro_registrado: dinero que entra al banco por una estimación cobrada. Póliza COBRO (cargo Bancos, abono
+ * Cuentas por Cobrar) por cobro; idempotente por id_cobro.
+ */
+export async function handleCobroRegistradoEvent(event: BocamEvent<CobroRegistradoPayload>): Promise<void> {
+  const p = event.payload || ({} as CobroRegistradoPayload);
+  if (!p.id_cobro || !p.folio || !p.fecha_cobro || !esNumeroPositivo(p.monto) || !p.origen_id) {
+    console.warn(JSON.stringify({
+      action: 'contabilidad.event.finanzas.cobro_registrado.invalid_payload',
+      event_type: event.event_type,
+      correlation_id: event.context?.correlation_id,
+      tenant_id: event.context?.tenant_id,
+      proyecto_id: event.context?.proyecto_id,
+      id_cobro: p.id_cobro,
+    }));
+    return;
+  }
+
+  const concepto = `Cobro ${p.codigo || p.origen_id} folio ${p.folio}`.slice(0, 500);
+  const result = await persistAsientoFromEvent(event, {
+    externalEventKey: `${ContabilidadConsumedEvents.COBRO_REGISTRADO}:${p.id_cobro}`,
+    tipoPoliza: 'COBRO',
+    folioPoliza: buildFolioByPrefix('POL-ING', p.id_cobro, p.fecha_cobro),
+    concepto,
+    montoTotal: p.monto,
+    fechaPoliza: p.fecha_cobro,
+    beneficiario: 'CLIENTE',
+    referenciaModulo: 'finanzas',
+    referenciaEntidad: p.origen === 'ESTIMACION' ? 'Estimacion' : p.origen,
+    referenciaId: p.origen_id,
+    estatus: 'REGISTRADO',
+    cfdiStatus: 'NO_APLICA',
+    bancarioStatus: 'PENDIENTE',
+    notas: `Asiento generado desde ${ContabilidadConsumedEvents.COBRO_REGISTRADO}. Estado de la cuenta por cobrar: ${p.estado}.`,
+    createdAction: 'contabilidad.event.finanzas.cobro_registrado.created',
+    idempotentAction: 'contabilidad.event.finanzas.cobro_registrado.idempotent',
+  });
+
+  if (!result.idempotent) {
+    await persistMovimientosIfEligible(result.asiento.id_asiento, event.context, 'COBRO', p.monto, concepto, p.fecha_cobro);
+  }
+}
+
 export async function handleEstimacionAprobadaEvent(event: BocamEvent<EstimacionAprobadaPayload>): Promise<void> {
   const payload = event.payload || ({} as EstimacionAprobadaPayload);
 
-  if (!payload.estimacion_id || !payload.codigo || typeof payload.monto_total !== 'number') {
+  // F27: Control de Proyectos publica total_neto; monto_total queda por compatibilidad (openspec: poliza-egreso-oc-y-cobro).
+  const montoEstimacion = typeof payload.monto_total === 'number' ? payload.monto_total : payload.total_neto;
+  if (!payload.estimacion_id || !payload.codigo || typeof montoEstimacion !== 'number') {
     console.warn(JSON.stringify({
       action: 'contabilidad.event.control_obra.estimacion_aprobada.invalid_payload',
       payload,
@@ -1528,7 +1663,7 @@ export async function handleEstimacionAprobadaEvent(event: BocamEvent<Estimacion
     tipoPoliza: 'ESTIMACION',
     folioPoliza: buildFolioByPrefix('POL-EST', payload.estimacion_id),
     concepto: payload.concepto || `Estimación aprobada ${payload.codigo}`,
-    montoTotal: payload.monto_total,
+    montoTotal: montoEstimacion,
     beneficiario: payload.proyecto_nombre || 'OBRA',
     referenciaModulo: 'control_obra',
     referenciaEntidad: 'Estimacion',
@@ -1544,7 +1679,7 @@ export async function handleEstimacionAprobadaEvent(event: BocamEvent<Estimacion
   if (!result.idempotent) {
     await persistMovimientosIfEligible(
       result.asiento.id_asiento, event.context, 'ESTIMACION',
-      payload.monto_total, payload.concepto || `Estimación ${payload.codigo}`,
+      montoEstimacion, payload.concepto || `Estimación ${payload.codigo}`,
     );
   }
 }
@@ -3445,9 +3580,9 @@ async function ensureEventSubscriptions() {
   });
 
   await eventBus.subscribe(ContabilidadConsumedEvents.ESTIMACION_APROBADA, async (event: BocamEvent<EstimacionAprobadaPayload>) => {
-    const { estimacion_id, codigo, monto_total } = event.payload as EstimacionAprobadaPayload;
+    const { estimacion_id, codigo, monto_total, total_neto } = event.payload as EstimacionAprobadaPayload;
     console.log(`[Contabilidad] EVENTO recibido: control_obra.estimacion_aprobada`);
-    console.log(`Estimación: ${codigo} (${estimacion_id}) | $${Number(monto_total).toLocaleString()}`);
+    console.log(`Estimación: ${codigo} (${estimacion_id}) | $${Number(monto_total ?? total_neto).toLocaleString()}`);
     await handleEstimacionAprobadaEvent(event);
   });
 
@@ -3477,6 +3612,16 @@ async function ensureEventSubscriptions() {
     console.log(`[Contabilidad] EVENTO recibido: auth.centro_costos_creado`);
     console.log(`Centro de costos: ${codigo_centro_costos}`);
     await handleCentroCostosCreadoEvent(event);
+  });
+
+  await eventBus.subscribe(ContabilidadConsumedEvents.EGRESO_OC_REGISTRADO, async (event: BocamEvent<EgresoOcRegistradoPayload>) => {
+    console.log(`[Contabilidad] EVENTO recibido: finanzas.egreso_oc_registrado | ${event.payload?.referencia} | $${Number(event.payload?.monto_total).toLocaleString()}`);
+    await handleEgresoOcRegistradoEvent(event);
+  });
+
+  await eventBus.subscribe(ContabilidadConsumedEvents.COBRO_REGISTRADO, async (event: BocamEvent<CobroRegistradoPayload>) => {
+    console.log(`[Contabilidad] EVENTO recibido: finanzas.cobro_registrado | ${event.payload?.folio} | $${Number(event.payload?.monto).toLocaleString()}`);
+    await handleCobroRegistradoEvent(event);
   });
 
   subscriptionsRegistered = true;

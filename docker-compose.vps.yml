@@ -227,6 +227,8 @@ services:
       DOCS_PROVEEDORES_UPLOAD_DIR: /data/compras/docs-proveedores
       COTIZACIONES_UPLOAD_DIR: /data/compras/cotizaciones
       SENTRY_DSN: ${SENTRY_DSN:-}
+      # Despachador del outbox de recepciones de OC: APAGADO salvo el valor exacto "on" (change fix-ingresos-almacen-por-recepcion-oc).
+      COMPRAS_OUTBOX_DISPATCHER: ${COMPRAS_OUTBOX_DISPATCHER:-off}
     volumes:
       - vps_docs_proveedores:/data/compras/docs-proveedores
       - vps_cotizaciones_uploads:/data/compras/cotizaciones

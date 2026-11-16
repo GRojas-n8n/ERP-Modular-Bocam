@@ -1,3 +1,9 @@
+# carga-masiva-archivos Specification
+
+## Purpose
+
+Define cómo la importación masiva de Clientes, Proveedores y Empleados reconoce las columnas de un archivo Excel o CSV aunque sus encabezados lleven acentos, espacios, guiones o palabras conectoras.
+
 ## Requirements
 
 ### Requirement: El emparejamiento de columnas de un archivo importado SHALL tolerar acentos, espacios y guiones

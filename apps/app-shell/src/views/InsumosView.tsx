@@ -26,6 +26,7 @@ import { TableScrollShadow } from '../components/TableScrollShadow';
 import { ControlPresupuestalTabla } from '../components/ControlPresupuestalTabla';
 import { HelpButton } from '../components/HelpButton';
 import { HelpPanel } from '../components/HelpPanel';
+import { ConfirmCriticalActionDialog } from '@bocam/ui-core';
 import {
   IconBriefcase,
   IconSearch,
@@ -114,6 +115,8 @@ interface InsumoData {
   tipo_insumo: TipoInsumo;
   costo_base: number;
   activo: boolean;
+  /** Suma de (concepto.cantidad × composición.cantidad) del presupuesto activo. */
+  cantidad_presupuestada?: number;
 }
 
 interface InsumoPreview {
@@ -310,7 +313,7 @@ function esCapituloNormalizado(c: ConceptoPreview): boolean {
 //
 // Extrae insumos únicos (por clave) de todas las secciones.
 // ─────────────────────────────────────────────────────────────────────────────
-function parsearArchivoAPU(rawRows: (string | number)[][]): APUParseResult {
+export function parsearArchivoAPU(rawRows: (string | number)[][]): APUParseResult {
   // Infiere tipo de insumo desde prefijo de clave OPUS (sección "Auxiliar")
   function inferirTipoAPU(clave: string): TipoInsumo {
     const c = clave.toUpperCase();
@@ -334,9 +337,13 @@ function parsearArchivoAPU(rawRows: (string | number)[][]): APUParseResult {
       const m = cell.match(/clave\s*:\s*(.+)/i);
       if (m && m[1].trim()) return m[1].trim();
       // Caso 2: la celda dice sólo "Clave:" (con dos puntos, sin valor tras él)
-      // → el valor está en la siguiente celda no vacía de la misma fila
+      // → el valor está en la siguiente celda no vacía de la misma fila.
+      // Las celdas combinadas de OPUS repiten la etiqueta "Clave:"/"Clave" en
+      // varias columnas antes de la celda con el valor real — se ignoran esas
+      // repeticiones en vez de tomar la primera no vacía (que sería otra
+      // copia de la etiqueta, no el valor).
       if (/^clave\s*:\s*$/i.test(cell)) {
-        const nextVal = celdas.slice(i + 1).find(c => c.trim() !== '');
+        const nextVal = celdas.slice(i + 1).find(c => c.trim() !== '' && !/^clave\s*:?\s*$/i.test(c.trim()));
         if (nextVal?.trim()) return nextVal.trim();
       }
     }
@@ -447,6 +454,12 @@ function parsearArchivoAPU(rawRows: (string | number)[][]): APUParseResult {
     if (!clave || clave.length < 2) continue;
     if (/^\d+(\.\d+)*$/.test(clave)) continue;
     if (/^(total|suma|sub)/i.test(clave)) continue;
+    // Boilerplate no previsto (firma, título de página repetido, etc.): OPUS
+    // repite el mismo texto en todas las columnas de la fila por celdas
+    // combinadas, produciendo una "clave"/"unidad" implausiblemente larga que
+    // supera VarChar(50)/VarChar(20) y tumbaba el import con 500 (ver
+    // openspec/changes/fix-500-importar-apu-explosion-filas-boilerplate).
+    if (clave.length > 50 || unidad.length > 20) continue;
 
     const tipo: TipoInsumo = enAuxiliar ? inferirTipoAPU(clave) : (tipoActual ?? 'MATERIAL');
 
@@ -558,7 +571,7 @@ function parsearArchivoAPU(rawRows: (string | number)[][]): APUParseResult {
 //     ante desplazamientos de columna en distintas versiones de OPUS).
 //   - Herramienta → INDIRECTO  /  Equipo → EQUIPO.
 // ─────────────────────────────────────────────────────────────────────────────
-function parsearArchivoExplosion(rawRows: (string | number)[][]): InsumoPreview[] {
+export function parsearArchivoExplosion(rawRows: (string | number)[][]): InsumoPreview[] {
   const insumoMap = new Map<string, InsumoPreview>();
   let tipoActual: TipoInsumo = 'MATERIAL';
   let headerDetectado = false; // una vez true, nunca regresa
@@ -569,6 +582,7 @@ function parsearArchivoExplosion(rawRows: (string | number)[][]): InsumoPreview[
   let colDescripcion   = 1;
   let colUnidad        = 2;
   let colCostoUnitario = 4;
+  let colImporte       = -1; // -1 = columna no detectada en este archivo
 
   for (const fila of rawRows) {
     const celdas = fila.map(c => String(c ?? '').trim());
@@ -597,6 +611,12 @@ function parsearArchivoExplosion(rawRows: (string | number)[][]): InsumoPreview[
           /costo\s*unit/i.test(c) || /precio\s*unit/i.test(c) || /costo\s*dir/i.test(c)
         );
         if (iCosto >= 0) colCostoUnitario = iCosto;
+        // Filas HH/HS (mano de obra e indirectos reportados como % de m.o.)
+        // no traen un costo por unidad real en COSTO UNITARIO — el monto
+        // correcto está en IMPORTE. Ver
+        // openspec/changes/fix-explosion-insumos-costo-vs-importe.
+        const iImporte = celdas.findIndex(c => /^importe$/i.test(c));
+        if (iImporte >= 0) colImporte = iImporte;
         headerDetectado = true;
       }
       // Saltear cualquier fila antes de que aparezca el encabezado
@@ -616,12 +636,21 @@ function parsearArchivoExplosion(rawRows: (string | number)[][]): InsumoPreview[
     const clave  = celdas[colClave]         ?? '';
     const desc   = celdas[colDescripcion]   ?? '';
     const unidad = celdas[colUnidad]        ?? '';
-    const precio = parsearNumero(celdas[colCostoUnitario]);
+    // HH (Herramienta Menor) y HS (indirectos de seguridad) se reportan en
+    // OPUS como % de mano de obra: COSTO UNITARIO no es un precio por
+    // unidad real para estas filas — el monto correcto está en IMPORTE.
+    const esIndirectoPorcentual = /^(HH|HS)/i.test(clave.trim());
+    const precio = (esIndirectoPorcentual && colImporte >= 0)
+      ? parsearNumero(celdas[colImporte])
+      : parsearNumero(celdas[colCostoUnitario]);
 
     // Saltear filas sin clave, con clave numérica pura o de totales/resumen
     if (!clave) continue;
     if (/^\d+(\.\d+)*$/.test(clave)) continue;
     if (/^(total|suma|importe|resumen|listado)/i.test(clave)) continue;
+    // Boilerplate no previsto (firma, título repetido, etc.) — ver
+    // openspec/changes/fix-500-importar-apu-explosion-filas-boilerplate.
+    if (clave.length > 50 || unidad.length > 20) continue;
 
     const claveNorm = clave.toUpperCase().trim();
 
@@ -660,13 +689,30 @@ function leerArchivoComoRawRows(
 
 // ─── Componente Principal ─────────────────────────────────────────────────────
 
-export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubView }) => {
+export const InsumosView: React.FC<{ activeSubView?: string; onSubNavigate?: (sub: string) => void }> = ({ activeSubView, onSubNavigate }) => {
   const { tenant, currentProjectId, user } = useTenant();
+  const nombreProyectoActivo = user?.projects?.find(p => p.id === currentProjectId)?.name || 'Sin proyecto';
   const { notify } = useNotification();
   const rolesUsuario: string[] = user?.role ?? [];
   const puedeAprobar = rolesUsuario.some(r => ['gerencia_tecnica', 'admin'].includes(r));
+  // Deshacer una importación por error — ver eliminacion-admin-archivos-importaciones-gt
+  const puedeDeshacerImportacion = rolesUsuario.some(r => ['admin', 'gerencia_tecnica', 'control_proyectos'].includes(r));
+  const [ultimoPresupuestoImportadoId, setUltimoPresupuestoImportadoId] = useState<string | null>(null);
+  const [ultimoLoteInsumosId, setUltimoLoteInsumosId] = useState<string | null>(null);
+  const [deshaciendoImportacion, setDeshaciendoImportacion] = useState(false);
 
   const activeTab: ActiveTab = (activeSubView as ActiveTab) || 'catalogo';
+
+  // Confirmación de destino antes de procesar cualquier carga de archivo —
+  // ver openspec/changes/modal-confirmacion-antes-de-subir-archivos.
+  type CargaKind = 'catalogo' | 'apu' | 'explosion' | 'ficha';
+  const [pendingUpload, setPendingUpload] = useState<{ file: File; kind: CargaKind } | null>(null);
+  const DESTINOS_CARGA: Record<CargaKind, string> = {
+    catalogo:  'Gerencia Técnica → Catálogo de Obra',
+    apu:       'Gerencia Técnica → Análisis de Precios Unitarios',
+    explosion: 'Gerencia Técnica → Explosión de Insumos',
+    ficha:     'Gerencia Técnica → Ficha Técnica',
+  };
 
   // ── Estado Tab 1: Catálogo de Obra ────────────────────────────────────────
   const fileInputRef  = useRef<HTMLInputElement>(null);
@@ -721,6 +767,15 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const [loadingTraz, setLoadingTraz]   = useState(false);
   const [trazParcial, setTrazParcial]   = useState(false);
   const [trazExpanded, setTrazExpanded] = useState<Set<string>>(new Set());
+  const [trazPendingExpand, setTrazPendingExpand] = useState<string | null>(null);
+
+  // Salto directo desde Control Presupuestal / Control de Costos a la pestaña
+  // Trazabilidad con la misma partida expandida (ver
+  // openspec/changes/enlace-trazabilidad-control-presupuestal).
+  const handleVerTrazabilidad = (conceptoId: string) => {
+    setTrazPendingExpand(conceptoId);
+    onSubNavigate?.('trazabilidad');
+  };
 
   // ── Estado Tab 2: Insumos ─────────────────────────────────────────────────
   const fileInputAPURef       = useRef<HTMLInputElement>(null);
@@ -765,15 +820,12 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     pct_economico: number | null;
     pct_fisico: number | null;
     semaforo: 'verde' | 'amarillo' | 'rojo' | 'sin_dato';
-    categorias: { nombre: string; comprometido: number; pagado: number }[];
     requisiciones: { folio: string; estado: string; monto: number }[];
   }
   const [costosWbs, setCostosWbs] = useState<CostosWbsRow[]>([]);
   const [costosLoading, setCostosLoading] = useState(false);
   const [costosExpandedId, setCostosExpandedId] = useState<string | null>(null);
-  const [costosFiltroCategoria, setCostosFiltroCategoria] = useState('');
   const [costosFiltroDes, setCostosFiltroDes] = useState(false);
-  const [costosCategoriasDisp, setCostosCategoriasDisp] = useState<string[]>([]);
 
   // ── Estado Tab 4: Control Presupuestal ───────────────────────────────────
   interface PartidaCP {
@@ -793,6 +845,10 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const [cpData, setCpData] = useState<ReporteCP | null>(null);
   const [cpLoading, setCpLoading] = useState(false);
   const [cpError, setCpError] = useState<string | null>(null);
+  // Presupuesto existe pero no está aprobado — distinto de "no hay nada".
+  // Ver openspec/changes/control-presupuestal-estado-presupuesto-visible.
+  const [cpPresupuestoPendiente, setCpPresupuestoPendiente] = useState<{ id: string; estado: string } | null>(null);
+  const [cpAprobando, setCpAprobando] = useState(false);
   const [cpCategoria, setCpCategoria] = useState('');
   const [cpExporting, setCpExporting] = useState<'PDF' | 'XLSX' | null>(null);
 
@@ -811,15 +867,36 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     if (!currentProjectId) return;
     setCpLoading(true);
     setCpError(null);
+    setCpPresupuestoPendiente(null);
     try {
       const params = cpCategoria ? `?categoria=${cpCategoria}` : '';
       const res = await api.get(`/api/v1/gerencia-tecnica/reportes/control-presupuestal${params}`);
       setCpData(res.data.data ?? res.data);
     } catch (err: any) {
-      const msg = err.response?.data?.message || err.response?.data?.error?.message || 'Error al cargar reporte.';
-      setCpError(msg);
+      if (err.response?.data?.error?.code === 'GT_PRESUPUESTO_PENDIENTE_APROBACION') {
+        const details = err.response.data.error.details;
+        setCpPresupuestoPendiente({ id: details.presupuesto_id, estado: details.estado });
+      } else {
+        const msg = err.response?.data?.message || err.response?.data?.error?.message || 'Error al cargar reporte.';
+        setCpError(msg);
+      }
     } finally {
       setCpLoading(false);
+    }
+  };
+
+  const handleAprobarDesdeControlPresupuestal = async () => {
+    if (!cpPresupuestoPendiente) return;
+    setCpAprobando(true);
+    try {
+      await api.patch(`/api/v1/gerencia-tecnica/presupuestos/${cpPresupuestoPendiente.id}/aprobar`);
+      notify({ title: 'Presupuesto aprobado — la composición APU queda bloqueada.', type: 'success' });
+      void fetchPresupuesto();
+      void loadControlPresupuestal();
+    } catch (err: any) {
+      notify({ title: err.response?.data?.message || 'Error al aprobar presupuesto.', type: 'error' });
+    } finally {
+      setCpAprobando(false);
     }
   };
 
@@ -861,11 +938,9 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
         pct_economico: c.pct_economico ?? null,
         pct_fisico: null,
         semaforo: c.semaforo === 'ambar' ? 'amarillo' : (c.semaforo ?? 'sin_dato'),
-        categorias: [],
         requisiciones: [],
       }));
       setCostosWbs(rows);
-      setCostosCategoriasDisp([]);
     } catch { /* silencioso */ }
     finally { setCostosLoading(false); }
   };
@@ -886,10 +961,15 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     finally { setLoadingFichasIns(false); }
   };
 
-  const handleFichaInsUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFichaInsUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file || !insumoFichasId) return;
+    setPendingUpload({ file, kind: 'ficha' });
+  };
+
+  const procesarFichaIns = async (file: File) => {
+    if (!insumoFichasId) return;
     setUploadingFichaIns(true);
     try {
       const fd = new FormData();
@@ -1042,6 +1122,11 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
 
   // ── Fetch Tab 1 ───────────────────────────────────────────────────────────
   const fetchPresupuesto = async () => {
+    if (!currentProjectId) {
+      setPresupuesto(null);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -1057,6 +1142,10 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   };
 
   const fetchSaldoPartidas = async () => {
+    if (!currentProjectId) {
+      setSaldoMap({});
+      return;
+    }
     try {
       if (tenant?.id === 'iretum-demo') return;
       const res = await api.get('/api/v1/gerencia-tecnica/partidas/resumen');
@@ -1070,6 +1159,10 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   };
 
   const fetchTransferencias = async (estado?: string) => {
+    if (!currentProjectId) {
+      setTransferencias([]);
+      return;
+    }
     if (tenant?.id === 'iretum-demo') { setTransferencias([]); return; }
     setLoadingTrans(true);
     try {
@@ -1176,11 +1269,18 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
 
   // ── Fetch Tab 2 ───────────────────────────────────────────────────────────
   const fetchInsumos = async () => {
+    if (!currentProjectId) {
+      setInsumos([]);
+      setLoadingInsumos(false);
+      return;
+    }
     setLoadingInsumos(true);
     setErrorInsumos(null);
     try {
       if (tenant?.id === 'iretum-demo') { setInsumos([]); return; }
-      const res = await api.get('/api/v1/gerencia-tecnica/insumos');
+      // /insumos/explosion (no el endpoint plano /insumos) trae también
+      // cantidad_presupuestada — ver openspec/changes/explosion-insumos-mostrar-cantidades.
+      const res = await api.get('/api/v1/gerencia-tecnica/insumos/explosion');
       setInsumos(res.data.data || []);
     } catch (err: any) {
       setErrorInsumos(err.response?.data?.message || 'Error al obtener catálogo de insumos.');
@@ -1189,19 +1289,34 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     }
   };
 
-  useEffect(() => { void fetchPresupuesto(); }, [currentProjectId]);
+  useEffect(() => {
+    if (!currentProjectId) {
+      setPresupuesto(null);
+      setInsumos([]);
+      setSaldoMap({});
+      setTransferencias([]);
+      setTrazabilidad([]);
+      setCostosWbs([]);
+      setCpData(null);
+      setCpPresupuestoPendiente(null);
+      setGtDash(null);
+      setLoading(false);
+      return;
+    }
+    void fetchPresupuesto();
+  }, [currentProjectId]);
   useEffect(() => {
     if (presupuesto?.estado === 'APROBADO' || presupuesto?.estado === 'LIBERADO' || presupuesto?.estado === 'CONGELADO') {
       void fetchSaldoPartidas();
     }
   }, [presupuesto?.id, presupuesto?.estado]);
-  useEffect(() => { if (activeTab === 'insumos') void fetchInsumos(); }, [activeTab, currentProjectId]);
-  useEffect(() => { if (activeTab === 'control-costos') void loadCostosWbs(); }, [activeTab, currentProjectId]);
-  useEffect(() => { if (activeTab === 'control-presupuestal') void loadControlPresupuestal(); }, [activeTab, currentProjectId]);
-  useEffect(() => { if (activeTab === 'transferencias') void fetchTransferencias(); }, [activeTab, currentProjectId]);
-  useEffect(() => { if (activeTab === 'trazabilidad') void fetchTrazabilidad(); }, [activeTab, currentProjectId]);
+  useEffect(() => { if (currentProjectId && activeTab === 'insumos') void fetchInsumos(); }, [activeTab, currentProjectId]);
+  useEffect(() => { if (currentProjectId && activeTab === 'control-costos') void loadCostosWbs(); }, [activeTab, currentProjectId]);
+  useEffect(() => { if (currentProjectId && activeTab === 'control-presupuestal') void loadControlPresupuestal(); }, [activeTab, currentProjectId]);
+  useEffect(() => { if (currentProjectId && activeTab === 'transferencias') void fetchTransferencias(); }, [activeTab, currentProjectId]);
+  useEffect(() => { if (currentProjectId && activeTab === 'trazabilidad') void fetchTrazabilidad(); }, [activeTab, currentProjectId]);
   useEffect(() => {
-    if (tenant?.id === 'iretum-demo') return;
+    if (!currentProjectId || tenant?.id === 'iretum-demo') return;
     api.get('/api/v1/gerencia-tecnica/dashboard').then(r => setGtDash(r.data?.data ?? null)).catch(() => {});
   }, [tenant?.id, currentProjectId]);
 
@@ -1325,8 +1440,18 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     setLoadingTraz(true);
     try {
       const r = await api.get('/api/v1/gerencia-tecnica/trazabilidad/resumen');
-      setTrazabilidad(r.data?.data ?? []);
+      const data: TrazabilidadConcepto[] = r.data?.data ?? [];
+      setTrazabilidad(data);
       setTrazParcial(r.data?.parcial ?? false);
+      // Salto directo desde Control Presupuestal / Control de Costos: expande
+      // la partida objetivo si llegó en este reporte (ver
+      // openspec/changes/enlace-trazabilidad-control-presupuestal).
+      if (trazPendingExpand) {
+        if (data.some(c => c.concepto_id === trazPendingExpand)) {
+          setTrazExpanded(prev => new Set(prev).add(trazPendingExpand));
+        }
+        setTrazPendingExpand(null);
+      }
     } catch {
       setTrazabilidad([]);
     } finally {
@@ -1335,9 +1460,16 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   };
 
   // ── Leer Catálogo de Obra (Tab 1) ─────────────────────────────────────────
+  // Selección de archivo → confirmar destino antes de parsear. Ver
+  // openspec/changes/modal-confirmacion-antes-de-subir-archivos.
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
+    setPendingUpload({ file, kind: 'catalogo' });
+  };
+
+  const procesarCatalogo = (file: File) => {
     setArchivoNombre(file.name);
     setParseError(null);
 
@@ -1402,7 +1534,6 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
         setPanelImport(true);
       })
       .catch((err: any) => setParseError(`Error al leer el archivo: ${err.message}`));
-    e.target.value = '';
   };
 
   // ── Confirmar Importación Catálogo (Tab 1) ────────────────────────────────
@@ -1422,8 +1553,9 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
           cantidad: c.cantidad, precio_unitario: c.precio_unitario,
         })),
       };
-      await api.post('/api/v1/gerencia-tecnica/presupuestos', payload);
+      const resImport = await api.post('/api/v1/gerencia-tecnica/presupuestos', payload);
       notify({ type: 'success', title: 'Catálogo importado', message: `${validRows.length} conceptos importados.`, duration: 5000 });
+      setUltimoPresupuestoImportadoId(resImport.data?.data?.id ?? null);
       setPanelImport(false);
       setPreview([]);
       setArchivoNombre('');
@@ -1438,7 +1570,12 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   // ── Leer archivo APU (Tab 2) ──────────────────────────────────────────────
   const handleFileAPU = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
+    setPendingUpload({ file, kind: 'apu' });
+  };
+
+  const procesarAPU = (file: File) => {
     setArchivoNombreInsumo(file.name);
     setParseErrorInsumos(null);
     setPreviewComposiciones([]); // limpiar composiciones anteriores
@@ -1459,13 +1596,17 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
       },
       (msg) => setParseErrorInsumos(msg)
     );
-    e.target.value = '';
   };
 
   // ── Leer archivo Explosión de Insumos (Tab 2) ─────────────────────────────
   const handleFileExplosion = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
+    setPendingUpload({ file, kind: 'explosion' });
+  };
+
+  const procesarExplosion = (file: File) => {
     setArchivoNombreInsumo(file.name);
     setParseErrorInsumos(null);
     setPreviewComposiciones([]); // Explosión no genera composiciones
@@ -1485,8 +1626,18 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
       },
       (msg) => setParseErrorInsumos(msg)
     );
-    e.target.value = '';
   };
+
+  const confirmarCargaArchivo = () => {
+    if (!pendingUpload) return;
+    const { file, kind } = pendingUpload;
+    setPendingUpload(null);
+    if (kind === 'catalogo') procesarCatalogo(file);
+    else if (kind === 'apu') procesarAPU(file);
+    else if (kind === 'explosion') procesarExplosion(file);
+    else void procesarFichaIns(file);
+  };
+  const cancelarCargaArchivo = () => setPendingUpload(null);
 
   // ── Confirmar Importación de Insumos (Tab 2) ──────────────────────────────
   const handleConfirmarInsumos = async () => {
@@ -1503,7 +1654,8 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
           costo_base: i.costo_base,
         })),
       });
-      const { creados, actualizados, omitidos } = res.data.data;
+      const { creados, actualizados, omitidos, lote_importacion_id } = res.data.data;
+      setUltimoLoteInsumosId(lote_importacion_id ?? null);
 
       // 2. Importar composiciones APU (solo si el parser extrajo composiciones)
       // El backend resuelve el presupuesto del proyecto activo (del JWT)
@@ -1546,7 +1698,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
       notify({
         type: 'error',
         title: 'Error al importar insumos',
-        message: err.response?.data?.message || err.message,
+        message: err.response?.data?.error?.message || err.message,
         duration: 6000,
       });
     } finally {
@@ -1554,13 +1706,72 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     }
   };
 
+  // ── Deshacer la última importación del Catálogo de Conceptos ─────────────
+  const handleDeshacerImportacionCatalogo = async () => {
+    if (!ultimoPresupuestoImportadoId) return;
+    setDeshaciendoImportacion(true);
+    try {
+      await api.delete(`/api/v1/gerencia-tecnica/presupuestos/${ultimoPresupuestoImportadoId}`);
+      notify({ type: 'success', title: 'Importación revertida', message: 'El Catálogo de Conceptos importado se eliminó. Ya puedes volver a importarlo.', duration: 5000 });
+      setUltimoPresupuestoImportadoId(null);
+      void fetchPresupuesto();
+    } catch (err: any) {
+      notify({ type: 'error', title: 'No se pudo deshacer la importación', message: err.response?.data?.error?.message || err.message, duration: 6000 });
+    } finally {
+      setDeshaciendoImportacion(false);
+    }
+  };
+
+  // ── Deshacer el último lote de Explosión de Insumos importado ────────────
+  const handleDeshacerLoteInsumos = async () => {
+    if (!ultimoLoteInsumosId) return;
+    setDeshaciendoImportacion(true);
+    try {
+      await api.delete(`/api/v1/gerencia-tecnica/insumos/importar-lote/${ultimoLoteInsumosId}`);
+      notify({ type: 'success', title: 'Lote revertido', message: 'Los insumos del último lote importado se desactivaron. Ya puedes volver a importarlos.', duration: 5000 });
+      setUltimoLoteInsumosId(null);
+      void fetchInsumos();
+    } catch (err: any) {
+      notify({ type: 'error', title: 'No se pudo revertir el lote', message: err.response?.data?.error?.message || err.message, duration: 6000 });
+    } finally {
+      setDeshaciendoImportacion(false);
+    }
+  };
+
   // ─── Render ───────────────────────────────────────────────────────────────
+  if (!currentProjectId) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center p-6">
+        <div className="w-full max-w-lg rounded-2xl border border-amber-500/20 bg-amber-500/5 p-8 text-center shadow-sm">
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-700">
+            Proyecto activo requerido
+          </p>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Elige una obra desde la barra superior para consultar su catálogo, presupuesto y controles técnicos.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       {/* Inputs ocultos */}
       <input ref={fileInputRef}       type="file" accept=".xlsx,.xls,.csv,.txt" className="hidden" onChange={handleFileChange} />
       <input ref={fileInputAPURef}    type="file" accept=".xlsx,.xls,.csv,.txt" className="hidden" onChange={handleFileAPU} />
       <input ref={fileInputExplosionRef} type="file" accept=".xlsx,.xls,.csv,.txt" className="hidden" onChange={handleFileExplosion} />
+
+      {pendingUpload && (
+        <ConfirmCriticalActionDialog
+          open
+          title="Confirmar carga de archivo"
+          projectName={nombreProyectoActivo}
+          fileName={pendingUpload.file.name}
+          destination={DESTINOS_CARGA[pendingUpload.kind]}
+          onConfirm={confirmarCargaArchivo}
+          onCancel={cancelarCargaArchivo}
+        />
+      )}
 
       <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-10">
 
@@ -1588,7 +1799,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                     ? 'Presupuestado vs. Comprometido vs. Pagado por partida'
                     : activeTab === 'transferencias'
                     ? 'Movimientos de presupuesto entre partidas · Aprobación requerida'
-                    : 'Catálogo maestro de insumos · Materiales, M.O., Equipo'}
+                    : 'Catálogo de insumos del proyecto · Materiales, M.O., Equipo'}
                 </p>
               </div>
             </div>
@@ -1629,7 +1840,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                   className="flex items-center gap-2 px-5 py-3 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all"
                 >
                   <IconDownload className="h-4 w-4" />
-                  Importar OPUS
+                  Importar Catálogo de Conceptos
                 </button>
               </>
             )}
@@ -1752,6 +1963,26 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
               </div>
             )}
 
+            {ultimoPresupuestoImportadoId && puedeDeshacerImportacion && (
+              <div className="flex items-center justify-between gap-4 rounded-2xl border border-rose-500/30 bg-rose-500/5 px-5 py-3">
+                <p className="text-xs text-rose-700 font-semibold">
+                  Catálogo de Conceptos recién importado. Si fue un error, puedes deshacerlo antes de seguir trabajando.
+                </p>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={handleDeshacerImportacionCatalogo}
+                    disabled={deshaciendoImportacion}
+                    className="px-4 py-2 bg-rose-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-rose-700 disabled:opacity-50 active:scale-95 transition-all"
+                  >
+                    {deshaciendoImportacion ? 'Deshaciendo...' : 'Deshacer importación'}
+                  </button>
+                  <button onClick={() => setUltimoPresupuestoImportadoId(null)} className="text-rose-700/70 hover:text-rose-700">
+                    <IconX className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+
             {presupuesto && (
               <div className="flex flex-col sm:flex-row gap-3 bg-card rounded-2xl border border-border/40 p-4 shadow-sm">
                 <div className="relative flex-1 group">
@@ -1807,7 +2038,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                       className="px-6 py-3 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all flex items-center gap-2"
                     >
                       <IconDownload className="h-4 w-4" />
-                      Importar desde OPUS
+                      Importar Catálogo de Conceptos
                     </button>
                     <button
                       onClick={() => setPanelGuia(true)}
@@ -1942,6 +2173,26 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
         {/* ════════════════════════════════════════════════════════════════════ */}
         {activeTab === 'insumos' && (
           <>
+            {ultimoLoteInsumosId && puedeDeshacerImportacion && (
+              <div className="flex items-center justify-between gap-4 rounded-2xl border border-rose-500/30 bg-rose-500/5 px-5 py-3">
+                <p className="text-xs text-rose-700 font-semibold">
+                  Lote de Explosión de Insumos / APU recién importado. Si fue un error, puedes deshacerlo antes de seguir trabajando.
+                </p>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={handleDeshacerLoteInsumos}
+                    disabled={deshaciendoImportacion}
+                    className="px-4 py-2 bg-rose-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-rose-700 disabled:opacity-50 active:scale-95 transition-all"
+                  >
+                    {deshaciendoImportacion ? 'Deshaciendo...' : 'Deshacer importación'}
+                  </button>
+                  <button onClick={() => setUltimoLoteInsumosId(null)} className="text-rose-700/70 hover:text-rose-700">
+                    <IconX className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Stats por tipo */}
             {insumos.length > 0 && (
               <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
@@ -2053,6 +2304,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                         <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em]">Descripción</th>
                         <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] text-center">Unidad</th>
                         <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em]">Tipo</th>
+                        <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] text-right">Cantidad</th>
                         <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] text-right">Costo Base</th>
                       </tr>
                     </thead>
@@ -2073,6 +2325,9 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                               {TIPO_LABEL[ins.tipo_insumo]}
                             </span>
                           </td>
+                          <td className="px-6 py-3.5 text-right font-mono text-sm text-foreground">
+                            {Number(ins.cantidad_presupuestada ?? 0).toLocaleString('es-MX', { maximumFractionDigits: 4 })} {ins.unidad_medida}
+                          </td>
                           <td className="px-6 py-3.5 text-right font-mono font-black text-sm text-primary">
                             {formatMXN(Number(ins.costo_base))}
                           </td>
@@ -2090,7 +2345,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                     </tbody>
                     <tfoot>
                       <tr className="border-t-2 border-border/60 bg-muted/20">
-                        <td colSpan={4} className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">
+                        <td colSpan={5} className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">
                           {filtroTipo || searchInsumos ? `Filtrado: ${insumosFiltrados.length}` : `Total: ${insumos.length} insumos`}
                         </td>
                         <td className="px-6 py-4 text-right">
@@ -2148,14 +2403,6 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
 
                 {/* Filtros */}
                 <div className="flex flex-wrap items-center gap-3">
-                  <select
-                    className="rounded-xl border border-border/40 bg-muted/30 px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500/40"
-                    value={costosFiltroCategoria}
-                    onChange={e => setCostosFiltroCategoria(e.target.value)}
-                  >
-                    <option value="">Todas las categorías</option>
-                    {costosCategoriasDisp.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
                   <label className="flex items-center gap-2 text-xs font-bold text-muted-foreground cursor-pointer">
                     <input
                       type="checkbox"
@@ -2190,7 +2437,6 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                     <tbody className="divide-y divide-border/20">
                       {costosWbs
                         .filter(r => {
-                          if (costosFiltroCategoria && !r.categorias.some(c => c.nombre === costosFiltroCategoria)) return false;
                           if (costosFiltroDes && r.semaforo !== 'rojo' && r.semaforo !== 'amarillo') return false;
                           return true;
                         })
@@ -2210,7 +2456,19 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                                 className="cursor-pointer hover:bg-muted/20 transition-colors"
                                 onClick={() => setCostosExpandedId(isExp ? null : row.concepto_id)}
                               >
-                                <td className="px-5 py-3 font-mono text-[10px] font-black text-indigo-700">{row.clave}</td>
+                                <td className="px-5 py-3 font-mono text-[10px] font-black text-indigo-700">
+                                  <div className="flex items-center gap-2">
+                                    {row.clave}
+                                    <button
+                                      type="button"
+                                      onClick={e => { e.stopPropagation(); handleVerTrazabilidad(row.concepto_id); }}
+                                      className="rounded-md border border-border/40 px-1.5 py-0.5 font-sans text-[9px] font-bold uppercase tracking-wide text-indigo-600 hover:bg-indigo-500/10"
+                                      title="Ver en Trazabilidad"
+                                    >
+                                      Ver en Trazabilidad
+                                    </button>
+                                  </div>
+                                </td>
                                 <td className="max-w-[250px] truncate px-5 py-3 text-xs font-medium">{row.descripcion}</td>
                                 <td className="px-5 py-3 text-right font-mono text-xs font-bold">{fmt(row.presupuesto)}</td>
                                 <td className="px-5 py-3 text-right font-mono text-xs font-bold text-amber-700">{fmt(row.comprometido)}</td>
@@ -2228,22 +2486,6 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                                 <tr key={`${row.concepto_id}-exp`} className="bg-muted/10">
                                   <td colSpan={7} className="px-8 py-4">
                                     <div className="space-y-3">
-                                      {row.categorias.length > 0 && (
-                                        <div>
-                                          <p className="mb-2 text-[9px] font-black uppercase tracking-widest text-muted-foreground">Desglose por categoría</p>
-                                          <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
-                                            {row.categorias.map(cat => (
-                                              <div key={cat.nombre} className="flex items-center justify-between rounded-xl border border-border/30 bg-card px-3 py-2">
-                                                <span className="text-[10px] font-bold text-foreground">{cat.nombre}</span>
-                                                <div className="flex gap-3 text-[10px]">
-                                                  <span className="text-amber-700">{fmt(cat.comprometido)}</span>
-                                                  <span className="text-emerald-700">{fmt(cat.pagado)}</span>
-                                                </div>
-                                              </div>
-                                            ))}
-                                          </div>
-                                        </div>
-                                      )}
                                       {row.requisiciones.length > 0 && (
                                         <div>
                                           <p className="mb-2 text-[9px] font-black uppercase tracking-widest text-muted-foreground">Requisiciones vinculadas</p>
@@ -2258,7 +2500,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                                           </div>
                                         </div>
                                       )}
-                                      {row.categorias.length === 0 && row.requisiciones.length === 0 && (
+                                      {row.requisiciones.length === 0 && (
                                         <p className="text-[10px] text-muted-foreground">Sin requisiciones vinculadas a esta partida.</p>
                                       )}
                                     </div>
@@ -2350,6 +2592,29 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
               </div>
             )}
 
+            {cpPresupuestoPendiente && !cpLoading && (
+              <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-6 text-center space-y-3">
+                <p className="text-sm font-bold text-amber-700">
+                  Presupuesto pendiente de aprobación
+                  <span className="ml-2 rounded-full bg-amber-500/20 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-amber-700">
+                    {cpPresupuestoPendiente.estado}
+                  </span>
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Este proyecto ya tiene un presupuesto importado, pero Control Presupuestal solo muestra datos de presupuestos aprobados.
+                </p>
+                {puedeAprobar && (
+                  <button
+                    onClick={handleAprobarDesdeControlPresupuestal}
+                    disabled={cpAprobando}
+                    className="rounded-xl bg-amber-600 px-5 py-2.5 text-xs font-black uppercase tracking-widest text-white hover:bg-amber-500 disabled:opacity-50"
+                  >
+                    {cpAprobando ? 'Aprobando…' : 'Aprobar presupuesto'}
+                  </button>
+                )}
+              </div>
+            )}
+
             {/* KPI totales (6.2) */}
             {cpData && !cpLoading && (
               <>
@@ -2375,6 +2640,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                   partidas={cpData.partidas}
                   sinPartidaComprometido={cpData.sin_partida_comprometido}
                   sinPartidaPagado={cpData.sin_partida_pagado}
+                  onVerTrazabilidad={handleVerTrazabilidad}
                 />
               </>
             )}
@@ -3429,13 +3695,15 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                     >
                       ⬇
                     </a>
-                    <button
-                      onClick={() => handleFichaInsDelete(f.id_ficha)}
-                      className="rounded-lg p-1.5 text-muted-foreground hover:bg-red-500/10 hover:text-red-500 transition-colors"
-                      title="Eliminar"
-                    >
-                      ✕
-                    </button>
+                    {rolesUsuario.includes('admin') && (
+                      <button
+                        onClick={() => handleFichaInsDelete(f.id_ficha)}
+                        className="rounded-lg p-1.5 text-muted-foreground hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                        title="Eliminar (solo Administrador)"
+                      >
+                        ✕
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}

@@ -408,6 +408,11 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
   const [generandoCredencial, setGenerandoCredencial] = useState(false);
   const [confirmRevocarCredencial, setConfirmRevocarCredencial] = useState(false);
 
+  // ── Baja / Reactivación de Empleado ─────────────────────────────────────────
+  const [confirmBajaEmpleado, setConfirmBajaEmpleado] = useState<Empleado | null>(null);
+  const [confirmReactivarEmpleado, setConfirmReactivarEmpleado] = useState<Empleado | null>(null);
+  const [procesandoEstadoEmpleado, setProcesandoEstadoEmpleado] = useState(false);
+
   // ── Selección e impresión de credenciales en lote ───────────────────────────
   const [seleccionCredenciales, setSeleccionCredenciales] = useState<Set<string>>(new Set());
   const [generandoImpresion, setGenerandoImpresion] = useState(false);
@@ -891,6 +896,36 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
     }
   };
 
+  const handleDarDeBaja = async () => {
+    if (!confirmBajaEmpleado) return;
+    setProcesandoEstadoEmpleado(true);
+    try {
+      const r = await api.patch(`/api/v1/personal/empleados/${confirmBajaEmpleado.id_empleado}/baja`, {});
+      setEmpleados(prev => prev.map(e => (e.id_empleado === confirmBajaEmpleado.id_empleado ? { ...e, ...r.data.data } : e)));
+      notify({ type: 'success', title: 'Empleado dado de baja' });
+    } catch (e: any) {
+      notify({ type: 'error', title: e.response?.data?.error?.message || 'Error al dar de baja al empleado' });
+    } finally {
+      setProcesandoEstadoEmpleado(false);
+      setConfirmBajaEmpleado(null);
+    }
+  };
+
+  const handleReactivarEmpleado = async () => {
+    if (!confirmReactivarEmpleado) return;
+    setProcesandoEstadoEmpleado(true);
+    try {
+      const r = await api.patch(`/api/v1/personal/empleados/${confirmReactivarEmpleado.id_empleado}/reactivar`, {});
+      setEmpleados(prev => prev.map(e => (e.id_empleado === confirmReactivarEmpleado.id_empleado ? { ...e, ...r.data.data } : e)));
+      notify({ type: 'success', title: 'Empleado reactivado' });
+    } catch (e: any) {
+      notify({ type: 'error', title: e.response?.data?.error?.message || 'Error al reactivar al empleado' });
+    } finally {
+      setProcesandoEstadoEmpleado(false);
+      setConfirmReactivarEmpleado(null);
+    }
+  };
+
   // ── Filtros previos a la selección (credenciales / descarga de QR) ──────────
   const frentesDisponibles = useMemo(() => {
     const set = new Set<string>();
@@ -1058,9 +1093,20 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
     } catch { setExpediente([]); }
   };
 
-  const handleSubirDocumento = async () => {
+  // Confirmar destino antes de subir un documento al expediente — ver
+  // openspec/changes/modal-confirmacion-antes-de-subir-archivos.
+  const [confirmarSubidaDocumento, setConfirmarSubidaDocumento] = useState<File | null>(null);
+
+  const handleSubirDocumento = () => {
     const file = fileExpedienteRef.current?.files?.[0];
     if (!configPanel || !file) return;
+    setConfirmarSubidaDocumento(file);
+  };
+
+  const subirDocumentoReal = async () => {
+    const file = confirmarSubidaDocumento;
+    if (!configPanel || !file) return;
+    setConfirmarSubidaDocumento(null);
     setSubiendoDocumento(true);
     try {
       const fd = new FormData();
@@ -1671,6 +1717,24 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
                             >
                               Deducciones
                             </button>
+                            {empleado.estado === 'ACTIVO' && (
+                              <button
+                                onClick={() => setConfirmBajaEmpleado(empleado)}
+                                className="text-[9px] font-black uppercase tracking-widest text-red-500 hover:text-red-700 hover:underline"
+                                title="Dar de baja al empleado"
+                              >
+                                Dar de baja
+                              </button>
+                            )}
+                            {empleado.estado === 'BAJA' && (
+                              <button
+                                onClick={() => setConfirmReactivarEmpleado(empleado)}
+                                className="text-[9px] font-black uppercase tracking-widest text-emerald-500 hover:text-emerald-700 hover:underline"
+                                title="Reactivar al empleado"
+                              >
+                                Reactivar
+                              </button>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -2594,6 +2658,17 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
                   onClick={handleSubirDocumento}
                 />
               </div>
+
+              <ConfirmCriticalActionDialog
+                open={!!confirmarSubidaDocumento}
+                title="Confirmar carga de archivo"
+                projectName={currentProjectName}
+                fileName={confirmarSubidaDocumento?.name}
+                destination="Personal → Empleados (expediente)"
+                confirmDisabled={subiendoDocumento}
+                onConfirm={() => void subirDocumentoReal()}
+                onCancel={() => setConfirmarSubidaDocumento(null)}
+              />
             </div>
 
             {/* ── Residente(s) asignado(s) ── */}
@@ -2816,6 +2891,37 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
         confirmDisabled={generandoCredencial}
         onConfirm={() => void handleRevocarCredencial()}
         onCancel={() => setConfirmRevocarCredencial(false)}
+      />
+
+      {/* ════════════════════════════════════════════════════════════════ */}
+      {/* MODAL — Confirmación dar de baja a un Empleado                   */}
+      {/* ════════════════════════════════════════════════════════════════ */}
+      <ConfirmCriticalActionDialog
+        open={!!confirmBajaEmpleado}
+        title={`¿Dar de baja a ${confirmBajaEmpleado?.nombre ?? 'este empleado'}?`}
+        description="Deja de aparecer como activo en nómina y pierde su cuadrilla asignada. Puede reactivarse después."
+        projectName={currentProjectName}
+        projectColorDot={currentProjectColor.dot}
+        confirmLabel="Dar de baja"
+        variant="destructive"
+        confirmDisabled={procesandoEstadoEmpleado}
+        onConfirm={() => void handleDarDeBaja()}
+        onCancel={() => setConfirmBajaEmpleado(null)}
+      />
+
+      {/* ════════════════════════════════════════════════════════════════ */}
+      {/* MODAL — Confirmación reactivar a un Empleado                     */}
+      {/* ════════════════════════════════════════════════════════════════ */}
+      <ConfirmCriticalActionDialog
+        open={!!confirmReactivarEmpleado}
+        title={`¿Reactivar a ${confirmReactivarEmpleado?.nombre ?? 'este empleado'}?`}
+        description="Vuelve a aparecer como activo, sin cuadrilla asignada."
+        projectName={currentProjectName}
+        projectColorDot={currentProjectColor.dot}
+        confirmLabel="Reactivar"
+        confirmDisabled={procesandoEstadoEmpleado}
+        onConfirm={() => void handleReactivarEmpleado()}
+        onCancel={() => setConfirmReactivarEmpleado(null)}
       />
 
       {/* ── Modal Detalle de Pre-Nómina ─────────────────────────────────────── */}

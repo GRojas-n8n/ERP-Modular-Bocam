@@ -1,0 +1,8 @@
+-- Marcador de versión intencionalmente sin DDL de políticas.
+--
+-- El usuario de runtime que ejecuta `prisma migrate deploy` no es propietario
+-- de las funciones ni de las políticas RLS de producción. La fuente canónica
+-- de estas políticas es ../rls-policies.sql y se aplica, de forma deliberada,
+-- con el workflow manual `deploy-vps-rls-apply.yml` usando el rol administrativo.
+-- Mantener el cambio fuera de la migración evita un despliegue parcial: primero
+-- se publica el guard HTTP y después se endurece RLS mediante ese flujo.

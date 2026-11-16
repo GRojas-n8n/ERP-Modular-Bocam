@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import api from '../lib/api';
 import { useTenant } from '../context/TenantContext';
 import { DEMO_BITACORAS, DEMO_AVANCES, DEMO_ESTIMACIONES } from '../lib/demoData';
@@ -281,6 +281,11 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
   const [conceptosAvance, setConceptosAvance] = useState<ConceptoCatalogo[]>([]);
   const [avanceConceptoId, setAvanceConceptoId] = useState<string | null>(null);
   const [avanceConceptoSearch, setAvanceConceptoSearch] = useState('');
+  const [avanceGuardado, setAvanceGuardado] = useState<{ clave: string; cantidad: string; unidad: string } | null>(null);
+  const [bitacoraGuardada, setBitacoraGuardada] = useState<number | null>(null);
+  const [avanceHighlightedIndex, setAvanceHighlightedIndex] = useState(0);
+  const [conceptosRecientes, setConceptosRecientes] = useState<ConceptoCatalogo[]>([]);
+  const avanceSearchInputRef = useRef<HTMLInputElement>(null);
 
   // ── Estado: configuración ────────────────────────────────────────────────────
   const [insumosClasif, setInsumosClasif] = useState<InsumoClasif[]>([]);
@@ -313,7 +318,10 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
   const [loadingCurvaS, setLoadingCurvaS] = useState(false);
   const [modalAlerta, setModalAlerta] = useState<{ alerta: Alerta; accion: 'reconocer' | 'ignorar' } | null>(null);
   const [notaCP, setNotaCP] = useState('');
-  const [enviandoAlerta, setEnviandoAlerta] = useState(false);
+  // IDs de alerta con una petición en curso — permite que "Reconocer" directo
+  // en una alerta no bloquee las acciones de las demás (ver
+  // openspec/changes/accion-directa-reconocer-alerta).
+  const [alertasEnviando, setAlertasEnviando] = useState<Set<string>>(new Set());
 
   // ── Fetch: campo ─────────────────────────────────────────────────────────────
   const fetchData = async () => {
@@ -539,30 +547,51 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
     } catch { /* silencioso */ }
   };
 
+  // Limpia solo los campos de captura de una entrada de bitácora, conservando
+  // el frente de trabajo — el panel permanece abierto entre guardados
+  // (ver openspec/changes/captura-continua-avances-bitacora).
+  const clearBitacoraCaptureFields = () => {
+    setBitForm(prev => ({
+      frente_trabajo: prev.frente_trabajo,
+      turno: 'DIURNO', clima: '', temperatura_c: '',
+      actividades_realizadas: '', personal_en_sitio: '', incidencias: '',
+      material_recibido: '', observaciones: '',
+      fecha: new Date().toISOString().split('T')[0],
+    }));
+  };
+
+  const resetBitacoraForm = () => {
+    setShowBitacoraForm(false);
+    setBitForm({
+      frente_trabajo: '', turno: 'DIURNO', clima: '', temperatura_c: '',
+      actividades_realizadas: '', personal_en_sitio: '', incidencias: '',
+      material_recibido: '', observaciones: '',
+      fecha: new Date().toISOString().split('T')[0],
+    });
+    setBitacoraGuardada(null);
+  };
+
   const handleSubmitBitacora = async () => {
     if (!bitForm.frente_trabajo || !bitForm.actividades_realizadas) return;
     try {
       setFormLoading(true);
-      await api.post('/api/v1/control-proyectos/bitacoras', {
+      const res = await api.post('/api/v1/control-proyectos/bitacoras', {
         ...bitForm,
         personal_en_sitio: Number(bitForm.personal_en_sitio) || 0,
         temperatura_c: bitForm.temperatura_c ? Number(bitForm.temperatura_c) : null,
       });
-      setShowBitacoraForm(false);
-      setBitForm({
-        frente_trabajo: '', turno: 'DIURNO', clima: '', temperatura_c: '',
-        actividades_realizadas: '', personal_en_sitio: '', incidencias: '',
-        material_recibido: '', observaciones: '',
-        fecha: new Date().toISOString().split('T')[0],
-      });
+      setBitacoraGuardada(res.data?.data?.numero_entrada ?? null);
+      clearBitacoraCaptureFields();
       await fetchData();
     } catch (err: any) {
       alert(`Error: ${err.response?.data?.error?.message || err.message}`);
     } finally { setFormLoading(false); }
   };
 
-  const resetAvanceForm = () => {
-    setShowAvanceForm(false);
+  // Limpia solo los campos de captura de un avance (concepto, cantidad,
+  // periodo) — el panel permanece abierto entre guardados (ver
+  // openspec/changes/captura-continua-avances-bitacora).
+  const clearAvanceCaptureFields = () => {
     setAvanceConceptoId(null);
     setAvanceConceptoSearch('');
     setAvForm({
@@ -570,6 +599,13 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
       periodo_inicio: new Date().toISOString().split('T')[0],
       periodo_fin: new Date().toISOString().split('T')[0],
     });
+  };
+
+  const resetAvanceForm = () => {
+    setShowAvanceForm(false);
+    clearAvanceCaptureFields();
+    setAvanceGuardado(null);
+    setConceptosRecientes([]);
   };
 
   const handleSubmitAvance = async () => {
@@ -584,22 +620,72 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
       });
       const nuevo = res.data?.data;
       if (nuevo) setAvances(prev => [...prev, nuevo]);
-      resetAvanceForm();
+      setAvanceGuardado({
+        clave: conceptoAvanceSeleccionado?.clave ?? '',
+        cantidad: avForm.cantidad_periodo,
+        unidad: conceptoAvanceSeleccionado?.unidad_medida ?? '',
+      });
+      if (conceptoAvanceSeleccionado) {
+        const usado = conceptoAvanceSeleccionado;
+        setConceptosRecientes(prev => [usado, ...prev.filter(c => c.id !== usado.id)].slice(0, 5));
+      }
+      clearAvanceCaptureFields();
     } catch (err: any) {
       alert(`Error: ${err.response?.data?.error?.message || err.message}`);
     } finally { setFormLoading(false); }
   };
 
+  // Las confirmaciones inline de guardado se ocultan solas tras unos segundos
+  // (ver openspec/changes/captura-continua-avances-bitacora, design.md).
+  useEffect(() => {
+    if (!avanceGuardado) return undefined;
+    const t = setTimeout(() => setAvanceGuardado(null), 4000);
+    return () => clearTimeout(t);
+  }, [avanceGuardado]);
+
+  useEffect(() => {
+    if (bitacoraGuardada === null) return undefined;
+    const t = setTimeout(() => setBitacoraGuardada(null), 4000);
+    return () => clearTimeout(t);
+  }, [bitacoraGuardada]);
+
+  // El resaltado del selector de concepto se reinicia cada vez que cambia el
+  // texto de búsqueda (ver openspec/changes/navegacion-selector-concepto-avance).
+  useEffect(() => { setAvanceHighlightedIndex(0); }, [avanceConceptoSearch]);
+  // El buscador recibe el foco automáticamente al mostrarse, para que las
+  // flechas de navegación funcionen sin que el usuario tenga que hacer clic
+  // primero (de lo contrario el foco se queda en el botón "Registrar Avance").
+  useEffect(() => {
+    if (showAvanceForm && !avanceConceptoId) {
+      avanceSearchInputRef.current?.focus();
+    }
+  }, [showAvanceForm, avanceConceptoId]);
+
   // ── Acciones EVM ─────────────────────────────────────────────────────────────
   async function accionarAlerta() {
     if (!modalAlerta) return;
-    setEnviandoAlerta(true);
+    const id = modalAlerta.alerta.id;
+    setAlertasEnviando(prev => new Set(prev).add(id));
     try {
-      await api.patch(`/api/v1/control-proyectos/alertas/${modalAlerta.alerta.id}/${modalAlerta.accion}`, { nota_cp: notaCP });
+      await api.patch(`/api/v1/control-proyectos/alertas/${id}/${modalAlerta.accion}`, { nota_cp: notaCP });
       setModalAlerta(null);
       setNotaCP('');
       void fetchAlertas();
-    } catch { /* silencio */ } finally { setEnviandoAlerta(false); }
+    } catch { /* silencio */ } finally {
+      setAlertasEnviando(prev => { const n = new Set(prev); n.delete(id); return n; });
+    }
+  }
+
+  // "Reconocer" en un clic, sin modal ni nota (ver
+  // openspec/changes/accion-directa-reconocer-alerta).
+  async function reconocerDirecto(alerta: Alerta) {
+    setAlertasEnviando(prev => new Set(prev).add(alerta.id));
+    try {
+      await api.patch(`/api/v1/control-proyectos/alertas/${alerta.id}/reconocer`, { nota_cp: '' });
+      void fetchAlertas();
+    } catch { /* silencio */ } finally {
+      setAlertasEnviando(prev => { const n = new Set(prev); n.delete(alerta.id); return n; });
+    }
   }
 
   // ── Derived ──────────────────────────────────────────────────────────────────
@@ -1164,20 +1250,30 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
                         </div>
                       </div>
                       {a.estado === 'ACTIVA' && (
-                        <div className="flex gap-2 shrink-0">
-                          <Button
+                        <div className="flex shrink-0 flex-col items-end gap-1">
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={() => void reconocerDirecto(a)}
+                              disabled={alertasEnviando.has(a.id)}
+                              className="h-8 bg-sky-600 px-3 text-[10px] font-black text-white hover:bg-sky-500 disabled:opacity-50"
+                            >
+                              {alertasEnviando.has(a.id) ? 'Guardando...' : 'Reconocer'}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={() => { setModalAlerta({ alerta: a, accion: 'ignorar' }); setNotaCP(''); }}
+                              className="h-8 px-3 text-[10px] font-black"
+                            >
+                              Ignorar
+                            </Button>
+                          </div>
+                          <button
+                            type="button"
                             onClick={() => { setModalAlerta({ alerta: a, accion: 'reconocer' }); setNotaCP(''); }}
-                            className="h-8 bg-sky-600 px-3 text-[10px] font-black text-white hover:bg-sky-500"
+                            className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground hover:text-sky-600"
                           >
-                            Reconocer
-                          </Button>
-                          <Button
-                            variant="outline"
-                            onClick={() => { setModalAlerta({ alerta: a, accion: 'ignorar' }); setNotaCP(''); }}
-                            className="h-8 px-3 text-[10px] font-black"
-                          >
-                            Ignorar
-                          </Button>
+                            Agregar nota
+                          </button>
                         </div>
                       )}
                     </div>
@@ -1417,8 +1513,14 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
       )}
 
       {/* ── Formularios (Slide Panels) ───────────────────────────────────────── */}
-      <SlidePanel isOpen={showBitacoraForm} onClose={() => setShowBitacoraForm(false)} title="Nueva Bitácora" subtitle="Registro diario de actividades en campo" accentColor="sky">
+      <SlidePanel isOpen={showBitacoraForm} onClose={resetBitacoraForm} title="Nueva Bitácora" subtitle="Registro diario de actividades en campo" accentColor="sky">
         <div className="space-y-5">
+          {bitacoraGuardada !== null && (
+            <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/5 px-3 py-2">
+              <IconCheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+              <p className="text-xs font-bold text-emerald-700">Entrada #{bitacoraGuardada} guardada</p>
+            </div>
+          )}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <FormField label="Fecha" required>
               <Input type="date" value={bitForm.fecha} onChange={e => setBitForm({ ...bitForm, fecha: e.target.value })} />
@@ -1471,10 +1573,41 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
 
       <SlidePanel isOpen={showAvanceForm} onClose={resetAvanceForm} title="Registrar Avance Físico" subtitle="Captura de avance por concepto del presupuesto base" accentColor="sky">
         <div className="space-y-5">
+          {avanceGuardado && (
+            <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/5 px-3 py-2">
+              <IconCheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+              <p className="text-xs font-bold text-emerald-700">
+                Avance guardado: {avanceGuardado.clave} — {avanceGuardado.cantidad} {avanceGuardado.unidad}
+              </p>
+            </div>
+          )}
           {(() => {
             const filtrados = avanceConceptoSearch.trim()
               ? conceptosAvance.filter(c => `${c.clave} ${c.descripcion}`.toLowerCase().includes(avanceConceptoSearch.toLowerCase()))
               : conceptosAvance;
+            const mostrarRecientes = !avanceConceptoSearch.trim() && conceptosRecientes.length > 0;
+            const listaPrincipal = mostrarRecientes
+              ? filtrados.filter(c => !conceptosRecientes.some(r => r.id === c.id))
+              : filtrados;
+            const opciones = mostrarRecientes ? [...conceptosRecientes, ...listaPrincipal] : listaPrincipal;
+            const seleccionarConcepto = (c: ConceptoCatalogo) => {
+              setAvanceConceptoId(c.id);
+              setAvanceConceptoSearch('');
+              setAvanceGuardado(null);
+            };
+            const onSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+              if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                setAvanceHighlightedIndex(i => Math.min(i + 1, opciones.length - 1));
+              } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setAvanceHighlightedIndex(i => Math.max(i - 1, 0));
+              } else if (e.key === 'Enter') {
+                e.preventDefault();
+                const opt = opciones[avanceHighlightedIndex];
+                if (opt) seleccionarConcepto(opt);
+              }
+            };
             return (
               <div className="space-y-1.5">
                 <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
@@ -1499,28 +1632,42 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
                     <div className="relative">
                       <IconSearch className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                       <input
+                        ref={avanceSearchInputRef}
                         type="text"
                         placeholder="Buscar concepto por clave o descripción..."
                         value={avanceConceptoSearch}
                         onChange={e => setAvanceConceptoSearch(e.target.value)}
+                        onKeyDown={onSearchKeyDown}
                         className="w-full pl-9 pr-3 py-2 text-xs bg-background border border-border/60 rounded-lg focus:border-sky-400 outline-none"
                       />
                     </div>
                     <div className="max-h-40 overflow-y-auto space-y-0.5">
-                      {filtrados.length === 0 ? (
+                      {opciones.length === 0 ? (
                         <p className="text-[10px] text-muted-foreground py-2 text-center">
                           {conceptosAvance.length === 0 ? 'Sin catálogo de obra — importa en Gerencia Técnica' : 'Sin coincidencias'}
                         </p>
-                      ) : filtrados.map(c => (
-                        <button
-                          key={c.id}
-                          type="button"
-                          onClick={() => { setAvanceConceptoId(c.id); setAvanceConceptoSearch(''); }}
-                          className="w-full flex items-center gap-3 rounded-lg border border-border/30 px-3 py-2 text-left hover:border-sky-400/40 hover:bg-sky-500/5 transition-all"
-                        >
-                          <span className="text-[10px] font-mono text-sky-600 shrink-0">{c.clave}</span>
-                          <span className="text-xs truncate text-foreground/80">{c.descripcion}</span>
-                        </button>
+                      ) : opciones.map((c, i) => (
+                        <React.Fragment key={c.id}>
+                          {mostrarRecientes && i === 0 && (
+                            <p className="px-1 pb-0.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground">Recientes</p>
+                          )}
+                          {mostrarRecientes && i === conceptosRecientes.length && listaPrincipal.length > 0 && (
+                            <p className="px-1 pb-0.5 pt-2 text-[9px] font-black uppercase tracking-widest text-muted-foreground">Catálogo completo</p>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => seleccionarConcepto(c)}
+                            onMouseEnter={() => setAvanceHighlightedIndex(i)}
+                            aria-selected={i === avanceHighlightedIndex}
+                            className={cn(
+                              'w-full flex items-center gap-3 rounded-lg border px-3 py-2 text-left transition-all',
+                              i === avanceHighlightedIndex ? 'border-sky-400 bg-sky-500/10' : 'border-border/30 hover:border-sky-400/40 hover:bg-sky-500/5'
+                            )}
+                          >
+                            <span className="text-[10px] font-mono text-sky-600 shrink-0">{c.clave}</span>
+                            <span className="text-xs truncate text-foreground/80">{c.descripcion}</span>
+                          </button>
+                        </React.Fragment>
                       ))}
                     </div>
                   </div>
@@ -1599,10 +1746,10 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
                 <Button variant="outline" onClick={() => { setModalAlerta(null); setNotaCP(''); }}>Cancelar</Button>
                 <Button
                   onClick={() => void accionarAlerta()}
-                  disabled={enviandoAlerta || (modalAlerta.accion === 'ignorar' && notaCP.length < 20)}
+                  disabled={alertasEnviando.has(modalAlerta.alerta.id) || (modalAlerta.accion === 'ignorar' && notaCP.length < 20)}
                   className="bg-sky-600 text-white hover:bg-sky-500 disabled:opacity-50"
                 >
-                  {enviandoAlerta ? 'Guardando...' : modalAlerta.accion === 'reconocer' ? 'Reconocer' : 'Ignorar'}
+                  {alertasEnviando.has(modalAlerta.alerta.id) ? 'Guardando...' : modalAlerta.accion === 'reconocer' ? 'Reconocer' : 'Ignorar'}
                 </Button>
               </div>
             </CardContent>

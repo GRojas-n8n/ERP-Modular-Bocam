@@ -13,7 +13,7 @@
  * │ Email                           │ Password    │ Rol              │
  * ├─────────────────────────────────┼─────────────┼──────────────────┤
  * │ admin@alfa.bocam.com            │ Admin.2026  │ admin, super     │
- * │ residente@alfa.bocam.com        │ Res.2026    │ resident         │
+ * │ residente@alfa.bocam.com        │ Res.2026    │ residencia       │
  * │ comprador@alfa.bocam.com        │ Comp.2026   │ procurement      │
  * │ admin@beta.bocam.com            │ Admin.2026  │ admin            │
  * └─────────────────────────────────┴─────────────┴──────────────────┘
@@ -144,7 +144,7 @@ async function main() {
       email: 'residente@alfa.bocam.com',
       password_hash: passRes,
       nombre: 'Carlos R. (Residente GDL)',
-      rol_global: ['resident'],
+      rol_global: ['residencia'],
       limite_aprobacion_financiera: 0,
       proyectos_acceso: {
         create: [
@@ -153,7 +153,7 @@ async function main() {
       },
     },
   });
-  console.log(`  ✅ Usuario: ${residenteAlfa.email} [resident → Solo GDL]`);
+  console.log(`  ✅ Usuario: ${residenteAlfa.email} [residencia → Solo GDL]`);
 
   // Comprador Alfa (Nivel Tenant - ve todos los proyectos)
   const passComp = await bcrypt.hash('Comp.2026', BCRYPT_ROUNDS);

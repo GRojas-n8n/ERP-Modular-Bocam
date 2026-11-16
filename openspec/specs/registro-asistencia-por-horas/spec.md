@@ -1,4 +1,10 @@
-## ADDED Requirements
+# registro-asistencia-por-horas Specification
+
+## Purpose
+
+Define el registro de asistencia por horas de los empleados en modo POR_HORAS: hora de entrada y de salida con cálculo automático de horas trabajadas, tratamiento de los registros sin salida al cierre del período y corrección manual.
+
+## Requirements
 
 ### Requirement: Registro de hora de entrada
 El sistema SHALL registrar `hora_entrada` en formato `HH:MM` cuando se recibe el primer scan QR o registro manual del día para un empleado con `modo_asistencia = POR_HORAS`. Si ya existe un registro para ese empleado/fecha con `hora_entrada` definida y `hora_salida` nula, el sistema SHALL interpretar el evento como salida (D2 del design).

@@ -303,6 +303,183 @@ CREATE POLICY rls_detalles_pago_oc_insert ON "detalles_pago_oc"
     );
 
 -- ─────────────────────────────────────────────────────────────────────────────
+-- 9b. TOMBSTONE DE CANCELACIÓN DE OC (openspec: blindar-compromiso-oc-concurrencia-y-orden-eventos)
+-- Registra la cancelación de una OC cuya creación aún no se procesó. Patrón Estricto (tenant + proyecto),
+-- igual que movimientos_presupuestales. Sin políticas de UPDATE/DELETE: bajo FORCE RLS es inmutable.
+-- La tabla la crea la migración 20260930120000_blindar_compromiso_oc (que ya incluye este mismo RLS).
+-- ─────────────────────────────────────────────────────────────────────────────
+ALTER TABLE "oc_cancelaciones_tombstone" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "oc_cancelaciones_tombstone" FORCE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS rls_oc_tombstone_select ON "oc_cancelaciones_tombstone";
+CREATE POLICY rls_oc_tombstone_select ON "oc_cancelaciones_tombstone"
+    FOR SELECT USING (
+        tenant_id = current_tenant_id()
+        AND proyecto_id = current_proyecto_id()
+    );
+
+DROP POLICY IF EXISTS rls_oc_tombstone_insert ON "oc_cancelaciones_tombstone";
+CREATE POLICY rls_oc_tombstone_insert ON "oc_cancelaciones_tombstone"
+    FOR INSERT WITH CHECK (
+        tenant_id = current_tenant_id()
+        AND proyecto_id = current_proyecto_id()
+    );
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 9c. OUTBOX DE EVENTOS (openspec: hacer-confiables-publicadores-eventbus-criticos, lote P1)
+-- Una sesión de aplicación (tenant + proyecto) solo lee e inserta filas propias; NO actualiza ni borra. Solo el
+-- despachador (app.internal_worker = 'outbox', que únicamente fija su código) lee todas las filas, las actualiza
+-- y borra las PUBLICADO antiguas. La tabla la crea la migración 20260930180000_outbox_eventos_finanzas (que ya
+-- incluye este mismo RLS; una prueba estática verifica la paridad del bloque OUTBOX_EVENTOS_FINANZAS).
+-- ─────────────────────────────────────────────────────────────────────────────
+ALTER TABLE "outbox_eventos" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "outbox_eventos" FORCE ROW LEVEL SECURITY;
+
+-- >>> OUTBOX_EVENTOS_FINANZAS
+-- Se comparan los GUC con NULLIF(..., ''): tras una transaccion con set_config(..., true) el GUC queda en ''
+-- en esa conexion del pool, y ''::uuid lanzaria un error antes de evaluar la rama del despachador.
+DROP POLICY IF EXISTS rls_outbox_fin_select ON "outbox_eventos";
+CREATE POLICY rls_outbox_fin_select ON "outbox_eventos"
+    FOR SELECT USING (
+        current_setting('app.internal_worker', true) = 'outbox'
+        OR (
+            tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+            AND proyecto_id = NULLIF(current_setting('app.current_proyecto_id', true), '')::uuid
+        )
+    );
+
+DROP POLICY IF EXISTS rls_outbox_fin_insert ON "outbox_eventos";
+CREATE POLICY rls_outbox_fin_insert ON "outbox_eventos"
+    FOR INSERT WITH CHECK (
+        tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+        AND proyecto_id = NULLIF(current_setting('app.current_proyecto_id', true), '')::uuid
+    );
+
+DROP POLICY IF EXISTS rls_outbox_fin_worker_update ON "outbox_eventos";
+CREATE POLICY rls_outbox_fin_worker_update ON "outbox_eventos"
+    FOR UPDATE USING (current_setting('app.internal_worker', true) = 'outbox')
+    WITH CHECK (current_setting('app.internal_worker', true) = 'outbox');
+
+DROP POLICY IF EXISTS rls_outbox_fin_worker_delete ON "outbox_eventos";
+CREATE POLICY rls_outbox_fin_worker_delete ON "outbox_eventos"
+    FOR DELETE USING (current_setting('app.internal_worker', true) = 'outbox');
+-- <<< OUTBOX_EVENTOS_FINANZAS
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 9d. OCS POR PAGAR (proyección de Compras; openspec: corregir-egreso-oc-multiproveedor)
+-- Patrón Global con Trazabilidad, igual que pagos_oc: un rol tenant-level sin proyecto activo lee todo el
+-- tenant; las escrituras exigen el proyecto activo (las hacen los handlers de oc_creada/oc_cancelada y el
+-- egreso, siempre con el proyecto de la OC). Sin DELETE: una OC cancelada conserva su historial.
+-- ─────────────────────────────────────────────────────────────────────────────
+ALTER TABLE "ocs_por_pagar" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "ocs_por_pagar" FORCE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS rls_ocs_por_pagar_select ON "ocs_por_pagar";
+CREATE POLICY rls_ocs_por_pagar_select ON "ocs_por_pagar"
+    FOR SELECT USING (
+        tenant_id = current_tenant_id()
+        AND (current_proyecto_id() IS NULL OR proyecto_id = current_proyecto_id())
+    );
+
+DROP POLICY IF EXISTS rls_ocs_por_pagar_insert ON "ocs_por_pagar";
+CREATE POLICY rls_ocs_por_pagar_insert ON "ocs_por_pagar"
+    FOR INSERT WITH CHECK (
+        tenant_id = current_tenant_id()
+        AND proyecto_id = current_proyecto_id()
+    );
+
+DROP POLICY IF EXISTS rls_ocs_por_pagar_update ON "ocs_por_pagar";
+CREATE POLICY rls_ocs_por_pagar_update ON "ocs_por_pagar"
+    FOR UPDATE USING (
+        tenant_id = current_tenant_id()
+        AND proyecto_id = current_proyecto_id()
+    ) WITH CHECK (
+        tenant_id = current_tenant_id()
+        AND proyecto_id = current_proyecto_id()
+    );
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 9e. CUENTAS POR COBRAR Y COBROS (openspec: cuentas-por-cobrar-estimaciones)
+-- Patrón Global con Trazabilidad, igual que ocs_por_pagar. Sin DELETE: el historial de cobro se conserva.
+-- ─────────────────────────────────────────────────────────────────────────────
+ALTER TABLE "cuentas_por_cobrar" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "cuentas_por_cobrar" FORCE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS rls_cxc_select ON "cuentas_por_cobrar";
+CREATE POLICY rls_cxc_select ON "cuentas_por_cobrar"
+    FOR SELECT USING (
+        tenant_id = current_tenant_id()
+        AND (current_proyecto_id() IS NULL OR proyecto_id = current_proyecto_id())
+    );
+
+DROP POLICY IF EXISTS rls_cxc_insert ON "cuentas_por_cobrar";
+CREATE POLICY rls_cxc_insert ON "cuentas_por_cobrar"
+    FOR INSERT WITH CHECK (
+        tenant_id = current_tenant_id()
+        AND proyecto_id = current_proyecto_id()
+    );
+
+DROP POLICY IF EXISTS rls_cxc_update ON "cuentas_por_cobrar";
+CREATE POLICY rls_cxc_update ON "cuentas_por_cobrar"
+    FOR UPDATE USING (
+        tenant_id = current_tenant_id()
+        AND proyecto_id = current_proyecto_id()
+    ) WITH CHECK (
+        tenant_id = current_tenant_id()
+        AND proyecto_id = current_proyecto_id()
+    );
+
+ALTER TABLE "cobros_cxc" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "cobros_cxc" FORCE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS rls_cobros_cxc_select ON "cobros_cxc";
+CREATE POLICY rls_cobros_cxc_select ON "cobros_cxc"
+    FOR SELECT USING (
+        tenant_id = current_tenant_id()
+        AND (current_proyecto_id() IS NULL OR proyecto_id = current_proyecto_id())
+    );
+
+DROP POLICY IF EXISTS rls_cobros_cxc_insert ON "cobros_cxc";
+CREATE POLICY rls_cobros_cxc_insert ON "cobros_cxc"
+    FOR INSERT WITH CHECK (
+        tenant_id = current_tenant_id()
+        AND proyecto_id = current_proyecto_id()
+    );
+
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 9f. NÓMINAS POR PAGAR (openspec: nomina-pagada-por-finanzas)
+-- Patrón Global con Trazabilidad, igual que ocs_por_pagar. Sin DELETE.
+-- ─────────────────────────────────────────────────────────────────────────────
+ALTER TABLE "nominas_por_pagar" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "nominas_por_pagar" FORCE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS rls_nominas_por_pagar_select ON "nominas_por_pagar";
+CREATE POLICY rls_nominas_por_pagar_select ON "nominas_por_pagar"
+    FOR SELECT USING (
+        tenant_id = current_tenant_id()
+        AND (current_proyecto_id() IS NULL OR proyecto_id = current_proyecto_id())
+    );
+
+DROP POLICY IF EXISTS rls_nominas_por_pagar_insert ON "nominas_por_pagar";
+CREATE POLICY rls_nominas_por_pagar_insert ON "nominas_por_pagar"
+    FOR INSERT WITH CHECK (
+        tenant_id = current_tenant_id()
+        AND proyecto_id = current_proyecto_id()
+    );
+
+DROP POLICY IF EXISTS rls_nominas_por_pagar_update ON "nominas_por_pagar";
+CREATE POLICY rls_nominas_por_pagar_update ON "nominas_por_pagar"
+    FOR UPDATE USING (
+        tenant_id = current_tenant_id()
+        AND proyecto_id = current_proyecto_id()
+    ) WITH CHECK (
+        tenant_id = current_tenant_id()
+        AND proyecto_id = current_proyecto_id()
+    );
+
+
+-- ─────────────────────────────────────────────────────────────────────────────
 -- 10. COMENTARIOS DE AUDITORÍA
 -- ─────────────────────────────────────────────────────────────────────────────
 COMMENT ON POLICY rls_presupuestos_select ON "presupuestos_asignados" IS 'Aisla presupuestos por constructora y centro de costos';
@@ -312,6 +489,7 @@ COMMENT ON POLICY rls_cuentas_select ON "cuentas_bancarias" IS 'Aisla cuentas ba
 COMMENT ON POLICY rls_proyectos_finanzas_select ON "proyectos_finanzas" IS 'Aisla anticipos por constructora y centro de costos';
 COMMENT ON POLICY rls_pagos_oc_select ON "pagos_oc" IS 'Aisla pagos de OC por constructora y centro de costos';
 COMMENT ON POLICY rls_detalles_pago_oc_select ON "detalles_pago_oc" IS 'Aisla detalle de pagos de OC via join a pagos_oc (no tiene tenant_id propio)';
+COMMENT ON POLICY rls_ocs_por_pagar_select ON "ocs_por_pagar" IS 'Aisla OCs por pagar por constructora y centro de costos (Patrón Global con Trazabilidad)';
 
 -- =============================================================================
 -- NOTA: El servicio de Finanzas inyecta set_config('app.current_tenant_id', ...)

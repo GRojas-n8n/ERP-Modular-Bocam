@@ -1,4 +1,10 @@
-## ADDED Requirements
+# expediente-empleado Specification
+
+## Purpose
+
+Define el expediente documental de cada empleado: carga, consulta, descarga y eliminación de documentos por RH con tipos y tamaños permitidos, almacenamiento aislado por tenant y empleado, panel y alerta de documentos por vencer, y aislamiento reforzado por RLS.
+
+## Requirements
 
 ### Requirement: RH sube documentos al expediente del empleado
 El sistema SHALL permitir a un usuario con rol `personal_rh` o `admin` subir un documento al expediente de un empleado, indicando `tipo_documento` (`INE`, `COMPROBANTE_DOMICILIO`, `CURSO_CAPACITACION`, `CONTRATO`, `OTRO`) y opcionalmente `fecha_vigencia`. `tenant_id` se lee del JWT, nunca del body.

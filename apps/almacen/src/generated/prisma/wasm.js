@@ -154,7 +154,18 @@ exports.Prisma.MovimientoAlmacenScalarFieldEnum = {
   concepto_id: 'concepto_id',
   concepto_clave: 'concepto_clave',
   frente_trabajo: 'frente_trabajo',
-  oc_item_id: 'oc_item_id'
+  oc_item_id: 'oc_item_id',
+  recepcion_id: 'recepcion_id',
+  recepcion_item_id: 'recepcion_item_id'
+};
+
+exports.Prisma.EventoProcesadoScalarFieldEnum = {
+  id: 'id',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  event_id: 'event_id',
+  event_type: 'event_type',
+  procesado_en: 'procesado_en'
 };
 
 exports.Prisma.ActivoScalarFieldEnum = {
@@ -216,6 +227,7 @@ exports.Prisma.NullsOrder = {
 exports.Prisma.ModelName = {
   ItemInventario: 'ItemInventario',
   MovimientoAlmacen: 'MovimientoAlmacen',
+  EventoProcesado: 'EventoProcesado',
   Activo: 'Activo',
   TraspasoActivo: 'TraspasoActivo'
 };

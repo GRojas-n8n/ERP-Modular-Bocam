@@ -6,9 +6,10 @@ export type TipoPoliza =
   | 'ESTIMACION'
   | 'AVANCE'
   | 'MANO_OBRA'
-  | 'PAGO_NOMINA';
+  | 'PAGO_NOMINA'
+  | 'COBRO';
 
-interface MovimientoDef {
+export interface MovimientoDef {
   clave_cargo: string;
   clave_abono: string;
   monto: number;
@@ -37,9 +38,28 @@ export function buildMovimientosForPoliza(
       return [{ clave_cargo: '5100', clave_abono: '2200', monto, descripcion }];
     case 'PAGO_NOMINA':
       return [{ clave_cargo: '2200', clave_abono: '1100', monto, descripcion }];
+    case 'COBRO':
+      // Cobro de estimación: entra a Bancos y salda Cuentas por Cobrar (cargada en la póliza ESTIMACION).
+      return [{ clave_cargo: '1100', clave_abono: '1200', monto, descripcion }];
     default:
       return [];
   }
+}
+
+/**
+ * Póliza de egreso multiproveedor: un cargo a Cuentas por Pagar por cada OC liquidada y su abono a Bancos.
+ * La suma de cargos y de abonos es el monto del egreso. openspec: poliza-egreso-oc-y-cobro.
+ */
+export function buildMovimientosEgresoOc(
+  referencia: string,
+  detalles: Array<{ oc_codigo: string; proveedor_nombre: string; monto_aplicado: number }>,
+): MovimientoDef[] {
+  return detalles.map((d) => ({
+    clave_cargo: '2100',
+    clave_abono: '1100',
+    monto: d.monto_aplicado,
+    descripcion: `Egreso ${referencia} · ${d.oc_codigo} · ${d.proveedor_nombre}`.slice(0, 250),
+  }));
 }
 
 export async function resolveCuentaId(

@@ -1,0 +1,62 @@
+## Context
+
+`Insumo` (`apps/gerencia-tecnica/prisma/schema.prisma:60-86`) es hoy un catálogo maestro por tenant, sin `proyecto_id`, único por `(tenant_id, clave)`. Su RLS (`rls_insumos_tenant`, `rls-policies.sql:54-60`) solo filtra por tenant. Esto es consistente con el "Patrón Catálogo Compartido" que `openspec/changes/aislamiento-proyecto-por-modulo` formalizó para otros catálogos análogos (`proveedores` en Compras, `empleados` en Personal) — pero a diferencia de esos catálogos (que son genuinamente reutilizables entre proyectos por naturaleza: un proveedor o un empleado no "pertenece" a una obra), el catálogo de insumos de una obra sí tiene un dueño natural: los materiales, mano de obra y equipo de una obra son específicos de esa obra, con precios y claves que legítimamente difieren de otra obra del mismo tenant.
+
+Dos síntomas concretos del problema:
+1. **Reportado por el Gerente Técnico**: la pantalla de Insumos (`GET /insumos`, `main.ts:78-114`) muestra el catálogo completo del tenant, no el de su obra.
+2. **Encontrado en la auditoría de código, no reportado pero real**: `GET /insumos/explosion` (`main.ts:123-162`), que alimenta el catálogo seleccionable en una requisición "Por Insumo" de Residencia (`RequisicionesTab.tsx:219`, spec `residente-seleccion-insumos`), tiene el mismo `where: { activo: true }` sin filtro de proyecto (`main.ts:129`) — un Residente puede seleccionar, en una requisición real, un insumo que solo existe en el catálogo de otra obra.
+
+Este servicio ya tiene el patrón de aislamiento que se necesita, aplicado en sus propias tablas hermanas: `presupuestos_base`/`conceptos` usan `tenant_id = current AND (current_proyecto_id() IS NULL OR proyecto_id = current_proyecto_id())` (`rls-policies.sql:62-100`) — lo que `aislamiento-proyecto-por-modulo` formalizó como "Patrón Global con Trazabilidad". Las tablas agregadas después (`categorias_gasto`, `concepto_insumos`, `capitulos`) usan el patrón estricto sin el fallback `IS NULL`, porque el código siempre les pasa `proyecto_id`. `Insumo` necesita el patrón intermedio: estricto para los roles de nivel-proyecto (que siempre tienen `proyecto_id` en contexto), con el fallback de consolidación solo para los roles de nivel-tenant que operan sin proyecto activo — igual que `presupuestos_base`.
+
+## Goals / Non-Goals
+
+**Goals:**
+- Un usuario con rol de nivel-proyecto (`gerencia_tecnica`, `technical` — los roles reales del Gerente Técnico y su equipo) nunca ve, en `GET /insumos` ni en `GET /insumos/explosion`, un insumo que no pertenece a su proyecto activo.
+- Un Residente armando una requisición "Por Insumo" solo puede seleccionar insumos del catálogo de su propio proyecto.
+- Un usuario con rol de nivel-tenant (`admin`, `superintendent`) sin proyecto activo sigue pudiendo ver el catálogo consolidado de todo el tenant (caso de uso real: auditoría, soporte) — cada fila trazable a su `proyecto_id`, mismo patrón ya usado en `presupuestos_base`.
+- Ningún dato existente se pierde ni se reasigna a un proyecto equivocado por adivinanza — lo que no se puede determinar con certeza a partir de los datos actuales se archiva, no se fuerza.
+
+**Non-Goals:**
+- No se resuelve automáticamente a qué proyecto pertenece cada insumo histórico cuando la evidencia es ambigua (usado en más de un proyecto) o inexistente (importado solo como Explosión plana, nunca compuesto en un APU) — ver Decision 3.
+- No se cambia el modelo `ConceptoCatalogo` (catálogo maestro de *conceptos*, no de insumos) — es una tabla distinta con su propia justificación de reutilización entre obras (`openspec/specs/catalogo-maestro-conceptos`), fuera del alcance de este change.
+- No se agrega `proyecto_id` a `fichas_tecnicas_insumo` — cuelga de `insumo_id`, y una vez que `Insumo` está acotado por proyecto, sus fichas quedan acotadas transitivamente (la ficha solo es alcanzable a través de un insumo ya visible en el proyecto activo); no se necesita una columna ni política nuevas ahí.
+- No se toca `enviarCorreosSolicitudCotizacion` en Compras (`apps/compras/src/main.ts:103-128`) — ya envía `x-proyecto-id` de la requisición al llamar a `GT_URL/insumos`, y ya maneja el caso "insumo no encontrado" (`main.ts:141`) de forma best-effort. Ver Risks.
+
+## Decisions
+
+**1. `Insumo.proyecto_id` es nullable — no se fuerza `NOT NULL` en la migración de schema.**
+Alternativa descartada: hacer la columna `NOT NULL` con un default forzado (ej. el primer proyecto del tenant). Se descarta porque asignaría insumos históricos a un proyecto incorrecto de forma silenciosa — exactamente el tipo de "mezcla" que este change busca eliminar, solo que ahora mal etiquetada como si fuera intencional. `NULL` dice honestamente "no se sabe" en vez de mentir con un valor.
+
+**2. La política RLS de `insumos` pasa de "solo tenant" a "tenant + proyecto con fallback de consolidación" — mismo patrón que `rls_presupuestos_tenant`, no el patrón estricto sin fallback de `categorias_gasto`.**
+Los roles de nivel-proyecto (`gerencia_tecnica`, `technical`) siempre tienen `proyecto_id` en el contexto de sesión (`requireProjectAccess()` los rechaza con 403 si no lo tienen — `packages/auth-middleware/src/middleware.ts:252-260`), así que para ellos el resultado es idéntico al patrón estricto: nunca ven otro proyecto. El fallback `IS NULL` solo se activa para `admin`/`superintendent` sin proyecto activo — mismo caso ya resuelto en este archivo para `presupuestos_base`. Alternativa descartada: patrón estricto sin fallback (como `categorias_gasto`) — se descarta porque le quitaría a `admin`/`superintendent` la vista consolidada que hoy tienen y que sí tiene un caso de uso legítimo (soporte/auditoría cross-proyecto), sin que el usuario lo haya pedido.
+
+**3. Migración de datos existentes: backfill de mejor esfuerzo vía `ConceptoInsumo`, sin resolver casos ambiguos — se archivan (`activo = false`), no se eliminan ni se adivinan.**
+`ConceptoInsumo` (composición APU, `schema.prisma`, ya tiene `proyecto_id`) es la única evidencia real, dentro de la propia base de `gerencia-tecnica`, de qué insumo se usó en qué proyecto — pero solo cubre insumos que llegaron a formar parte de una composición APU; un insumo importado solo vía "Explosión de Insumos" (catálogo plano, sin composición) no tiene ningún rastro de proyecto en los datos actuales. El backfill:
+- Para un `Insumo` legacy (`proyecto_id IS NULL`) referenciado en `ConceptoInsumo` de un único `proyecto_id`: se le asigna ese `proyecto_id`. Caso no ambiguo, respaldado por datos reales.
+- Para un `Insumo` legacy referenciado en `ConceptoInsumo` de **más de un** `proyecto_id`, o **sin ninguna** referencia en `ConceptoInsumo`: no se asigna — se marca `activo = false` (archivado) y se conserva con `proyecto_id = NULL`. Deja de aparecer en cualquier vista de proyecto activo (consistente con "no mezclar"), pero el registro y su `id` (referenciado por `insumo_id` en Compras/Almacén) sobreviven intactos.
+- Alternativa descartada: pedirle al Gerente que reclasifique cada insumo ambiguo manualmente antes del deploy — se descarta porque bloquea el deploy del fix en un proceso manual potencialmente largo, sin necesidad: el catálogo se reconstruye solo, de forma natural, cada vez que alguien reimporta la Explosión/APU de un proyecto (ya es el flujo normal de uso, ver `feedback-progreso-carga-masiva`), y el `activo = false` no rompe nada que dependa de leer el histórico.
+
+**4. La unicidad de `clave` pasa a ser por proyecto (`[tenant_id, proyecto_id, clave]`), no por tenant.**
+Consecuencia directa de la Decision 3 del proposal — el usuario pidió aislamiento estricto, no una variante de reutilización entre obras. A partir de este change, importar el mismo código de insumo en dos proyectos del mismo tenant crea dos filas independientes, cada una con su propio precio — refleja la realidad de que el mismo material puede cotizar distinto en dos obras.
+
+**5. `POST /insumos` y `POST /insumos/importar-lote` estampan `proyecto_id` explícitamente en el `data` de `create`/`createMany` — la RLS por sí sola no lo hace.**
+La sesión de Postgres conoce `app.current_proyecto_id` vía `set_config()` (`db.ts:101-106`), pero eso solo restringe qué filas son *visibles/escribibles* (`USING`/`WITH CHECK`) — no rellena automáticamente la columna en un INSERT que no la incluye. Cada endpoint de escritura debe pasar `proyecto_id: proyectoId` en el payload, igual que ya hacen todos los demás modelos de este servicio que tienen la columna (`Concepto`, `Capitulo`, `CategoriaGasto`).
+
+## Risks / Trade-offs
+
+- **[Riesgo] Insumos archivados por ambigüedad (Decision 3) "desaparecen" de la vista del Gerente hasta que reimporte.** → Mitigación: es el comportamiento correcto, no un bug — esos insumos genuinamente no se pueden atribuir a un proyecto con los datos disponibles. El Gerente ya tiene el flujo de reimportar Explosión/APU; tras este change, reimportar simplemente crea las filas nuevas ya correctamente acotadas a su proyecto.
+- **[Riesgo] Una requisición histórica de Compras cuyo `insumo_id` quedó archivado puede mostrar "Insumo no encontrado en catálogo" en el correo de solicitud de cotización (`apps/compras/src/main.ts:141`).** → Aceptado: ese fallback ya existe hoy para insumos eliminados/no encontrados por cualquier motivo; no es un caso nuevo de fallo, y el correo ya es best-effort (nunca bloquea la operación real). No se investigó cuántas requisiciones activas (no cerradas) podrían verse afectadas — si el número resulta alto, es una razón para tratar esos casos como "único proyecto" en el backfill antes de archivarlos (ver tasks.md, tarea de auditoría previa).
+- **[Trade-off] La vista consolidada de `admin`/`superintendent` sin proyecto activo (Decision 2) sigue mezclando insumos de distintos proyectos en una sola respuesta.** → Aceptado deliberadamente: es el mismo patrón ya vigente en este servicio para `presupuestos_base`, con trazabilidad por fila (`proyecto_id` expuesto) — no es el caso que reportó el usuario, que opera con un proyecto activo.
+
+## Migration Plan
+
+- **Auditoría previa (bloqueante, antes de generar la migración de schema):** contra la base real de `gerencia-tecnica`, contar (a) insumos activos totales, (b) cuántos están referenciados por `ConceptoInsumo` de un único `proyecto_id` (caso no ambiguo), (c) cuántos por más de uno (ambiguo), (d) cuántos sin ninguna referencia (huérfanos, típicamente importados solo vía Explosión). Documentar los resultados en `tasks.md` antes de continuar — si (c)+(d) resulta ser la mayoría del catálogo, reconsiderar con el dueño del producto si el backfill automático (Decision 3) sigue siendo aceptable o si se necesita coordinación manual antes del deploy.
+- Migración de schema: agregar `Insumo.proyecto_id` (nullable), índice `[tenant_id, proyecto_id]`, cambiar unique constraint a `[tenant_id, proyecto_id, clave]` (Prisma `migrate dev --create-only`, sin aplicar hasta confirmar que no rompe con datos duplicados reales — incluso con `proyecto_id` nullable, dos filas con el mismo `(tenant_id, NULL, clave)` no colisionan bajo Postgres estándar, así que el legacy no bloquea la migración de constraint).
+- Script de backfill (no es una migración Prisma — corre una sola vez contra la base real, vía `adminPrisma`/superusuario, igual que otros scripts de mantenimiento de este servicio, `db.ts:143-145`): aplica Decision 3.
+- Actualizar `rls-policies.sql`: `rls_insumos_tenant` → `rls_insumos_context` (patrón de `presupuestos_base`). Aplicar vía el mecanismo ya establecido (`scripts/ci/apply-rls-as-admin.sh`, usado en `aislamiento-proyecto-por-modulo`).
+- Deploy de un solo servicio backend (`gerencia-tecnica`) + frontend (`app-shell`, sin cambios de contrato esperados). Compras/Almacén no requieren deploy — su código no cambia (ver proposal.md, Impact).
+- Rollback: revertir el commit del código de aplicación es seguro (la RLS actualizada es más estricta, no rompe lecturas existentes de filas con `proyecto_id` ya asignado). Revertir la migración de schema (quitar la columna) perdería el backfill — si se necesita rollback después del backfill, primero exportar/respaldar los `proyecto_id` asignados.
+
+## Open Questions
+
+- ~~Resultado de la auditoría previa~~ — Resuelto (2026-08-27, ver `tasks.md` grupo 1): 441 insumos activos en producción, 394 no ambiguos, 9 ambiguos, 38 huérfanos (10.7% del total). No es la mayoría del catálogo — el backfill automático de Decision 3 es suficiente, sin necesidad de decisión de negocio adicional. Impacto en Compras: 0 requisiciones activas afectadas.

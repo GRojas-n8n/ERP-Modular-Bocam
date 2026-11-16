@@ -359,6 +359,10 @@ export interface ConfirmCriticalActionDialogProps {
   /** Si es `false`, el diálogo ignora el clic en el overlay y la tecla Escape — solo se
    * resuelve con clic explícito en "Confirmar" o "Cancelar". Default `true`. */
   dismissible?: boolean;
+  /** Nombre del archivo seleccionado — para confirmar carga de archivo antes de procesarlo. */
+  fileName?: string;
+  /** Destino legible dentro de iRetum, ej. "Gerencia Técnica → Catálogo de Obra". */
+  destination?: string;
   children?: React.ReactNode;
   onConfirm: () => void;
   onCancel: () => void;
@@ -382,6 +386,8 @@ export function ConfirmCriticalActionDialog({
   confirmDisabled = false,
   variant = 'default',
   dismissible = true,
+  fileName,
+  destination,
   children,
   onConfirm,
   onCancel,
@@ -415,6 +421,16 @@ export function ConfirmCriticalActionDialog({
 
         <h2 className="text-base font-black text-foreground">{title}</h2>
         {description ? <p className="mt-2 text-sm text-muted-foreground">{description}</p> : null}
+        {(fileName || destination) ? (
+          <div className="mt-3 space-y-1 rounded-xl border border-border/30 bg-muted/30 px-3 py-2.5 text-xs">
+            {fileName ? (
+              <p className="font-bold text-foreground truncate" title={fileName}>{fileName}</p>
+            ) : null}
+            {destination ? (
+              <p className="text-muted-foreground">{destination}</p>
+            ) : null}
+          </div>
+        ) : null}
         {children ? <div className="mt-3">{children}</div> : null}
 
         <div className="mt-6 flex justify-end gap-3">

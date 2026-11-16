@@ -23,6 +23,26 @@
 
 import express, { Request, Response } from 'express';
 import { createTenantContext } from './db';
+import { esUuid, registrarCancelacionOc, registrarCompromisoOc } from './compromiso-oc';
+import { cancelarOcPorPagar, ErrorEgreso, parsearEgresoOc, registrarEgresoOc, registrarOcPorPagar } from './egreso-oc';
+import { parsearMontoPositivo } from './montos';
+import { ErrorFinanzas } from './errores';
+import { ejecutarPago, parsearEjecucion, parsearLote, parsearPagoProgramado, programarLote, programarPago } from './programa-pagos';
+import { cortarPagina, despuesDe, parsearPaginacion } from './paginacion';
+import { listarNominasPorPagar, pagarNomina, parsearNominaAutorizada, parsearPagoNomina, registrarNominaPorPagar } from './nomina-por-pagar';
+import { listarCuentasPorCobrar, parsearCobro, parsearFiltroCxc, registrarCobro, registrarCuentaPorCobrar } from './cuentas-por-cobrar';
+import { ErrorPresupuesto, registrarMovimientoManual, sincronizarPartidasGt, TIPOS_MOVIMIENTO_MANUAL, transferirPresupuesto } from './presupuesto-blindado';
+import { modoEventos, VARIABLE_MODO_EVENTOS } from './outbox-eventos';
+import {
+  configurarDespachadorOutbox,
+  configurarLimpiezaOutbox,
+  consultarBacklog,
+  estadoDespachadorOutbox,
+  metricasOutbox,
+  VARIABLE_DESPACHADOR,
+  VARIABLE_LIMPIEZA,
+} from './outbox-dispatcher';
+import { iniciarVerificacionConsumidores, ultimoInformeConsumidores } from './outbox-consumidores';
 import { v4 as uuidv4 } from 'uuid';
 import {
   createApiResponse,
@@ -30,16 +50,19 @@ import {
   FondosComprometidosPayload,
   FondosLiberadosPayload,
   PagoRegistradoPayload,
+  EgresoOcRegistradoPayload,
+  CobroRegistradoPayload,
+  NominaPagadaFinanzasPayload,
   TransferenciaPresupuestalPayload,
   TipoMovimiento,
   FinanzasEvents,
   PresupuestoInsuficientePayload,
   SuficienciaPresupuestal,
 } from './types';
-import type { PrismaClient } from './generated/prisma';
+import { Prisma, type PrismaClient } from './generated/prisma';
 
 // ─── Importar middleware JWT compartido ──────────────────────────────────────
-import { createAuthMiddleware, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
+import { createAuthMiddleware, requireActiveProject, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
 import { createRateLimiter } from '../../../packages/rate-limiter/src';
 import { createEventBus, BocamEvent } from '../../../packages/event-bus/src';
 import {
@@ -51,7 +74,6 @@ import {
   logWarn,
   setupSentryExpressHandler,
 } from '../../../packages/observability/src';
-import { applyIdempotentMutationInContext } from '../../../packages/tenant-idempotency/src';
 
 // ─── EventBus (RabbitMQ) ─────────────────────────────────────────────────────
 const eventBus = createEventBus('finanzas');
@@ -59,7 +81,7 @@ const eventBus = createEventBus('finanzas');
 async function publishFinanceDomainEvent(
   eventType: FinanzasEvents,
   context: { tenant_id: string; proyecto_id: string; user_id: string; correlation_id?: string },
-  payload: FondosComprometidosPayload | FondosLiberadosPayload | PresupuestoInsuficientePayload | PagoRegistradoPayload | TransferenciaPresupuestalPayload
+  payload: FondosComprometidosPayload | FondosLiberadosPayload | PresupuestoInsuficientePayload | PagoRegistradoPayload | TransferenciaPresupuestalPayload | EgresoOcRegistradoPayload | CobroRegistradoPayload | NominaPagadaFinanzasPayload
 ) {
   await eventBus.publish({
     event_type: eventType,
@@ -67,6 +89,24 @@ async function publishFinanceDomainEvent(
     context,
     payload,
   });
+}
+
+/** Respuesta estándar con `meta.paginacion` (data sigue siendo arreglo). openspec: optimizar-api-y-dashboard-finanzas. */
+function responderPagina(res: Response, pagina: { data: unknown[]; paginacion: unknown }, tenantId: string, proyectoId: string | undefined, correlationId?: string) {
+  const r = createApiResponse(pagina.data, tenantId, proyectoId, correlationId) as any;
+  r.meta.paginacion = pagina.paginacion;
+  res.json(r);
+}
+
+/** Traduce ErrorFinanzas a su código; cualquier otro error es 500 sin exponer el mensaje interno. */
+function responderError(req: Request, res: Response, error: any, accion: string, mensaje: string) {
+  const correlationId = getCorrelationId(req);
+  if (error instanceof ErrorFinanzas) {
+    res.status(error.status).json(createApiError(error.code, error.message, undefined, correlationId));
+    return;
+  }
+  logError(req, 'finanzas', accion, mensaje, { error_message: error?.message });
+  res.status(500).json(createApiError('FIN_INTERNAL_ERROR', `${mensaje}.`, undefined, correlationId));
 }
 
 export const app = express();
@@ -82,10 +122,20 @@ initSentry(process.env.SENTRY_DSN || '', 'finanzas');
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 app.use(createAuthMiddleware({
   jwtSecret: JWT_SECRET,
-  excludePaths: ['/health'],
+  excludePaths: ['/health', '/ready'],
 }));
 app.use(createRateLimiter({ windowMs: 15 * 60 * 1000, max: 300, serviceName: 'finanzas' }));
 app.use(requireProjectAccess());
+app.use([
+  '/api/v1/finanzas/suficiencia',
+  '/api/v1/finanzas/presupuestos',
+  '/api/v1/finanzas/movimientos',
+  '/api/v1/finanzas/transferencias-presupuestales',
+  '/api/v1/finanzas/comprometer-fondos',
+  '/api/v1/finanzas/liberar-fondos',
+  '/api/v1/finanzas/proyectos',
+  '/api/v1/finanzas/reportes/pagado-por-concepto',
+], requireActiveProject());
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // ENDPOINT CRÍTICO: GET /api/v1/finanzas/suficiencia
@@ -242,7 +292,7 @@ app.get('/api/v1/finanzas/presupuestos/:id',
           where: { id_presupuesto: id },
           include: {
             movimientos: { orderBy: { fecha_registro: 'desc' }, take: 50 },
-            programa_pagos: { orderBy: { fecha_programada: 'asc' } },
+            programa_pagos: { orderBy: { fecha_programada: 'asc' }, take: 50 },
           },
         });
       }
@@ -361,377 +411,185 @@ app.get('/api/v1/finanzas/movimientos',
     const { tenantId, proyectoId, userId } = req.securityContext;
     const presupuestoId = req.query.presupuesto_id as string | undefined;
     const conceptoId    = req.query.concepto_id as string | undefined;
+    if ((presupuestoId && !esUuid(presupuestoId)) || (conceptoId && !esUuid(conceptoId))) {
+      res.status(400).json(createApiError('FIN_INVALID_REFERENCE', 'presupuesto_id y concepto_id deben ser UUID válidos.', undefined, getCorrelationId(req)));
+      return;
+    }
+    const pag = parsearPaginacion(req.query);
 
-    const data = await createTenantContext(
+    const pagina = await createTenantContext(
       { tenantId, proyectoId, userId },
       async (prisma) => {
         let resolvedPresupuestoId = presupuestoId;
 
         if (!resolvedPresupuestoId && conceptoId) {
           const presupuesto = await prisma.presupuestoAsignado.findFirst({
-            where: { concepto_id: conceptoId, estatus: 'ACTIVO' },
+            where: { tenant_id: tenantId, concepto_id: conceptoId, estatus: 'ACTIVO', ...(proyectoId ? { proyecto_id: proyectoId } : {}) },
           });
-          if (!presupuesto) return [];
+          if (!presupuesto) return { data: [], paginacion: { limit: pag.limit, next_cursor: null } };
           resolvedPresupuestoId = presupuesto.id_presupuesto;
         }
 
-        return await prisma.movimientoPresupuestal.findMany({
-          where: resolvedPresupuestoId ? { presupuesto_id: resolvedPresupuestoId } : undefined,
+        const filas = await prisma.movimientoPresupuestal.findMany({
+          where: {
+            AND: [
+              { tenant_id: tenantId },
+              resolvedPresupuestoId ? { presupuesto_id: resolvedPresupuestoId } : {},
+              proyectoId ? { proyecto_id: proyectoId } : {},
+              despuesDe('fecha_registro', 'id_movimiento', 'desc', pag),
+            ],
+          },
           include: { presupuesto: { select: { codigo: true, capitulo: true } } },
-          orderBy: { fecha_registro: 'desc' },
-          take: 100,
+          orderBy: [{ fecha_registro: 'desc' }, { id_movimiento: 'desc' }],
+          take: pag.limit + 1,
         });
+        return cortarPagina(filas, pag, (f) => f.fecha_registro, (f) => f.id_movimiento);
       }
     );
 
-    res.json(createApiResponse(data, tenantId, proyectoId));
+    responderPagina(res, pagina, tenantId, proyectoId, getCorrelationId(req));
   } catch (error: any) {
-    console.error('[Finanzas] Error listando movimientos:', error.message);
-    res.status(500).json(createApiError('FIN_INTERNAL_ERROR', 'Error al listar movimientos.'));
+    responderError(req, res, error, 'finanzas.movimientos.list_error', 'Error al listar movimientos');
   }
 });
 
-// Registrar nuevo movimiento presupuestal (inmutable)
+// Registrar nuevo movimiento presupuestal (inmutable). Bloquea la fila del presupuesto antes de validar saldos.
+// Las transferencias van por /transferencias-presupuestales; las partidas de GT no aceptan movimientos manuales.
+// openspec: blindar-movimientos-y-sincronizacion-gt.
 app.post('/api/v1/finanzas/movimientos', async (req: Request, res: Response) => {
+  const correlationId = getCorrelationId(req);
   try {
     const { tenantId, proyectoId, userId, roles, limiteAprobacion } = req.securityContext;
     const {
       presupuesto_id, tipo, concepto, monto, moneda,
       referencia_modulo, referencia_entidad, referencia_id, referencia_codigo,
       notas,
-    } = req.body;
+    } = req.body ?? {};
 
-    // Validación RBAC
     const rolesAutorizados = ['admin', 'superintendent', 'finanzas'];
     if (!roles.some((r: string) => rolesAutorizados.includes(r))) {
-      res.status(403).json(createApiError(
-        'FIN_FORBIDDEN',
-        'No tienes permisos para registrar movimientos presupuestales.'
-      ));
+      res.status(403).json(createApiError('FIN_FORBIDDEN', 'No tienes permisos para registrar movimientos presupuestales.', undefined, correlationId));
       return;
     }
 
-    // Validar campos obligatorios
-    if (!presupuesto_id || !tipo || !concepto || !monto) {
-      res.status(400).json(createApiError(
-        'FIN_MISSING_FIELDS',
-        'Los campos presupuesto_id, tipo, concepto y monto son obligatorios.'
-      ));
+    if (!presupuesto_id || !tipo || !concepto || monto === undefined || monto === null || monto === '') {
+      res.status(400).json(createApiError('FIN_MISSING_FIELDS', 'Los campos presupuesto_id, tipo, concepto y monto son obligatorios.', undefined, correlationId));
       return;
     }
 
-    // Validar tipo de movimiento
-    const tiposValidos = Object.values(TipoMovimiento);
-    if (!tiposValidos.includes(tipo as TipoMovimiento)) {
-      res.status(400).json(createApiError(
-        'FIN_INVALID_TYPE',
-        `Tipo de movimiento inválido. Valores permitidos: ${tiposValidos.join(', ')}`
-      ));
+    if (tipo === TipoMovimiento.TRANSFERENCIA) {
+      res.status(400).json(createApiError('FIN_TRANSFERENCIA_POR_ENDPOINT',
+        'Las transferencias se registran en /transferencias-presupuestales (origen y destino en una sola operación).', undefined, correlationId));
+      return;
+    }
+    if (!(TIPOS_MOVIMIENTO_MANUAL as readonly string[]).includes(tipo)) {
+      res.status(400).json(createApiError('FIN_INVALID_TYPE',
+        `Tipo de movimiento inválido. Valores permitidos: ${TIPOS_MOVIMIENTO_MANUAL.join(', ')}`, undefined, correlationId));
       return;
     }
 
-    // Validar Límite de Autoridad Financiera
     if (Number(monto) > limiteAprobacion) {
-      res.status(403).json(createApiError(
-        'FIN_LIMIT_EXCEEDED',
-        `El monto $${Number(monto).toLocaleString()} excede tu límite de autoridad financiera.`
-      ));
+      res.status(403).json(createApiError('FIN_LIMIT_EXCEEDED',
+        `El monto $${Number(monto).toLocaleString()} excede tu límite de autoridad financiera.`, undefined, correlationId));
       return;
     }
 
-    const data = await createTenantContext(
-      { tenantId, proyectoId, userId },
-      async (prisma) => {
-        // 1. Verificar que el presupuesto existe
-        const presupuesto = await prisma.presupuestoAsignado.findUnique({
-          where: { id_presupuesto: presupuesto_id },
-        });
+    const montoValidado = parsearMontoPositivo(monto, 'monto');
+    if (montoValidado.motivo !== undefined) {
+      res.status(400).json(createApiError('FIN_MONTO_INVALIDO', montoValidado.motivo, undefined, correlationId));
+      return;
+    }
+    if (!esUuid(presupuesto_id)) {
+      res.status(400).json(createApiError('FIN_INVALID_REFERENCE', 'presupuesto_id debe ser un UUID válido.', undefined, correlationId));
+      return;
+    }
 
-        if (!presupuesto) {
-          throw new Error('Presupuesto no encontrado.');
-        }
-        const montoNum = Number(monto);
-        const disponible = Number(presupuesto.monto_disponible);
+    const data = await registrarMovimientoManual({ tenantId, proyectoId, userId }, {
+      presupuesto_id, tipo, concepto: String(concepto).slice(0, 500), monto: montoValidado.monto!, moneda,
+      referencia_modulo, referencia_entidad, referencia_id, referencia_codigo, notas,
+    });
 
-        // 2. Validar suficiencia según tipo
-        if (tipo === TipoMovimiento.COMPROMISO || tipo === TipoMovimiento.EJERCIDO) {
-          if (montoNum > disponible) {
-            throw new Error(
-              `PRESUPUESTO_INSUFICIENTE: Disponible $${disponible.toLocaleString()}, ` +
-              `Solicitado $${montoNum.toLocaleString()}, ` +
-              `Déficit $${(montoNum - disponible).toLocaleString()}`
-            );
-          }
-        }
-
-        // 3. Crear movimiento (inmutable)
-        const movimiento = await prisma.movimientoPresupuestal.create({
-          data: {
-            tenant_id: tenantId,
-            proyecto_id: proyectoId,
-            presupuesto_id,
-            tipo,
-            concepto,
-            monto: montoNum,
-            moneda: moneda || 'MXN',
-            referencia_modulo,
-            referencia_entidad,
-            referencia_id,
-            referencia_codigo,
-            usuario_id: userId,
-            notas,
-          },
-        });
-
-        // 4. Actualizar saldos del presupuesto
-        let updateData: any = {};
-        switch (tipo) {
-          case TipoMovimiento.COMPROMISO:
-            updateData = {
-              monto_comprometido: { increment: montoNum },
-              monto_disponible: { decrement: montoNum },
-            };
-            break;
-          case TipoMovimiento.EJERCIDO:
-            updateData = {
-              monto_ejercido: { increment: montoNum },
-              monto_disponible: { decrement: montoNum },
-            };
-            break;
-          case TipoMovimiento.DEVENGADO:
-            // Devengado mueve de comprometido a ejercido (transición)
-            updateData = {
-              monto_comprometido: { decrement: montoNum },
-              monto_ejercido: { increment: montoNum },
-            };
-            break;
-          case TipoMovimiento.LIBERACION:
-            updateData = {
-              monto_comprometido: { decrement: montoNum },
-              monto_disponible: { increment: montoNum },
-            };
-            break;
-          case TipoMovimiento.TRANSFERENCIA:
-            // Las transferencias se manejan con 2 movimientos (origen + destino)
-            // Aquí solo procesamos la salida; el destino se registra en otro call
-            updateData = {
-              monto_disponible: { decrement: montoNum },
-            };
-            break;
-        }
-
-        await prisma.presupuestoAsignado.update({
-          where: { id_presupuesto: presupuesto_id },
-          data: updateData,
-        });
-
-        return movimiento;
-      }
-    );
-
-    console.log(`[Finanzas] ✅ Movimiento registrado: ${tipo} → $${monto}`);
-    res.status(201).json(createApiResponse(data, tenantId, proyectoId));
+    console.log(`[Finanzas] ✅ Movimiento registrado: ${tipo} → $${montoValidado.monto!.toFixed(2)}`);
+    res.status(201).json(createApiResponse(data, tenantId, proyectoId, correlationId));
   } catch (error: any) {
-    console.error('[Finanzas] Error registrando movimiento:', error.message);
-
-    if (error.message.includes('PRESUPUESTO_INSUFICIENTE')) {
-      res.status(422).json(createApiError(
-        'FIN_INSUFFICIENT_BUDGET',
-        error.message
-      ));
+    if (error instanceof ErrorFinanzas) {
+      res.status(error.status).json(createApiError(error.code, error.message, undefined, correlationId));
       return;
     }
-
-    res.status(500).json(createApiError('FIN_INTERNAL_ERROR', 'Error al registrar movimiento.'));
+    console.error('[Finanzas] Error registrando movimiento:', error.message);
+    res.status(500).json(createApiError('FIN_INTERNAL_ERROR', 'Error al registrar movimiento.', undefined, correlationId));
   }
 });
 
+// Transferencia presupuestal: mueve autorizado y disponible entre dos presupuestos del proyecto en una sola
+// transacción, con ambos bloqueados e idempotencia por transferencia_id (obligatorio).
+// openspec: blindar-movimientos-y-sincronizacion-gt.
 app.post('/api/v1/finanzas/transferencias-presupuestales', async (req: Request, res: Response) => {
+  const correlationId = getCorrelationId(req);
   try {
     const { tenantId, proyectoId, userId, roles, limiteAprobacion } = req.securityContext;
-    const correlationId = getCorrelationId(req);
-    const {
-      transferencia_id,
-      presupuesto_origen_id,
-      presupuesto_destino_id,
-      monto,
-      concepto,
-    } = req.body;
+    const { transferencia_id, presupuesto_origen_id, presupuesto_destino_id, monto, concepto } = req.body ?? {};
 
     const rolesAutorizados = ['admin', 'finanzas', 'superintendent'];
     if (!roles.some((r: string) => rolesAutorizados.includes(r))) {
-      res.status(403).json(createApiError(
-        'FIN_FORBIDDEN',
-        'No tienes permisos para transferir presupuesto.'
-      ));
+      res.status(403).json(createApiError('FIN_FORBIDDEN', 'No tienes permisos para transferir presupuesto.', undefined, correlationId));
       return;
     }
 
-    if (!presupuesto_origen_id || !presupuesto_destino_id || !monto || !concepto) {
-      res.status(400).json(createApiError(
-        'FIN_MISSING_FIELDS',
-        'Los campos presupuesto_origen_id, presupuesto_destino_id, monto y concepto son obligatorios.'
-      ));
+    if (!presupuesto_origen_id || !presupuesto_destino_id || monto === undefined || monto === null || monto === '' || !concepto) {
+      res.status(400).json(createApiError('FIN_MISSING_FIELDS',
+        'Los campos presupuesto_origen_id, presupuesto_destino_id, monto y concepto son obligatorios.', undefined, correlationId));
       return;
     }
 
     if (presupuesto_origen_id === presupuesto_destino_id) {
-      res.status(422).json(createApiError(
-        'FIN_INVALID_TRANSFER',
-        'El presupuesto de origen y destino deben ser distintos.'
-      ));
+      res.status(422).json(createApiError('FIN_INVALID_TRANSFER', 'El presupuesto de origen y destino deben ser distintos.', undefined, correlationId));
       return;
     }
 
-    const transferenciaId = transferencia_id || uuidv4();
-    const montoNum = Number(monto);
-
-    // Validar Límite de Autoridad Financiera
-    if (montoNum > limiteAprobacion) {
-      res.status(403).json(createApiError(
-        'FIN_LIMIT_EXCEEDED',
-        `El monto $${montoNum.toLocaleString()} excede tu límite de autoridad financiera ($${limiteAprobacion.toLocaleString()}).`,
-        undefined,
-        correlationId
-      ));
+    // Límite de Autoridad Financiera antes de cualquier otra validación de negocio (contrato de seguridad.e2e).
+    if (Number(monto) > limiteAprobacion) {
+      res.status(403).json(createApiError('FIN_LIMIT_EXCEEDED',
+        `El monto $${Number(monto).toLocaleString()} excede tu límite de autoridad financiera ($${limiteAprobacion.toLocaleString()}).`,
+        undefined, correlationId));
       return;
     }
 
-    const result = await createTenantContext(
-      { tenantId, proyectoId, userId },
-      async (prisma) => {
-        const movimientosExistentes = await prisma.movimientoPresupuestal.findMany({
-          where: {
-            referencia_modulo: 'finanzas',
-            referencia_entidad: 'TransferenciaPresupuestal',
-            referencia_id: transferenciaId,
-            tipo: TipoMovimiento.TRANSFERENCIA,
-          },
-          orderBy: { fecha_registro: 'asc' },
-        });
+    if (!esUuid(transferencia_id)) {
+      res.status(400).json(createApiError('FIN_TRANSFERENCIA_ID_REQUERIDO',
+        'transferencia_id (UUID generado por quien solicita) es obligatorio: permite reintentar sin duplicar.', undefined, correlationId));
+      return;
+    }
+    if (!esUuid(presupuesto_origen_id) || !esUuid(presupuesto_destino_id)) {
+      res.status(400).json(createApiError('FIN_INVALID_REFERENCE', 'Los presupuestos deben ser UUID válidos.', undefined, correlationId));
+      return;
+    }
+    const montoValidado = parsearMontoPositivo(monto, 'monto');
+    if (montoValidado.motivo !== undefined) {
+      res.status(400).json(createApiError('FIN_MONTO_INVALIDO', montoValidado.motivo, undefined, correlationId));
+      return;
+    }
 
-        const origen = await prisma.presupuestoAsignado.findUniqueOrThrow({
-          where: { id_presupuesto: presupuesto_origen_id },
-        });
-
-        const destino = await prisma.presupuestoAsignado.findUniqueOrThrow({
-          where: { id_presupuesto: presupuesto_destino_id },
-        });
-
-        if (movimientosExistentes.length >= 2) {
-          return {
-            evento: FinanzasEvents.TRANSFERENCIA_PRESUPUESTAL,
-            transferencia_id: transferenciaId,
-            movimiento_origen_id: movimientosExistentes[0].id_movimiento,
-            movimiento_destino_id: movimientosExistentes[1].id_movimiento,
-            presupuesto_origen_id,
-            presupuesto_destino_id,
-            codigo_origen: origen.codigo,
-            codigo_destino: destino.codigo,
-            capitulo_origen: origen.capitulo,
-            capitulo_destino: destino.capitulo,
-            monto_transferido: montoNum,
-            concepto,
-            idempotente: true,
-          };
-        }
-
-        if (Number(origen.monto_disponible) < montoNum) {
-          throw new Error('No hay presupuesto disponible suficiente para la transferencia.');
-        }
-
-        const movimientoOrigen = await prisma.movimientoPresupuestal.create({
-          data: {
-            tenant_id: tenantId,
-            proyecto_id: proyectoId,
-            presupuesto_id: presupuesto_origen_id,
-            tipo: TipoMovimiento.TRANSFERENCIA,
-            concepto,
-            monto: montoNum,
-            referencia_modulo: 'finanzas',
-            referencia_entidad: 'TransferenciaPresupuestal',
-            referencia_id: transferenciaId,
-            usuario_id: userId,
-            notas: 'Transferencia presupuestal - salida.',
-          },
-        });
-
-        const movimientoDestino = await prisma.movimientoPresupuestal.create({
-          data: {
-            tenant_id: tenantId,
-            proyecto_id: proyectoId,
-            presupuesto_id: presupuesto_destino_id,
-            tipo: TipoMovimiento.TRANSFERENCIA,
-            concepto,
-            monto: montoNum,
-            referencia_modulo: 'finanzas',
-            referencia_entidad: 'TransferenciaPresupuestal',
-            referencia_id: transferenciaId,
-            usuario_id: userId,
-            notas: 'Transferencia presupuestal - entrada.',
-          },
-        });
-
-        await prisma.presupuestoAsignado.update({
-          where: { id_presupuesto: presupuesto_origen_id },
-          data: {
-            monto_disponible: { decrement: montoNum },
-          },
-        });
-
-        await prisma.presupuestoAsignado.update({
-          where: { id_presupuesto: presupuesto_destino_id },
-          data: {
-            monto_disponible: { increment: montoNum },
-          },
-        });
-
-        return {
-          evento: FinanzasEvents.TRANSFERENCIA_PRESUPUESTAL,
-          transferencia_id: transferenciaId,
-          movimiento_origen_id: movimientoOrigen.id_movimiento,
-          movimiento_destino_id: movimientoDestino.id_movimiento,
-          presupuesto_origen_id,
-          presupuesto_destino_id,
-          codigo_origen: origen.codigo,
-          codigo_destino: destino.codigo,
-          capitulo_origen: origen.capitulo,
-          capitulo_destino: destino.capitulo,
-          monto_transferido: montoNum,
-          concepto,
-          idempotente: false,
-        };
-      }
-    );
-
-    await publishFinanceDomainEvent(FinanzasEvents.TRANSFERENCIA_PRESUPUESTAL, {
-      tenant_id: tenantId,
-      proyecto_id: proyectoId,
-      user_id: userId,
-      correlation_id: correlationId,
-    }, {
-      transferencia_id: result.transferencia_id,
-      movimiento_origen_id: result.movimiento_origen_id,
-      movimiento_destino_id: result.movimiento_destino_id,
-      presupuesto_origen_id: result.presupuesto_origen_id,
-      presupuesto_destino_id: result.presupuesto_destino_id,
-      codigo_origen: result.codigo_origen,
-      codigo_destino: result.codigo_destino,
-      capitulo_origen: result.capitulo_origen,
-      capitulo_destino: result.capitulo_destino,
-      monto_transferido: result.monto_transferido,
-      concepto: result.concepto,
-      idempotente: result.idempotente,
+    const result = await transferirPresupuesto({ tenantId, proyectoId, userId }, {
+      transferencia_id, presupuesto_origen_id, presupuesto_destino_id,
+      monto: montoValidado.monto!, concepto: String(concepto).slice(0, 500),
     });
 
-    res.status(201).json(createApiResponse(result, tenantId, proyectoId, correlationId));
+    if (!result.idempotente) {
+      await publishFinanceDomainEvent(FinanzasEvents.TRANSFERENCIA_PRESUPUESTAL, {
+        tenant_id: tenantId, proyecto_id: proyectoId, user_id: userId, correlation_id: correlationId,
+      }, { ...result });
+    }
+
+    res.status(201).json(createApiResponse(
+      { evento: FinanzasEvents.TRANSFERENCIA_PRESUPUESTAL, ...result }, tenantId, proyectoId, correlationId));
   } catch (error: any) {
-    logError(req, 'finanzas', 'finanzas.transferencias.error', 'Error al transferir presupuesto', {
-      error_message: error.message,
-    });
-
-    const statusCode = error.message.includes('No hay presupuesto disponible suficiente') ? 422 : 500;
-    res.status(statusCode).json(createApiError('FIN_INTERNAL_ERROR', 'Error al transferir presupuesto.', undefined, getCorrelationId(req)));
+    if (error instanceof ErrorFinanzas) {
+      res.status(error.status).json(createApiError(error.code, error.message, undefined, correlationId));
+      return;
+    }
+    logError(req, 'finanzas', 'finanzas.transferencias.error', 'Error al transferir presupuesto', { error_message: error.message });
+    res.status(500).json(createApiError('FIN_INTERNAL_ERROR', 'Error al transferir presupuesto.', undefined, correlationId));
   }
 });
 
@@ -760,166 +618,118 @@ app.post('/api/v1/finanzas/comprometer-fondos',
       return;
     }
 
-    type ComprometerFondosLoaded = {
-      compromisoExistente: Awaited<ReturnType<PrismaClient['movimientoPresupuestal']['findFirst']>>;
-      montoNum: number;
-      disponible: number;
-    };
+    if (!esUuid(oc_id) || !esUuid(presupuesto_id)) {
+      res.status(400).json(createApiError(
+        'FIN_INVALID_REFERENCE',
+        'oc_id y presupuesto_id deben ser UUID válidos.'
+      ));
+      return;
+    }
 
-    type ComprometerFondosResult =
-      | {
-          evento: FinanzasEvents.FONDOS_COMPROMETIDOS;
-          suficiencia: true;
-          movimiento_id: string;
-          presupuesto_id: string;
-          monto_comprometido: number;
-          monto_disponible_restante: number;
-          oc_id: string;
-          oc_codigo: string;
-          idempotente: boolean;
-        }
-      | {
-          evento: FinanzasEvents.PRESUPUESTO_INSUFICIENTE;
-          suficiencia: false;
-          presupuesto_id: string;
-          monto_solicitado: number;
-          monto_disponible: number;
-          deficit: number;
-          oc_id: string;
-          oc_codigo: string;
-          idempotente: boolean;
-        };
-
-    const result = await applyIdempotentMutationInContext<
-      { tenantId: string; proyectoId: string; userId: string },
-      PrismaClient,
-      ComprometerFondosLoaded,
-      ComprometerFondosResult
-    >({
-      context: { tenantId, proyectoId, userId },
-      runInContext: createTenantContext,
-      load: async (prisma) => {
-        const compromisoExistente = await prisma.movimientoPresupuestal.findFirst({
-          where: {
-            referencia_modulo: 'compras',
-            referencia_entidad: 'OrdenCompra',
-            referencia_id: oc_id,
-            tipo: TipoMovimiento.COMPROMISO,
-          },
-        });
-
-        const presupuesto = await prisma.presupuestoAsignado.findUnique({
-          where: { id_presupuesto: presupuesto_id },
-        });
-
-        if (!presupuesto) {
-          throw new Error('Presupuesto no encontrado.');
-        }
-
-        return {
-          compromisoExistente,
-          montoNum: Number(monto),
-          disponible: Number(presupuesto.monto_disponible),
-        };
-      },
-      idempotentResult: async (loaded) => {
-        if (!loaded.compromisoExistente) {
-          return null;
-        }
-
-        logInfo(req, 'finanzas', 'finanzas.comprometer_fondos.idempotent', 'Compromiso de fondos resuelto en modo idempotente', {
-          idempotent: true,
-          presupuesto_id,
-          oc_id,
-          oc_codigo,
-          movimiento_id: loaded.compromisoExistente.id_movimiento,
-        });
-
-        return {
-          evento: FinanzasEvents.FONDOS_COMPROMETIDOS,
-          suficiencia: true,
-          movimiento_id: loaded.compromisoExistente.id_movimiento,
-          presupuesto_id,
-          monto_comprometido: Number(loaded.compromisoExistente.monto),
-          monto_disponible_restante: 0,
-          oc_id,
-          oc_codigo,
-          idempotente: true,
-        };
-      },
-      apply: async (loaded, prisma) => {
-        if (loaded.montoNum > loaded.disponible) {
-          logWarn(req, 'finanzas', 'finanzas.comprometer_fondos.insufficient_budget', 'Presupuesto insuficiente para comprometer fondos', {
-            idempotent: false,
-            presupuesto_id,
-            oc_id,
-            oc_codigo,
-            monto_solicitado: loaded.montoNum,
-            monto_disponible: loaded.disponible,
-            deficit: loaded.montoNum - loaded.disponible,
-          });
-
-          console.log(`[Finanzas] PRESUPUESTO INSUFICIENTE para OC ${oc_codigo}`);
-          console.log(`   Disponible: ${loaded.disponible.toLocaleString()}`);
-          console.log(`   Solicitado: ${loaded.montoNum.toLocaleString()}`);
-          console.log(`   Deficit:    ${(loaded.montoNum - loaded.disponible).toLocaleString()}`);
-
-          return {
-            evento: FinanzasEvents.PRESUPUESTO_INSUFICIENTE,
-            suficiencia: false,
-            presupuesto_id,
-            monto_solicitado: loaded.montoNum,
-            monto_disponible: loaded.disponible,
-            deficit: loaded.montoNum - loaded.disponible,
-            oc_id,
-            oc_codigo,
-            idempotente: false,
-          };
-        }
-
-        const movimiento = await prisma.movimientoPresupuestal.create({
-          data: {
-            tenant_id: tenantId,
-            proyecto_id: proyectoId,
-            presupuesto_id,
-            tipo: TipoMovimiento.COMPROMISO,
-            concepto: concepto || `Fondos comprometidos por OC ${oc_codigo}`,
-            monto: loaded.montoNum,
-            referencia_modulo: 'compras',
-            referencia_entidad: 'OrdenCompra',
-            referencia_id: oc_id,
-            referencia_codigo: oc_codigo,
-            usuario_id: userId,
-            notas: 'Compromiso automatico por emision de Orden de Compra.',
-          },
-        });
-
-        await prisma.presupuestoAsignado.update({
-          where: { id_presupuesto: presupuesto_id },
-          data: {
-            monto_comprometido: { increment: loaded.montoNum },
-            monto_disponible: { decrement: loaded.montoNum },
-          },
-        });
-
-        console.log(`[Finanzas] FONDOS COMPROMETIDOS: ${loaded.montoNum.toLocaleString()} para OC ${oc_codigo}`);
-
-        return {
-          evento: FinanzasEvents.FONDOS_COMPROMETIDOS,
-          suficiencia: true,
-          movimiento_id: movimiento.id_movimiento,
-          presupuesto_id,
-          monto_comprometido: loaded.montoNum,
-          monto_disponible_restante: loaded.disponible - loaded.montoNum,
-          oc_id,
-          oc_codigo,
-          idempotente: false,
-        };
-      },
+    // Compromiso único por OC: lock por (tenant, OC), inserción atómica sobre el índice único parcial y
+    // UPDATE condicional del saldo (ver compromiso-oc.ts). Los eventos se publican después del commit.
+    const resultado = await registrarCompromisoOc({ tenantId, proyectoId, userId, correlationId }, {
+      ocId: oc_id,
+      ocCodigo: oc_codigo,
+      monto: Number(monto),
+      presupuestoId: presupuesto_id,
+      validarSuficiencia: true,
+      concepto: concepto || `Fondos comprometidos por OC ${oc_codigo}`,
+      notas: 'Compromiso automatico por emision de Orden de Compra.',
+      publicaEvento: true,
     });
 
-    if (result.evento === FinanzasEvents.FONDOS_COMPROMETIDOS) {
-      await publishFinanceDomainEvent(FinanzasEvents.FONDOS_COMPROMETIDOS, {
+    if (resultado.estado === 'presupuesto_no_encontrado') {
+      throw new Error('Presupuesto no encontrado.');
+    }
+
+    if (resultado.estado === 'oc_cancelada') {
+      logWarn(req, 'finanzas', 'finanzas.comprometer_fondos.oc_cancelada', 'La OC ya fue cancelada: no se comprometen fondos', {
+        presupuesto_id, oc_id, oc_codigo,
+      });
+      res.status(409).json(createApiError(
+        'FIN_OC_CANCELADA',
+        'La OC ya fue cancelada; no se comprometen fondos.',
+        undefined,
+        correlationId
+      ));
+      return;
+    }
+
+    if (resultado.estado === 'presupuesto_insuficiente') {
+      logWarn(req, 'finanzas', 'finanzas.comprometer_fondos.insufficient_budget', 'Presupuesto insuficiente para comprometer fondos', {
+        idempotent: false,
+        presupuesto_id,
+        oc_id,
+        oc_codigo,
+        monto_solicitado: resultado.montoSolicitado,
+        monto_disponible: resultado.montoDisponible,
+        deficit: resultado.montoSolicitado - resultado.montoDisponible,
+      });
+
+      console.log(`[Finanzas] PRESUPUESTO INSUFICIENTE para OC ${oc_codigo}`);
+      console.log(`   Disponible: ${resultado.montoDisponible.toLocaleString()}`);
+      console.log(`   Solicitado: ${resultado.montoSolicitado.toLocaleString()}`);
+      console.log(`   Deficit:    ${(resultado.montoSolicitado - resultado.montoDisponible).toLocaleString()}`);
+
+      const insuficiente = {
+        evento: FinanzasEvents.PRESUPUESTO_INSUFICIENTE,
+        suficiencia: false as const,
+        presupuesto_id,
+        monto_solicitado: resultado.montoSolicitado,
+        monto_disponible: resultado.montoDisponible,
+        deficit: resultado.montoSolicitado - resultado.montoDisponible,
+        oc_id,
+        oc_codigo,
+        idempotente: false,
+      };
+
+      // Modo outbox: el evento ya quedo escrito en la outbox; no se publica directamente.
+      if (!resultado.eventoEncolado) await publishFinanceDomainEvent(FinanzasEvents.PRESUPUESTO_INSUFICIENTE, {
+        tenant_id: tenantId,
+        proyecto_id: proyectoId,
+        user_id: userId,
+        correlation_id: correlationId,
+      }, {
+        presupuesto_id: insuficiente.presupuesto_id,
+        monto_solicitado: insuficiente.monto_solicitado,
+        monto_disponible: insuficiente.monto_disponible,
+        deficit: insuficiente.deficit,
+        referencia_oc_id: oc_id,
+        referencia_oc_codigo: oc_codigo,
+        idempotente: false,
+      });
+
+      res.status(422).json(createApiResponse(insuficiente, tenantId, proyectoId, correlationId));
+      return;
+    }
+
+    const idempotente = resultado.estado === 'idempotente';
+    const result = {
+      evento: FinanzasEvents.FONDOS_COMPROMETIDOS,
+      suficiencia: true as const,
+      movimiento_id: resultado.movimientoId,
+      presupuesto_id: resultado.presupuestoId,
+      monto_comprometido: resultado.monto,
+      // Saldo real del presupuesto (antes se devolvía 0 en el caso idempotente).
+      monto_disponible_restante: resultado.estado === 'creado' ? resultado.montoDisponibleRestante : resultado.montoDisponibleActual,
+      oc_id,
+      oc_codigo,
+      idempotente,
+    };
+
+    if (idempotente) {
+      logInfo(req, 'finanzas', 'finanzas.comprometer_fondos.idempotent', 'Compromiso de fondos resuelto en modo idempotente', {
+        idempotent: true,
+        presupuesto_id,
+        oc_id,
+        oc_codigo,
+        movimiento_id: resultado.movimientoId,
+      });
+    } else {
+      console.log(`[Finanzas] FONDOS COMPROMETIDOS: ${resultado.monto.toLocaleString()} para OC ${oc_codigo}`);
+      // Solo el procesamiento que crea el compromiso publica fondos_comprometidos (con el saldo real).
+      if (!resultado.eventoEncolado) await publishFinanceDomainEvent(FinanzasEvents.FONDOS_COMPROMETIDOS, {
         tenant_id: tenantId,
         proyecto_id: proyectoId,
         user_id: userId,
@@ -931,29 +741,11 @@ app.post('/api/v1/finanzas/comprometer-fondos',
         monto_disponible_restante: result.monto_disponible_restante,
         referencia_oc_id: result.oc_id,
         referencia_oc_codigo: result.oc_codigo,
-        idempotente: result.idempotente,
-      });
-    }
-
-    if (result.evento === FinanzasEvents.PRESUPUESTO_INSUFICIENTE) {
-      await publishFinanceDomainEvent(FinanzasEvents.PRESUPUESTO_INSUFICIENTE, {
-        tenant_id: tenantId,
-        proyecto_id: proyectoId,
-        user_id: userId,
-        correlation_id: correlationId,
-      }, {
-        presupuesto_id: result.presupuesto_id,
-        monto_solicitado: result.monto_solicitado,
-        monto_disponible: result.monto_disponible,
-        deficit: result.deficit,
-        referencia_oc_id: result.oc_id,
-        referencia_oc_codigo: result.oc_codigo,
         idempotente: false,
       });
     }
 
-    const statusCode = result.suficiencia ? 201 : 422;
-    res.status(statusCode).json(createApiResponse(result, tenantId, proyectoId, correlationId));
+    res.status(201).json(createApiResponse(result, tenantId, proyectoId, correlationId));
   } catch (error: any) {
     logError(req, 'finanzas', 'finanzas.comprometer_fondos.error', 'Error al comprometer fondos', {
       error_message: error.message,
@@ -987,130 +779,68 @@ app.post('/api/v1/finanzas/liberar-fondos',
       return;
     }
 
-    type LiberarFondosLoaded = {
-      liberacionExistente: Awaited<ReturnType<PrismaClient['movimientoPresupuestal']['findFirst']>>;
-      montoNum: number;
-      montoComprometido: number;
-    };
+    if (!esUuid(oc_id)) {
+      res.status(400).json(createApiError('FIN_INVALID_REFERENCE', 'oc_id debe ser un UUID válido.'));
+      return;
+    }
 
-    type LiberarFondosResult = {
-      evento: FinanzasEvents.FONDOS_LIBERADOS;
-      movimiento_id: string;
-      presupuesto_id: string;
-      monto_liberado: number;
-      oc_id: string;
-      oc_codigo: string;
-      idempotente: boolean;
-    };
-
-    const result = await applyIdempotentMutationInContext<
-      { tenantId: string; proyectoId: string; userId: string },
-      PrismaClient,
-      LiberarFondosLoaded,
-      LiberarFondosResult
-    >({
-      context: { tenantId, proyectoId, userId },
-      runInContext: createTenantContext,
-      load: async (prisma) => {
-        const liberacionExistente = await prisma.movimientoPresupuestal.findFirst({
-          where: {
-            referencia_modulo: 'compras',
-            referencia_entidad: 'OrdenCompra',
-            referencia_id: oc_id,
-            tipo: TipoMovimiento.LIBERACION,
-          },
-        });
-
-        const presupuesto = await prisma.presupuestoAsignado.findUnique({
-          where: { id_presupuesto: presupuesto_id },
-        });
-
-        if (!presupuesto) {
-          throw new Error('Presupuesto no encontrado.');
-        }
-
-        return {
-          liberacionExistente,
-          montoNum: Number(monto),
-          montoComprometido: Number(presupuesto.monto_comprometido),
-        };
-      },
-      idempotentResult: async (loaded) => {
-        if (!loaded.liberacionExistente) {
-          return null;
-        }
-
-        logInfo(req, 'finanzas', 'finanzas.liberar_fondos.idempotent', 'Liberacion de fondos resuelta en modo idempotente', {
-          idempotent: true,
-          presupuesto_id,
-          oc_id,
-          oc_codigo,
-          movimiento_id: loaded.liberacionExistente.id_movimiento,
-        });
-
-        return {
-          evento: FinanzasEvents.FONDOS_LIBERADOS,
-          movimiento_id: loaded.liberacionExistente.id_movimiento,
-          presupuesto_id,
-          monto_liberado: Number(loaded.liberacionExistente.monto),
-          oc_id,
-          oc_codigo,
-          idempotente: true,
-        };
-      },
-      apply: async (loaded, prisma) => {
-        if (loaded.montoComprometido < loaded.montoNum) {
-          throw new Error('No hay fondos comprometidos suficientes para liberar este monto.');
-        }
-
-        const movimiento = await prisma.movimientoPresupuestal.create({
-          data: {
-            tenant_id: tenantId,
-            proyecto_id: proyectoId,
-            presupuesto_id,
-            tipo: TipoMovimiento.LIBERACION,
-            concepto: concepto || `Liberacion de fondos por OC ${oc_codigo} (Cancelacion/Ajuste)`,
-            monto: loaded.montoNum,
-            referencia_modulo: 'compras',
-            referencia_entidad: 'OrdenCompra',
-            referencia_id: oc_id,
-            referencia_codigo: oc_codigo,
-            usuario_id: userId,
-            notas: 'Proceso automatico de liberacion de fondos.',
-          },
-        });
-
-        await prisma.presupuestoAsignado.update({
-          where: { id_presupuesto: presupuesto_id },
-          data: {
-            monto_comprometido: { decrement: loaded.montoNum },
-            monto_disponible: { increment: loaded.montoNum },
-          },
-        });
-
-        console.log(`[Finanzas] FONDOS LIBERADOS: ${loaded.montoNum.toLocaleString()} para OC ${oc_codigo}`);
-        logInfo(req, 'finanzas', 'finanzas.liberar_fondos.created', 'Fondos liberados exitosamente', {
-          idempotent: false,
-          presupuesto_id,
-          oc_id,
-          oc_codigo,
-          movimiento_id: movimiento.id_movimiento,
-          monto_liberado: loaded.montoNum,
-        });
-
-        return {
-          evento: FinanzasEvents.FONDOS_LIBERADOS,
-          movimiento_id: movimiento.id_movimiento,
-          presupuesto_id,
-          monto_liberado: loaded.montoNum,
-          oc_id,
-          oc_codigo,
-          idempotente: false,
-        };
-      },
+    // Liberación única por OC: usa el COMPROMISO exacto de esa OC (nunca saldos agregados) y deja el tombstone.
+    const liberacion = await registrarCancelacionOc({ tenantId, proyectoId, userId, correlationId }, {
+      ocId: oc_id,
+      ocCodigo: oc_codigo,
+      origen: 'HTTP',
+      concepto: concepto || `Liberacion de fondos por OC ${oc_codigo} (Cancelacion/Ajuste)`,
+      notas: 'Proceso automatico de liberacion de fondos.',
+      publicaEvento: true,
     });
 
-    await publishFinanceDomainEvent(FinanzasEvents.FONDOS_LIBERADOS, {
+    if (liberacion.estado === 'sin_compromiso') {
+      // No-op idempotente: la OC no tiene compromiso que liberar. Se registró el tombstone (la creación tardía
+      // no comprometerá fondos) y no se libera nada. Se loguea sin montos ni datos de negocio sensibles.
+      logInfo(req, 'finanzas', 'finanzas.liberar_fondos.no_op_sin_compromiso', 'Cancelacion sin compromiso: tombstone registrado, 0 liberado', {
+        idempotent: true,
+        no_op: true,
+        motivo: 'SIN_COMPROMISO',
+        tombstone_registrado: true,
+      });
+      res.status(201).json(createApiResponse({
+        evento: FinanzasEvents.FONDOS_LIBERADOS,
+        movimiento_id: '',
+        presupuesto_id,
+        monto_liberado: 0,
+        oc_id,
+        oc_codigo,
+        idempotente: true,
+        no_op: true,
+        motivo: 'SIN_COMPROMISO',
+        tombstone_registrado: true,
+      }, tenantId, proyectoId, correlationId));
+      return;
+    }
+
+    const result = {
+      evento: FinanzasEvents.FONDOS_LIBERADOS,
+      movimiento_id: liberacion.movimientoId,
+      presupuesto_id: liberacion.presupuestoId,
+      monto_liberado: liberacion.monto,
+      oc_id,
+      oc_codigo,
+      idempotente: liberacion.estado === 'idempotente',
+    };
+
+    if (result.idempotente) {
+      logInfo(req, 'finanzas', 'finanzas.liberar_fondos.idempotent', 'Liberacion de fondos resuelta en modo idempotente', {
+        idempotent: true, presupuesto_id: result.presupuesto_id, oc_id, oc_codigo, movimiento_id: result.movimiento_id,
+      });
+    } else {
+      console.log(`[Finanzas] FONDOS LIBERADOS: ${result.monto_liberado.toLocaleString()} para OC ${oc_codigo}`);
+      logInfo(req, 'finanzas', 'finanzas.liberar_fondos.created', 'Fondos liberados exitosamente', {
+        idempotent: false, presupuesto_id: result.presupuesto_id, oc_id, oc_codigo,
+        movimiento_id: result.movimiento_id, monto_liberado: result.monto_liberado,
+      });
+    }
+
+    if (!liberacion.eventoEncolado) await publishFinanceDomainEvent(FinanzasEvents.FONDOS_LIBERADOS, {
       tenant_id: tenantId,
       proyecto_id: proyectoId,
       user_id: userId,
@@ -1142,23 +872,32 @@ app.get('/api/v1/finanzas/pagos',
   async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
-    const estado = req.query.estado as string;
+    const estado = req.query.estado as string | undefined;
+    const pag = parsearPaginacion(req.query);
 
-    const data = await createTenantContext(
+    const pagina = await createTenantContext(
       { tenantId, proyectoId, userId },
       async (prisma) => {
-        return await prisma.programaPagos.findMany({
-          where: estado ? { estado } : undefined,
+        const filas = await prisma.programaPagos.findMany({
+          where: {
+            AND: [
+              { tenant_id: tenantId },
+              estado ? { estado } : {},
+              proyectoId ? { proyecto_id: proyectoId } : {},
+              despuesDe('fecha_programada', 'id_pago', 'asc', pag),
+            ],
+          },
           include: { presupuesto: { select: { codigo: true, capitulo: true } } },
-          orderBy: { fecha_programada: 'asc' },
+          orderBy: [{ fecha_programada: 'asc' }, { id_pago: 'asc' }],
+          take: pag.limit + 1,
         });
+        return cortarPagina(filas, pag, (f) => f.fecha_programada, (f) => f.id_pago);
       }
     );
 
-    res.json(createApiResponse(data, tenantId, proyectoId));
+    responderPagina(res, pagina, tenantId, proyectoId, getCorrelationId(req));
   } catch (error: any) {
-    console.error('[Finanzas] Error listando pagos:', error.message);
-    res.status(500).json(createApiError('FIN_INTERNAL_ERROR', 'Error al listar pagos.'));
+    responderError(req, res, error, 'finanzas.pagos.list_error', 'Error al listar pagos');
   }
 });
 
@@ -1170,288 +909,90 @@ app.get('/api/v1/finanzas/pagos',
 // planear el pago pero no ejecutarlo — segregación de funciones deliberada.
 // Ver openspec/changes/limite-autoridad-pagos-oc.
 app.post('/api/v1/finanzas/pagos', async (req: Request, res: Response) => {
+  const correlationId = getCorrelationId(req);
   try {
     const { tenantId, proyectoId, userId, roles } = req.securityContext;
-    const correlationId = getCorrelationId(req);
-    const {
-      presupuesto_id, concepto, beneficiario, beneficiario_id,
-      monto_programado, fecha_programada, metodo_pago, banco,
-      referencia_modulo, referencia_entidad, referencia_id,
-    } = req.body;
 
-    // Validación RBAC
     const rolesAutorizados = ['admin', 'superintendent', 'finanzas'];
     if (!roles.some((r: string) => rolesAutorizados.includes(r))) {
-      res.status(403).json(createApiError(
-        'FIN_FORBIDDEN',
-        'No tienes permisos para programar pagos.'
-      ));
+      res.status(403).json(createApiError('FIN_FORBIDDEN', 'No tienes permisos para programar pagos.', undefined, correlationId));
       return;
     }
 
-    if (!presupuesto_id || !concepto || !beneficiario || !monto_programado || !fecha_programada) {
-      res.status(400).json(createApiError(
-        'FIN_MISSING_FIELDS',
-        'Los campos presupuesto_id, concepto, beneficiario, monto_programado y fecha_programada son obligatorios.'
-      ));
-      return;
-    }
+    const pago = parsearPagoProgramado(req.body);
+    const data = await programarPago({ tenantId, proyectoId, userId }, pago);
 
-    type PagoRecord = Awaited<ReturnType<PrismaClient['programaPagos']['create']>>;
-    type PagosLoaded = {
-      existente: PagoRecord | null;
-    };
-    type PagosResult = {
-      pago: PagoRecord;
-      idempotente: boolean;
-    };
-
-    const data = await applyIdempotentMutationInContext<
-      { tenantId: string; proyectoId: string; userId: string },
-      PrismaClient,
-      PagosLoaded,
-      PagosResult
-    >({
-      context: { tenantId, proyectoId, userId },
-      runInContext: createTenantContext,
-      load: async (prisma) => {
-        let existente: PagoRecord | null = null;
-
-        if (referencia_modulo && referencia_entidad && referencia_id) {
-          existente = await prisma.programaPagos.findFirst({
-            where: {
-              referencia_modulo,
-              referencia_entidad,
-              referencia_id,
-            },
-          });
-        }
-
-        return { existente };
-      },
-      idempotentResult: async (loaded) => {
-        if (!loaded.existente) {
-          return null;
-        }
-
-        logInfo(req, 'finanzas', 'finanzas.pagos.idempotent', 'Pago programado resuelto en modo idempotente', {
-          idempotent: true,
-          presupuesto_id,
-          referencia_modulo,
-          referencia_entidad,
-          referencia_id,
-          id_pago: loaded.existente.id_pago,
-        });
-
-        return {
-          pago: loaded.existente,
-          idempotente: true,
-        };
-      },
-      apply: async (_loaded, prisma) => {
-        const pago = await prisma.programaPagos.create({
-          data: {
-            tenant_id: tenantId,
-            proyecto_id: proyectoId,
-            presupuesto_id,
-            concepto,
-            beneficiario,
-            beneficiario_id,
-            monto_programado: Number(monto_programado),
-            fecha_programada: new Date(fecha_programada),
-            estado: 'PENDIENTE',
-            metodo_pago,
-            banco,
-            referencia_modulo,
-            referencia_entidad,
-            referencia_id,
-          },
-        });
-
-        logInfo(req, 'finanzas', 'finanzas.pagos.created', 'Pago programado exitosamente', {
-          idempotent: false,
-          presupuesto_id,
-          referencia_modulo,
-          referencia_entidad,
-          referencia_id,
-          id_pago: pago.id_pago,
-          monto_programado: Number(monto_programado),
-        });
-
-        return {
-          pago,
-          idempotente: false,
-        };
-      },
-    });
-
-    console.log(`[Finanzas] ✅ Pago programado: $${monto_programado} → ${beneficiario}`);
-    res.status(201).json(createApiResponse({
-      ...data.pago,
-      idempotente: data.idempotente,
-    }, tenantId, proyectoId, correlationId));
+    logInfo(req, 'finanzas', data.idempotente ? 'finanzas.pagos.idempotent' : 'finanzas.pagos.created',
+      data.idempotente ? 'Pago programado resuelto en modo idempotente' : 'Pago programado exitosamente', {
+        idempotent: data.idempotente, presupuesto_id: pago.presupuesto_id, id_pago: data.pago.id_pago,
+        referencia_modulo: pago.referencia_modulo, referencia_entidad: pago.referencia_entidad, referencia_id: pago.referencia_id,
+      });
+    res.status(201).json(createApiResponse({ ...data.pago, idempotente: data.idempotente }, tenantId, proyectoId, correlationId));
   } catch (error: any) {
-    logError(req, 'finanzas', 'finanzas.pagos.error', 'Error al programar pago', {
-      error_message: error.message,
-    });
-    res.status(500).json(createApiError('FIN_INTERNAL_ERROR', 'Error al programar pago.', undefined, getCorrelationId(req)));
+    if (error instanceof ErrorFinanzas) {
+      res.status(error.status).json(createApiError(error.code, error.message, undefined, correlationId));
+      return;
+    }
+    logError(req, 'finanzas', 'finanzas.pagos.error', 'Error al programar pago', { error_message: error.message });
+    res.status(500).json(createApiError('FIN_INTERNAL_ERROR', 'Error al programar pago.', undefined, correlationId));
   }
 });
 
-// Crear programación de pagos masiva
+// Crear programación de pagos masiva: todo o nada (un renglón inválido o un presupuesto inexistente rechaza el lote).
 // El Límite de Autoridad Financiera NO se valida aquí a propósito: programar un
 // pago no mueve dinero. El límite se ejerce al ejecutarlo
 // (PATCH /pagos/:id/pagar) y al registrarlo contra una OC (POST /pagos-oc).
 // Los roles tampoco coinciden con esos dos por diseño: 'superintendent' puede
 // planear el pago pero no ejecutarlo — segregación de funciones deliberada.
-// Ver openspec/changes/limite-autoridad-pagos-oc.
+// Ver openspec/changes/limite-autoridad-pagos-oc y corregir-ejecucion-programa-pagos.
 app.post('/api/v1/finanzas/pagos/bulk', async (req: Request, res: Response) => {
+  const correlationId = getCorrelationId(req);
   try {
     const { tenantId, proyectoId, userId, roles } = req.securityContext;
-    const { pagos } = req.body; // Array de pagos
 
-    // Validación RBAC
     const rolesAutorizados = ['admin', 'superintendent', 'finanzas'];
     if (!roles.some((r: string) => rolesAutorizados.includes(r))) {
-      res.status(403).json(createApiError(
-        'FIN_FORBIDDEN',
-        'No tienes permisos para programar pagos.'
-      ));
+      res.status(403).json(createApiError('FIN_FORBIDDEN', 'No tienes permisos para programar pagos.', undefined, correlationId));
       return;
     }
 
-    if (!pagos || !Array.isArray(pagos) || pagos.length === 0) {
-      res.status(400).json(createApiError(
-        'FIN_INVALID_PAYLOAD',
-        'Se requiere un array de pagos no vacío.'
-      ));
-      return;
-    }
+    const pagos = parsearLote(req.body?.pagos);
+    const data = await programarLote({ tenantId, proyectoId, userId }, pagos);
 
-    const data = await createTenantContext(
-      { tenantId, proyectoId, userId },
-      async (prisma) => {
-        const payload = pagos.map((p: any) => ({
-          tenant_id: tenantId,
-          proyecto_id: proyectoId,
-          presupuesto_id: p.presupuesto_id,
-          concepto: p.concepto,
-          beneficiario: p.beneficiario,
-          beneficiario_id: p.beneficiario_id,
-          monto_programado: Number(p.monto_programado),
-          fecha_programada: new Date(p.fecha_programada),
-          estado: 'PENDIENTE',
-          metodo_pago: p.metodo_pago,
-          banco: p.banco,
-          referencia_modulo: p.referencia_modulo,
-          referencia_entidad: p.referencia_entidad,
-          referencia_id: p.referencia_id,
-        }));
-
-        return await prisma.programaPagos.createMany({
-          data: payload,
-        });
-      }
-    );
-
-    console.log(`[Finanzas] ✅ Carga masiva completada: ${pagos.length} pagos registrados.`);
-    res.status(201).json(createApiResponse(data, tenantId, proyectoId));
+    console.log(`[Finanzas] ✅ Carga masiva completada: ${data.count} pagos registrados.`);
+    res.status(201).json(createApiResponse(data, tenantId, proyectoId, correlationId));
   } catch (error: any) {
+    if (error instanceof ErrorFinanzas) {
+      res.status(error.status).json(createApiError(error.code, error.message, undefined, correlationId));
+      return;
+    }
     console.error('[Finanzas] Error en carga masiva de pagos:', error.message);
-    res.status(500).json(createApiError('FIN_INTERNAL_ERROR', 'Error al procesar carga masiva.'));
+    res.status(500).json(createApiError('FIN_INTERNAL_ERROR', 'Error al procesar carga masiva.', undefined, correlationId));
   }
 });
 
 
-// Registrar pago realizado (cambiar estado a PAGADO)
+// Registrar pago realizado: descuenta la cuenta bancaria (obligatoria) y aplica el presupuesto correctamente
+// (DEVENGADO contra su compromiso; EJERCIDO directo solo si el disponible alcanza). Ver programa-pagos.ts.
 app.patch('/api/v1/finanzas/pagos/:id/pagar', async (req: Request, res: Response) => {
+  const correlationId = getCorrelationId(req);
   try {
     const { id } = req.params;
     const { tenantId, proyectoId, userId, roles, limiteAprobacion } = req.securityContext;
-    const { referencia_bancaria, metodo_pago, banco } = req.body;
-    const correlationId = getCorrelationId(req);
 
-    // Validación RBAC
     const rolesAutorizados = ['admin', 'finanzas'];
     if (!roles.some((r: string) => rolesAutorizados.includes(r))) {
-      res.status(403).json(createApiError(
-        'FIN_FORBIDDEN',
-        'Solo admin o finanzas pueden registrar pagos.'
-      ));
+      res.status(403).json(createApiError('FIN_FORBIDDEN', 'Solo admin o finanzas pueden registrar pagos.', undefined, correlationId));
+      return;
+    }
+    if (!esUuid(id)) {
+      res.status(400).json(createApiError('FIN_INVALID_REFERENCE', 'El id del pago debe ser un UUID válido.', undefined, correlationId));
       return;
     }
 
-    const data = await createTenantContext(
-      { tenantId, proyectoId, userId },
-      async (prisma) => {
-        const pago = await prisma.programaPagos.findUnique({
-          where: { id_pago: id },
-        });
-
-        if (!pago) {
-          throw new Error('Pago no encontrado.');
-        }
-
-        if (pago.estado === 'PAGADO') {
-          throw new Error('Este pago ya fue procesado.');
-        }
-
-        if (pago.estado === 'CANCELADO') {
-          throw new Error('No se puede pagar un registro cancelado.');
-        }
-
-        const montoPago = Number(pago.monto_programado);
-
-        // Validar Límite de Autoridad Financiera
-        if (montoPago > limiteAprobacion) {
-          throw new Error(
-            `LIMITE_EXCEDIDO: El monto $${montoPago.toLocaleString()} excede tu límite ($${limiteAprobacion.toLocaleString()}).`
-          );
-        }
-
-        // 1. Actualizar el pago
-        const pagoActualizado = await prisma.programaPagos.update({
-          where: { id_pago: id },
-          data: {
-            estado: 'PAGADO',
-            monto_pagado: montoPago,
-            fecha_pago_real: new Date(),
-            referencia_bancaria,
-            metodo_pago: metodo_pago || pago.metodo_pago,
-            banco: banco || pago.banco,
-          },
-        });
-
-        // 2. Registrar movimiento de tipo EJERCIDO
-        await prisma.movimientoPresupuestal.create({
-          data: {
-            tenant_id: tenantId,
-            proyecto_id: proyectoId,
-            presupuesto_id: pago.presupuesto_id,
-            tipo: TipoMovimiento.EJERCIDO,
-            concepto: `Pago procesado: ${pago.concepto}`,
-            monto: montoPago,
-            referencia_modulo: pago.referencia_modulo,
-            referencia_entidad: pago.referencia_entidad,
-            referencia_id: pago.referencia_id,
-            usuario_id: userId,
-            notas: `Ref. bancaria: ${referencia_bancaria || 'N/A'}`,
-          },
-        });
-
-        // 3. Actualizar saldos del presupuesto
-        // El pago mueve de comprometido a ejercido
-        await prisma.presupuestoAsignado.update({
-          where: { id_presupuesto: pago.presupuesto_id },
-          data: {
-            monto_comprometido: { decrement: montoPago },
-            monto_ejercido: { increment: montoPago },
-          },
-        });
-
-        return pagoActualizado;
-      }
-    );
+    const ejecucion = parsearEjecucion(req.body);
+    const resultado = await ejecutarPago({ tenantId, proyectoId, userId }, id, ejecucion, limiteAprobacion);
+    const data = resultado.pago;
 
     await publishFinanceDomainEvent(FinanzasEvents.PAGO_REGISTRADO, {
       tenant_id: tenantId,
@@ -1472,19 +1013,19 @@ app.patch('/api/v1/finanzas/pagos/:id/pagar', async (req: Request, res: Response
       referencia_id: data.referencia_id || undefined,
       concepto: data.concepto,
       beneficiario: data.beneficiario,
+      cuenta_id: ejecucion.cuenta_id,
     });
 
     console.log(`[Finanzas] ✅ Pago procesado: ${id}`);
-    res.json(createApiResponse(data, tenantId, proyectoId, correlationId));
+    res.json(createApiResponse({ ...data, devengado: resultado.devengado, ejercido_directo: resultado.ejercido_directo },
+      tenantId, proyectoId, correlationId));
   } catch (error: any) {
-    console.error('[Finanzas] Error procesando pago:', error.message);
-
-    if (error.message.includes('LIMITE_EXCEDIDO')) {
-      res.status(403).json(createApiError('FIN_LIMIT_EXCEEDED', error.message));
+    if (error instanceof ErrorFinanzas) {
+      res.status(error.status).json(createApiError(error.code, error.message, undefined, correlationId));
       return;
     }
-
-    res.status(500).json(createApiError('FIN_INTERNAL_ERROR', error.message));
+    console.error('[Finanzas] Error procesando pago:', error.message);
+    res.status(500).json(createApiError('FIN_INTERNAL_ERROR', 'Error al procesar el pago.', undefined, correlationId));
   }
 });
 
@@ -1494,63 +1035,82 @@ app.patch('/api/v1/finanzas/pagos/:id/pagar', async (req: Request, res: Response
 // Roles: lo consume la pantalla de inicio, que no filtra por rol. El cliente
 // usa Promise.allSettled y oculta la tarjeta ante un 403, asi que cerrar esto
 // no rompe la home. El asistente tambien lo consulta, con superintendent/admin.
+// Dashboard del módulo (CLAUDE.md: { kpis, alertas, actividad_reciente }). Conserva los campos previos que lee la
+// pantalla (resumen_presupuestal, pagos_proximos, pagos_vencidos, ultimos_movimientos, alertas) y llena los que
+// estaban fijos en cero (F16): cuentas bancarias, OCs por pagar y cuentas por cobrar.
+// openspec: optimizar-api-y-dashboard-finanzas.
 app.get('/api/v1/finanzas/dashboard',
   requireRoles('finanzas', 'admin', 'director', 'superintendent'),
   async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
+    const delProyecto = proyectoId ? { proyecto_id: proyectoId } : {};
 
     const data = await createTenantContext(
       { tenantId, proyectoId, userId },
       async (prisma) => {
-        // 1. Resumen presupuestal
-        const presupuestos = await prisma.presupuestoAsignado.findMany({
-          where: { estatus: 'ACTIVO' },
-        });
+        const hoy = new Date();
+        const en30Dias = new Date(hoy.getTime() + 30 * 24 * 60 * 60 * 1000);
 
+        const [totales, pagosProximos, pagosVencidos, ultimosMovimientos, cuentas, ocs, cxc, cxcVencidas] = await Promise.all([
+          prisma.presupuestoAsignado.aggregate({
+            where: { tenant_id: tenantId, estatus: 'ACTIVO', ...delProyecto },
+            _sum: { monto_autorizado: true, monto_ejercido: true, monto_comprometido: true, monto_disponible: true },
+          }),
+          prisma.programaPagos.findMany({
+            where: { tenant_id: tenantId, ...delProyecto, fecha_programada: { gte: hoy, lte: en30Dias }, estado: { in: ['PENDIENTE', 'PROGRAMADO'] } },
+            orderBy: { fecha_programada: 'asc' },
+            take: 10,
+          }),
+          prisma.programaPagos.count({
+            where: { tenant_id: tenantId, ...delProyecto, fecha_programada: { lt: hoy }, estado: { in: ['PENDIENTE', 'PROGRAMADO'] } },
+          }),
+          prisma.movimientoPresupuestal.findMany({
+            where: { tenant_id: tenantId, ...delProyecto },
+            orderBy: { fecha_registro: 'desc' },
+            take: 10,
+            include: { presupuesto: { select: { codigo: true } } },
+          }),
+          // Las cuentas son de la empresa y se comparten entre proyectos: se listan todas las activas del tenant.
+          prisma.cuentaBancaria.findMany({
+            where: { tenant_id: tenantId, activa: true },
+            select: { id_cuenta: true, banco: true, alias: true, moneda: true, saldo: true },
+            orderBy: { banco: 'asc' },
+          }),
+          prisma.$queryRaw<Array<{ cantidad: number; saldo: number }>>`
+            SELECT count(*)::int AS "cantidad", COALESCE(sum("total" - "pagado"), 0)::float8 AS "saldo"
+              FROM "ocs_por_pagar"
+             WHERE "tenant_id" = ${tenantId}::uuid
+               AND (${proyectoId ?? null}::uuid IS NULL OR "proyecto_id" = ${proyectoId ?? null}::uuid)
+               AND "estado" IN ('POR_PAGAR', 'PAGO_PARCIAL')`,
+          prisma.$queryRaw<Array<{ cantidad: number; saldo: number }>>`
+            SELECT count(*)::int AS "cantidad", COALESCE(sum("monto" - "cobrado"), 0)::float8 AS "saldo"
+              FROM "cuentas_por_cobrar"
+             WHERE "tenant_id" = ${tenantId}::uuid
+               AND (${proyectoId ?? null}::uuid IS NULL OR "proyecto_id" = ${proyectoId ?? null}::uuid)
+               AND "estado" IN ('POR_COBRAR', 'COBRO_PARCIAL')`,
+          prisma.cuentaPorCobrar.count({
+            where: { tenant_id: tenantId, ...delProyecto, estado: { in: ['POR_COBRAR', 'COBRO_PARCIAL'] }, fecha_vencimiento: { lt: hoy } },
+          }),
+        ]);
+
+        const n = (v: unknown) => Number(v ?? 0);
         const resumenPresupuestal = {
-          total_autorizado: presupuestos.reduce((sum, p) => sum + Number(p.monto_autorizado), 0),
-          total_ejercido: presupuestos.reduce((sum, p) => sum + Number(p.monto_ejercido), 0),
-          total_comprometido: presupuestos.reduce((sum, p) => sum + Number(p.monto_comprometido), 0),
-          total_disponible: presupuestos.reduce((sum, p) => sum + Number(p.monto_disponible), 0),
+          total_autorizado: n(totales._sum.monto_autorizado),
+          total_ejercido: n(totales._sum.monto_ejercido),
+          total_comprometido: n(totales._sum.monto_comprometido),
+          total_disponible: n(totales._sum.monto_disponible),
           porcentaje_ejercido: 0,
         };
         resumenPresupuestal.porcentaje_ejercido = resumenPresupuestal.total_autorizado > 0
           ? Math.round((resumenPresupuestal.total_ejercido / resumenPresupuestal.total_autorizado) * 100)
           : 0;
 
-        // 2. Pagos próximos (siguiente 30 días)
-        const hoy = new Date();
-        const en30Dias = new Date();
-        en30Dias.setDate(en30Dias.getDate() + 30);
-
-        const pagosProximos = await prisma.programaPagos.findMany({
-          where: {
-            fecha_programada: { gte: hoy, lte: en30Dias },
-            estado: { in: ['PENDIENTE', 'PROGRAMADO'] },
-          },
-          orderBy: { fecha_programada: 'asc' },
-          take: 10,
-        });
-
-        const totalPagosProximos = pagosProximos.reduce(
-          (sum, p) => sum + Number(p.monto_programado), 0
-        );
-
-        // 3. Últimos 10 movimientos
-        const ultimosMovimientos = await prisma.movimientoPresupuestal.findMany({
-          orderBy: { fecha_registro: 'desc' },
-          take: 10,
-          include: { presupuesto: { select: { codigo: true } } },
-        });
-
-        // 4. Pagos vencidos
-        const pagosVencidos = await prisma.programaPagos.count({
-          where: {
-            fecha_programada: { lt: hoy },
-            estado: { in: ['PENDIENTE', 'PROGRAMADO'] },
-          },
-        });
+        const totalPagosProximos = pagosProximos.reduce((sum, p) => sum + Number(p.monto_programado), 0);
+        const cuentasBancarias = cuentas.map((c) => ({ ...c, saldo: Number(c.saldo) }));
+        const saldoBancos = cuentasBancarias.reduce((sum, c) => sum + c.saldo, 0);
+        const ocsPorPagar = { cantidad: ocs[0]?.cantidad ?? 0, saldo: ocs[0]?.saldo ?? 0 };
+        const cuentasPorCobrar = { cantidad: cxc[0]?.cantidad ?? 0, saldo: cxc[0]?.saldo ?? 0, vencidas: cxcVencidas };
 
         const alertas: Array<{ tipo: string; mensaje: string; severidad: string }> = [];
         if (resumenPresupuestal.porcentaje_ejercido > 80) {
@@ -1567,27 +1127,56 @@ app.get('/api/v1/finanzas/dashboard',
             severidad: 'critical',
           });
         }
+        if (cxcVencidas > 0) {
+          alertas.push({
+            tipo: 'COBROS_VENCIDOS',
+            mensaje: `${cxcVencidas} estimaci${cxcVencidas !== 1 ? 'ones' : 'ón'} vencida${cxcVencidas !== 1 ? 's' : ''} sin cobrar`,
+            severidad: 'warning',
+          });
+        }
+        if (ocsPorPagar.saldo > saldoBancos) {
+          alertas.push({
+            tipo: 'LIQUIDEZ_INSUFICIENTE',
+            mensaje: `Las OCs por pagar ($${ocsPorPagar.saldo.toLocaleString()}) superan el saldo en bancos ($${saldoBancos.toLocaleString()})`,
+            severidad: 'warning',
+          });
+        }
 
         return {
-          resumen_presupuestal: resumenPresupuestal,
-          pagos_proximos: {
-            cantidad: pagosProximos.length,
-            monto_total: totalPagosProximos,
-            detalle: pagosProximos,
+          kpis: {
+            total_autorizado: resumenPresupuestal.total_autorizado,
+            total_comprometido: resumenPresupuestal.total_comprometido,
+            total_ejercido: resumenPresupuestal.total_ejercido,
+            total_disponible: resumenPresupuestal.total_disponible,
+            porcentaje_ejercido: resumenPresupuestal.porcentaje_ejercido,
+            saldo_bancos: saldoBancos,
+            ocs_por_pagar: ocsPorPagar.saldo,
+            cuentas_por_cobrar: cuentasPorCobrar.saldo,
+            pagos_vencidos: pagosVencidos,
           },
+          alertas,
+          actividad_reciente: ultimosMovimientos.map((m) => ({
+            id: m.id_movimiento,
+            tipo: m.tipo,
+            concepto: m.concepto,
+            monto: Number(m.monto),
+            presupuesto: m.presupuesto?.codigo ?? null,
+            fecha: m.fecha_registro,
+          })),
+          resumen_presupuestal: resumenPresupuestal,
+          pagos_proximos: { cantidad: pagosProximos.length, monto_total: totalPagosProximos, detalle: pagosProximos },
           pagos_vencidos: pagosVencidos,
           ultimos_movimientos: ultimosMovimientos,
-          alertas,
-          cuentas_bancarias: [],
-          ocs_por_pagar: 0,
+          cuentas_bancarias: cuentasBancarias,
+          ocs_por_pagar: ocsPorPagar,
+          cuentas_por_cobrar: cuentasPorCobrar,
         };
       }
     );
 
-    res.json(createApiResponse(data, tenantId, proyectoId));
+    res.json(createApiResponse(data, tenantId, proyectoId, getCorrelationId(req)));
   } catch (error: any) {
-    console.error('[Finanzas] Error en dashboard:', error.message);
-    res.status(500).json(createApiError('FIN_INTERNAL_ERROR', 'Error al cargar dashboard financiero.'));
+    responderError(req, res, error, 'finanzas.dashboard.error', 'Error al cargar dashboard financiero');
   }
 });
 
@@ -1601,14 +1190,14 @@ app.get('/api/v1/finanzas/cuentas-bancarias',
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
       const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
-        return (prisma as any).cuentaBancaria.findMany({
+        return prisma.cuentaBancaria.findMany({
           where: { tenant_id: tenantId, activa: true },
           orderBy: { banco: 'asc' },
         });
       });
-      res.json({ success: true, data });
+      res.json(createApiResponse(data, tenantId, proyectoId, getCorrelationId(req)));
     } catch (error: any) {
-      res.status(500).json({ success: false, message: error.message });
+      responderError(req, res, error, 'finanzas.cuentas.list_error', 'Error al listar cuentas bancarias');
     }
   }
 );
@@ -1620,7 +1209,10 @@ app.post('/api/v1/finanzas/cuentas-bancarias',
       const { tenantId, proyectoId, userId } = req.securityContext;
       const { banco, numero_cuenta, clabe, alias, moneda, saldo, proyecto_id } = req.body;
       if (!banco || !numero_cuenta || !alias) {
-        return res.status(400).json({ success: false, message: 'banco, numero_cuenta y alias son obligatorios.' });
+        return res.status(400).json(createApiError('FIN_MISSING_FIELDS', 'banco, numero_cuenta y alias son obligatorios.', undefined, getCorrelationId(req)));
+      }
+      if (proyecto_id !== undefined && proyecto_id !== null && !esUuid(proyecto_id)) {
+        return res.status(400).json(createApiError('FIN_INVALID_REFERENCE', 'proyecto_id debe ser un UUID válido.', undefined, getCorrelationId(req)));
       }
       const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
         return (prisma as any).cuentaBancaria.create({
@@ -1636,9 +1228,9 @@ app.post('/api/v1/finanzas/cuentas-bancarias',
           },
         });
       });
-      res.status(201).json({ success: true, data });
+      res.status(201).json(createApiResponse(data, tenantId, proyectoId, getCorrelationId(req)));
     } catch (error: any) {
-      res.status(500).json({ success: false, message: error.message });
+      responderError(req, res, error, 'finanzas.cuentas.create_error', 'Error al crear la cuenta bancaria');
     }
   }
 );
@@ -1649,9 +1241,14 @@ app.patch('/api/v1/finanzas/cuentas-bancarias/:id',
     try {
       const { id } = req.params;
       const { tenantId, proyectoId, userId } = req.securityContext;
+      if (!esUuid(id)) {
+        return res.status(400).json(createApiError('FIN_INVALID_REFERENCE', 'El id de la cuenta debe ser un UUID válido.', undefined, getCorrelationId(req)));
+      }
       const { banco, numero_cuenta, clabe, alias, moneda, saldo } = req.body;
       const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
-        return (prisma as any).cuentaBancaria.update({
+        const existe = await prisma.cuentaBancaria.findFirst({ where: { id_cuenta: id, tenant_id: tenantId }, select: { id_cuenta: true } });
+        if (!existe) throw new ErrorFinanzas(404, 'FIN_CUENTA_NO_ENCONTRADA', 'Cuenta bancaria no encontrada.');
+        return prisma.cuentaBancaria.update({
           where: { id_cuenta: id },
           data: {
             ...(banco         !== undefined ? { banco }         : {}),
@@ -1663,9 +1260,9 @@ app.patch('/api/v1/finanzas/cuentas-bancarias/:id',
           },
         });
       });
-      res.json({ success: true, data });
+      res.json(createApiResponse(data, tenantId, proyectoId, getCorrelationId(req)));
     } catch (error: any) {
-      res.status(500).json({ success: false, message: error.message });
+      responderError(req, res, error, 'finanzas.cuentas.update_error', 'Error al actualizar la cuenta bancaria');
     }
   }
 );
@@ -1676,21 +1273,19 @@ app.delete('/api/v1/finanzas/cuentas-bancarias/:id',
     try {
       const { id } = req.params;
       const { tenantId, proyectoId, userId } = req.securityContext;
+      if (!esUuid(id)) {
+        return res.status(400).json(createApiError('FIN_INVALID_REFERENCE', 'El id de la cuenta debe ser un UUID válido.', undefined, getCorrelationId(req)));
+      }
       const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
-        const tiene = await (prisma as any).pagoOC.count({ where: { cuenta_id: id } });
-        if (tiene > 0) {
-          const err: any = new Error('No se puede eliminar: la cuenta tiene pagos registrados.');
-          err.status = 409;
-          throw err;
-        }
-        return (prisma as any).cuentaBancaria.update({
-          where: { id_cuenta: id },
-          data: { activa: false },
-        });
+        const existe = await prisma.cuentaBancaria.findFirst({ where: { id_cuenta: id, tenant_id: tenantId }, select: { id_cuenta: true } });
+        if (!existe) throw new ErrorFinanzas(404, 'FIN_CUENTA_NO_ENCONTRADA', 'Cuenta bancaria no encontrada.');
+        const tiene = await prisma.pagoOC.count({ where: { cuenta_id: id } });
+        if (tiene > 0) throw new ErrorFinanzas(409, 'FIN_CUENTA_CON_PAGOS', 'No se puede eliminar: la cuenta tiene pagos registrados.');
+        return prisma.cuentaBancaria.update({ where: { id_cuenta: id }, data: { activa: false } });
       });
-      res.json({ success: true, data });
+      res.json(createApiResponse(data, tenantId, proyectoId, getCorrelationId(req)));
     } catch (error: any) {
-      res.status(error.status ?? 500).json({ success: false, message: error.message });
+      responderError(req, res, error, 'finanzas.cuentas.delete_error', 'Error al desactivar la cuenta bancaria');
     }
   }
 );
@@ -1705,15 +1300,17 @@ app.get('/api/v1/finanzas/proyectos/:proyectoId/anticipo',
     try {
       const { proyectoId: pId } = req.params;
       const { tenantId, proyectoId, userId } = req.securityContext;
-      const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
-        return (prisma as any).proyectoFinanzas.findFirst({
-          where: { tenant_id: tenantId, proyecto_id: pId },
-        }) ?? { anticipo_total: 0, anticipo_usado: 0, disponible: 0 };
-      });
-      const record = data as any;
-      res.json({ success: true, data: { ...record, disponible: Number(record.anticipo_total ?? 0) - Number(record.anticipo_usado ?? 0) } });
+      if (!esUuid(pId)) {
+        return res.status(400).json(createApiError('FIN_INVALID_REFERENCE', 'proyectoId debe ser un UUID válido.', undefined, getCorrelationId(req)));
+      }
+      const record = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) =>
+        prisma.proyectoFinanzas.findFirst({ where: { tenant_id: tenantId, proyecto_id: pId } }));
+      const total = Number(record?.anticipo_total ?? 0);
+      const usado = Number(record?.anticipo_usado ?? 0);
+      res.json(createApiResponse({ ...(record ?? { proyecto_id: pId }), anticipo_total: total, anticipo_usado: usado, disponible: total - usado },
+        tenantId, proyectoId, getCorrelationId(req)));
     } catch (error: any) {
-      res.status(500).json({ success: false, message: error.message });
+      responderError(req, res, error, 'finanzas.anticipo.get_error', 'Error al consultar el anticipo');
     }
   }
 );
@@ -1724,12 +1321,12 @@ app.post('/api/v1/finanzas/proyectos/:proyectoId/anticipo',
     try {
       const { proyectoId: pId } = req.params;
       const { tenantId, proyectoId, userId, limiteAprobacion } = req.securityContext;
-      const { anticipo_total } = req.body;
+      const { anticipo_total } = req.body ?? {};
       if (anticipo_total === undefined) {
-        return res.status(400).json({ success: false, message: 'anticipo_total es obligatorio.' });
+        return res.status(400).json(createApiError('FIN_MISSING_FIELDS', 'anticipo_total es obligatorio.', undefined, getCorrelationId(req)));
       }
 
-      // Validar Límite de Autoridad Financiera
+      // Validar Límite de Autoridad Financiera (antes de validar el resto; contrato de seguridad.e2e)
       if (Number(anticipo_total) > limiteAprobacion) {
         return res.status(403).json(createApiError(
           'FIN_LIMIT_EXCEEDED',
@@ -1738,16 +1335,28 @@ app.post('/api/v1/finanzas/proyectos/:proyectoId/anticipo',
           getCorrelationId(req)
         ));
       }
+      if (!esUuid(pId)) {
+        return res.status(400).json(createApiError('FIN_INVALID_REFERENCE', 'proyectoId debe ser un UUID válido.', undefined, getCorrelationId(req)));
+      }
+      const monto = parsearMontoPositivo(anticipo_total, 'anticipo_total');
+      if (monto.motivo !== undefined) {
+        return res.status(400).json(createApiError('FIN_MONTO_INVALIDO', monto.motivo, undefined, getCorrelationId(req)));
+      }
       const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
-        return (prisma as any).proyectoFinanzas.upsert({
+        const actual = await prisma.proyectoFinanzas.findFirst({ where: { tenant_id: tenantId, proyecto_id: pId } });
+        if (actual && monto.monto.lt(String(actual.anticipo_usado))) {
+          throw new ErrorFinanzas(422, 'FIN_ANTICIPO_MENOR_A_USADO',
+            `El anticipo no puede ser menor a lo ya usado ($${Number(actual.anticipo_usado).toFixed(2)}).`);
+        }
+        return prisma.proyectoFinanzas.upsert({
           where: { tenant_id_proyecto_id: { tenant_id: tenantId, proyecto_id: pId } },
-          update: { anticipo_total: Number(anticipo_total) },
-          create: { tenant_id: tenantId, proyecto_id: pId, anticipo_total: Number(anticipo_total), anticipo_usado: 0 },
+          update: { anticipo_total: monto.monto.toFixed(2) },
+          create: { tenant_id: tenantId, proyecto_id: pId, anticipo_total: monto.monto.toFixed(2), anticipo_usado: 0 },
         });
       });
-      res.json({ success: true, data });
+      res.json(createApiResponse(data, tenantId, proyectoId, getCorrelationId(req)));
     } catch (error: any) {
-      res.status(500).json({ success: false, message: error.message });
+      responderError(req, res, error, 'finanzas.anticipo.set_error', 'Error al registrar el anticipo');
     }
   }
 );
@@ -1762,25 +1371,33 @@ app.get('/api/v1/finanzas/pagos-oc',
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
       const { proyectoId: pId, proveedorId } = req.query as Record<string, string | undefined>;
-      const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
-        return (prisma as any).pagoOC.findMany({
+      if ((pId && !esUuid(pId)) || (proveedorId && !esUuid(proveedorId))) {
+        return res.status(400).json(createApiError('FIN_INVALID_REFERENCE', 'proyectoId y proveedorId deben ser UUID válidos.', undefined, getCorrelationId(req)));
+      }
+      const filtroProyecto = pId ?? proyectoId;
+      const pag = parsearPaginacion(req.query);
+      const pagina = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+        const filas = await prisma.pagoOC.findMany({
           where: {
-            tenant_id:  tenantId,
-            ...(pId          ? { proyecto_id: pId }            : {}),
+            AND: [
+              { tenant_id: tenantId },
+              filtroProyecto ? { proyecto_id: filtroProyecto } : {},
+              proveedorId ? { detalles: { some: { proveedor_id: proveedorId } } } : {},
+              despuesDe('created_at', 'id_pago', 'desc', pag),
+            ],
           },
           include: {
             detalles: true,
             cuenta:   { select: { banco: true, alias: true } },
           },
-          orderBy: { created_at: 'desc' },
+          orderBy: [{ created_at: 'desc' }, { id_pago: 'desc' }],
+          take: pag.limit + 1,
         });
+        return cortarPagina(filas, pag, (f) => f.created_at, (f) => f.id_pago);
       });
-      const result = proveedorId
-        ? (data as any[]).filter((p: any) => p.detalles.some((d: any) => d.proveedor_id === proveedorId))
-        : data;
-      res.json({ success: true, data: result });
+      responderPagina(res, pagina, tenantId, proyectoId, getCorrelationId(req));
     } catch (error: any) {
-      res.status(500).json({ success: false, message: error.message });
+      responderError(req, res, error, 'finanzas.pagos_oc.list_error', 'Error al listar pagos de OC');
     }
   }
 );
@@ -1791,138 +1408,254 @@ app.get('/api/v1/finanzas/pagos-oc/:id',
     try {
       const { id } = req.params;
       const { tenantId, proyectoId, userId } = req.securityContext;
-      const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
-        return (prisma as any).pagoOC.findFirst({
-          where: { id_pago: id, tenant_id: tenantId },
-          include: { detalles: true, cuenta: true },
-        });
-      });
-      if (!data) return res.status(404).json({ success: false, message: 'Pago no encontrado.' });
-      res.json({ success: true, data });
+      if (!esUuid(id)) {
+        return res.status(400).json(createApiError('FIN_INVALID_REFERENCE', 'El id del pago debe ser un UUID válido.', undefined, getCorrelationId(req)));
+      }
+      const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) =>
+        prisma.pagoOC.findFirst({
+          where: { id_pago: id, tenant_id: tenantId, ...(proyectoId ? { proyecto_id: proyectoId } : {}) },
+          include: { detalles: true, cuenta: { select: { id_cuenta: true, banco: true, alias: true, moneda: true } } },
+        }));
+      if (!data) return res.status(404).json(createApiError('FIN_PAGO_NO_ENCONTRADO', 'Pago no encontrado.', undefined, getCorrelationId(req)));
+      res.json(createApiResponse(data, tenantId, proyectoId, getCorrelationId(req)));
     } catch (error: any) {
-      res.status(500).json({ success: false, message: error.message });
+      responderError(req, res, error, 'finanzas.pagos_oc.get_error', 'Error al consultar el pago de OC');
     }
   }
 );
 
+// OCs por pagar del proyecto (proyección local alimentada por compras.oc_creada/oc_cancelada).
+// Fuente del selector multi-OC de la pantalla de pagos: cumple "una vista, un servicio".
+app.get('/api/v1/finanzas/ocs-por-pagar',
+  requireRoles('finanzas', 'admin', 'director'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const pId = (req.query.proyectoId ?? req.query.proyecto_id) as string | undefined;
+      const proveedorId = req.query.proveedorId as string | undefined;
+      if ((pId && !esUuid(pId)) || (proveedorId && !esUuid(proveedorId))) {
+        res.status(400).json(createApiError('FIN_INVALID_REFERENCE', 'proyectoId y proveedorId deben ser UUID válidos.'));
+        return;
+      }
+      const filtroProyecto = pId ?? proyectoId ?? null;
+      const filtroProveedor = proveedorId ?? null;
+      const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => prisma.$queryRaw<any[]>`
+        SELECT "oc_id", "proyecto_id", "oc_codigo", "proveedor_id", "proveedor_nombre", "concepto_id",
+               "total"::float8 AS "total", "pagado"::float8 AS "pagado", ("total" - "pagado")::float8 AS "saldo", "estado"
+          FROM "ocs_por_pagar"
+         WHERE "tenant_id" = ${tenantId}::uuid
+           AND "estado" IN ('POR_PAGAR', 'PAGO_PARCIAL')
+           AND (${filtroProyecto}::uuid IS NULL OR "proyecto_id" = ${filtroProyecto}::uuid)
+           AND (${filtroProveedor}::uuid IS NULL OR "proveedor_id" = ${filtroProveedor}::uuid)
+         ORDER BY "proveedor_nombre", "oc_codigo"
+         LIMIT 500`);
+      res.json(createApiResponse(data, tenantId, proyectoId));
+    } catch (error: any) {
+      logError(req, 'finanzas', 'finanzas.ocs_por_pagar.error', 'Error al listar OCs por pagar', { error_message: error.message });
+      res.status(500).json(createApiError('FIN_INTERNAL_ERROR', 'Error al listar OCs por pagar.', undefined, getCorrelationId(req)));
+    }
+  }
+);
+
+// Cuentas por cobrar (estimaciones aprobadas). Ver cuentas-por-cobrar.ts y openspec/changes/cuentas-por-cobrar-estimaciones.
+// Por defecto lista las abiertas (POR_COBRAR y COBRO_PARCIAL); ?estado= filtra uno.
+app.get('/api/v1/finanzas/cuentas-por-cobrar',
+  requireRoles('finanzas', 'admin', 'director'),
+  async (req: Request, res: Response) => {
+    const correlationId = getCorrelationId(req);
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const filtro = parsearFiltroCxc(req.query);
+      const data = await listarCuentasPorCobrar({ tenantId, proyectoId, userId }, filtro);
+      res.json(createApiResponse(data, tenantId, proyectoId, correlationId));
+    } catch (error: any) {
+      if (error instanceof ErrorFinanzas) {
+        res.status(error.status).json(createApiError(error.code, error.message, undefined, correlationId));
+        return;
+      }
+      logError(req, 'finanzas', 'finanzas.cxc.error', 'Error al listar cuentas por cobrar', { error_message: error.message });
+      res.status(500).json(createApiError('FIN_INTERNAL_ERROR', 'Error al listar cuentas por cobrar.', undefined, correlationId));
+    }
+  }
+);
+
+// Cobro de una cuenta por cobrar: abona la cuenta bancaria e incrementa lo cobrado. Idempotente por folio (200 en
+// reintento con el mismo contenido; 409 con otro). Exige proyecto activo: el cobro entra a los fondos de ese proyecto.
+// Sin límite de autoridad: registrar dinero que entra no compromete recursos de la empresa.
+app.post('/api/v1/finanzas/cuentas-por-cobrar/:id/cobros',
+  requireRoles('finanzas', 'admin'),
+  async (req: Request, res: Response) => {
+    const correlationId = getCorrelationId(req);
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      if (!proyectoId) {
+        res.status(400).json(createApiError('FIN_PROYECTO_REQUERIDO', 'El cobro requiere un proyecto activo en la sesión.', undefined, correlationId));
+        return;
+      }
+      const cobro = parsearCobro(req.body);
+      const r = await registrarCobro({ tenantId, proyectoId, userId }, req.params.id, cobro);
+
+      if (!r.idempotente) {
+        await publishFinanceDomainEvent(FinanzasEvents.COBRO_REGISTRADO,
+          { tenant_id: tenantId, proyecto_id: r.proyecto_id, user_id: userId, correlation_id: correlationId },
+          {
+            id_cobro: r.id_cobro, cxc_id: r.cxc_id, proyecto_id: r.proyecto_id, origen: r.origen, origen_id: r.origen_id,
+            codigo: r.codigo, cuenta_id: r.cuenta_id, folio: r.folio, monto: r.monto, moneda: r.moneda,
+            fecha_cobro: r.fecha_cobro, cobrado_total: r.cobrado_total, saldo: r.saldo, estado: r.estado,
+          });
+      }
+      logInfo(req, 'finanzas', r.idempotente ? 'finanzas.cobro.idempotent' : 'finanzas.cobro.created', 'Cobro registrado', {
+        id_cobro: r.id_cobro, cxc_id: r.cxc_id, monto: r.monto, estado: r.estado, idempotent: r.idempotente,
+      });
+      res.status(r.idempotente ? 200 : 201).json(createApiResponse(r, tenantId, proyectoId, correlationId));
+    } catch (error: any) {
+      if (error instanceof ErrorFinanzas) {
+        res.status(error.status).json(createApiError(error.code, error.message, undefined, correlationId));
+        return;
+      }
+      if (error?.code === 'P2002') {
+        res.status(409).json(createApiError('FIN_COBRO_DUPLICADO', 'El folio ya fue registrado en otro cobro.', undefined, correlationId));
+        return;
+      }
+      logError(req, 'finanzas', 'finanzas.cobro.error', 'Error al registrar cobro', { error_message: error.message });
+      res.status(500).json(createApiError('FIN_INTERNAL_ERROR', 'Error al registrar el cobro.', undefined, correlationId));
+    }
+  }
+);
+
+// Nóminas autorizadas pendientes de pago (proyección de personal.nomina_autorizada). Ver nomina-por-pagar.ts.
+app.get('/api/v1/finanzas/nominas-por-pagar',
+  requireRoles('finanzas', 'admin', 'director'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const data = await listarNominasPorPagar({ tenantId, proyectoId, userId }, req.query.estado as string | undefined);
+      res.json(createApiResponse(data, tenantId, proyectoId, getCorrelationId(req)));
+    } catch (error: any) {
+      responderError(req, res, error, 'finanzas.nominas.list_error', 'Error al listar nóminas por pagar');
+    }
+  }
+);
+
+// Pago de una nómina desde una cuenta bancaria. Idempotente por (cuenta, referencia). Publica finanzas.nomina_pagada
+// para que Personal marque la prenómina PAGADA y Control de Proyectos sume el costo real de mano de obra.
+app.post('/api/v1/finanzas/nominas-por-pagar/:prenominaId/pagar',
+  requireRoles('finanzas', 'admin'),
+  async (req: Request, res: Response) => {
+    const correlationId = getCorrelationId(req);
+    try {
+      const { tenantId, proyectoId, userId, limiteAprobacion } = req.securityContext;
+      if (!proyectoId) {
+        res.status(400).json(createApiError('FIN_PROYECTO_REQUERIDO', 'El pago de nómina requiere un proyecto activo en la sesión.', undefined, correlationId));
+        return;
+      }
+      const entrada = parsearPagoNomina(req.body);
+      const r = await pagarNomina({ tenantId, proyectoId, userId }, req.params.prenominaId, entrada, limiteAprobacion);
+      if (!r.idempotente) {
+        await publishFinanceDomainEvent(FinanzasEvents.NOMINA_PAGADA,
+          { tenant_id: tenantId, proyecto_id: r.proyecto_id, user_id: userId, correlation_id: correlationId },
+          {
+            prenomina_id: r.prenomina_id, proyecto_id: r.proyecto_id, codigo: r.codigo, total_neto: r.total_neto,
+            total_empleados: r.total_empleados, periodo_inicio: r.periodo_inicio, periodo_fin: r.periodo_fin,
+            cuenta_id: r.cuenta_id, referencia: r.referencia, fecha_pago: r.fecha_pago, efecto_presupuestal: r.efecto_presupuestal,
+          });
+      }
+      logInfo(req, 'finanzas', r.idempotente ? 'finanzas.nomina.pago.idempotent' : 'finanzas.nomina.pago.created', 'Nómina pagada', {
+        prenomina_id: r.prenomina_id, monto: r.total_neto, efecto_presupuestal: r.efecto_presupuestal,
+      });
+      res.status(r.idempotente ? 200 : 201).json(createApiResponse(r, tenantId, proyectoId, correlationId));
+    } catch (error: any) {
+      responderError(req, res, error, 'finanzas.nomina.pago.error', 'Error al pagar la nómina');
+    }
+  }
+);
+
+// Egreso contra N OCs: un cheque, transferencia o SPEI liquida OCs de varios proveedores (cualquier giro) del
+// MISMO proyecto. Proyecto, proveedor, código y saldo de cada OC los resuelve el servidor desde ocs_por_pagar;
+// el cliente solo envía oc_id y monto_aplicado. Ver egreso-oc.ts y openspec/changes/corregir-egreso-oc-multiproveedor.
 app.post('/api/v1/finanzas/pagos-oc',
   requireRoles('finanzas', 'admin'),
   async (req: Request, res: Response) => {
+    const correlationId = getCorrelationId(req);
     try {
       const { tenantId, proyectoId: ctxPid, userId, limiteAprobacion } = req.securityContext;
-      const { fuente, cuenta_id, tipo_pago, referencia, concepto, fecha_pago, proyecto_id, detalles } = req.body;
-
-      if (!fuente || !tipo_pago || !referencia || !concepto || !fecha_pago || !proyecto_id || !Array.isArray(detalles) || detalles.length === 0) {
-        return res.status(400).json({ success: false, message: 'Faltan campos obligatorios.' });
-      }
-      if (!['ANTICIPO', 'CUENTA_BANCARIA'].includes(fuente)) {
-        return res.status(400).json({ success: false, message: 'fuente debe ser ANTICIPO o CUENTA_BANCARIA.' });
-      }
-      if (fuente === 'CUENTA_BANCARIA' && !cuenta_id) {
-        return res.status(400).json({ success: false, message: 'cuenta_id es requerido para fuente CUENTA_BANCARIA.' });
-      }
-
-      const montoTotal = (detalles as any[]).reduce((sum: number, d: any) => sum + Number(d.monto_aplicado), 0);
-
-      // Validar Límite de Autoridad Financiera ANTES de descontar saldo o anticipo.
-      // Sin esto, este endpoint era un bypass del límite: el mismo pago rechazado
-      // por PATCH /pagos/:id/pagar se podía registrar aquí contra una OC sin que
-      // nadie mirara el límite del usuario.
-      // Ver openspec/changes/limite-autoridad-pagos-oc.
-      if (montoTotal > limiteAprobacion) {
-        return res.status(403).json(createApiError(
+      // Límite de Autoridad Financiera PRIMERO, antes de cualquier validación de negocio o acceso a BD
+      // (openspec/changes/limite-autoridad-pagos-oc). Suma tolerante: los montos inválidos los rechaza el parser.
+      const detallesBody: any[] = Array.isArray(req.body?.detalles) ? req.body.detalles : [];
+      const totalSolicitado = detallesBody.reduce((acc, d) => acc + Math.max(0, Number(d?.monto_aplicado) || 0), 0);
+      if (totalSolicitado > limiteAprobacion) {
+        res.status(403).json(createApiError(
           'FIN_LIMIT_EXCEEDED',
-          `El monto $${montoTotal.toLocaleString()} excede tu límite de autoridad financiera ($${limiteAprobacion.toLocaleString()}).`,
+          `El monto $${totalSolicitado.toLocaleString()} excede tu límite de autoridad financiera ($${limiteAprobacion.toLocaleString()}).`,
           undefined,
-          getCorrelationId(req)
+          correlationId
         ));
+        return;
       }
 
-      const data = await createTenantContext({ tenantId, proyectoId: ctxPid, userId }, async (prisma) => {
-        return (prisma as any).$transaction(async (tx: any) => {
-          // Validar y descontar fuente
-          if (fuente === 'ANTICIPO') {
-            const pf = await tx.proyectoFinanzas.findFirst({ where: { tenant_id: tenantId, proyecto_id: proyecto_id } });
-            const disponible = Number(pf?.anticipo_total ?? 0) - Number(pf?.anticipo_usado ?? 0);
-            if (disponible < montoTotal) {
-              throw Object.assign(new Error(`Anticipo insuficiente. Disponible: $${disponible.toFixed(2)}, Requerido: $${montoTotal.toFixed(2)}`), { status: 422 });
-            }
-            if (pf) {
-              await tx.proyectoFinanzas.update({
-                where: { id_proyecto_finanzas: pf.id_proyecto_finanzas },
-                data: { anticipo_usado: { increment: montoTotal } },
-              });
-            }
-          } else {
-            const cuenta = await tx.cuentaBancaria.findFirst({ where: { id_cuenta: cuenta_id, tenant_id: tenantId, activa: true } });
-            if (!cuenta) throw Object.assign(new Error('Cuenta bancaria no encontrada.'), { status: 404 });
-            if (Number(cuenta.saldo) < montoTotal) {
-              throw Object.assign(new Error(`Saldo insuficiente. Disponible: $${Number(cuenta.saldo).toFixed(2)}, Requerido: $${montoTotal.toFixed(2)}`), { status: 422 });
-            }
-            await tx.cuentaBancaria.update({
-              where: { id_cuenta: cuenta_id },
-              data: { saldo: { decrement: montoTotal } },
-            });
-          }
+      // La pantalla toma el proyecto del JWT; un rol tenant-level sin proyecto activo debe indicarlo en el body.
+      const egreso = parsearEgresoOc({ ...req.body, proyecto_id: req.body?.proyecto_id ?? ctxPid });
 
-          // Crear pago
-          const pago = await tx.pagoOC.create({
-            data: {
-              tenant_id:   tenantId,
-              proyecto_id: proyecto_id,
-              fuente,
-              cuenta_id:   fuente === 'CUENTA_BANCARIA' ? cuenta_id : null,
-              tipo_pago,
-              referencia,
-              concepto,
-              fecha_pago:  new Date(fecha_pago),
-              monto_total: montoTotal,
-              moneda:      'MXN',
-              usuario_id:  userId,
-              detalles: {
-                create: (detalles as any[]).map((d: any) => ({
-                  oc_id:            d.oc_id,
-                  oc_codigo:        d.oc_codigo ?? d.oc_id.slice(0, 8),
-                  proveedor_id:     d.proveedor_id,
-                  proveedor_nombre: d.proveedor_nombre ?? '',
-                  monto_aplicado:   Number(d.monto_aplicado),
-                  saldo_oc_antes:   Number(d.saldo_oc_antes ?? 0),
-                  saldo_oc_despues: Number(d.saldo_oc_despues ?? 0),
-                  concepto_id:      d.concepto_id   ?? null,
-                  concepto_clave:   d.concepto_clave ?? null,
-                })),
-              },
-            },
-            include: { detalles: true },
-          });
+      if (ctxPid && egreso.proyecto_id !== String(ctxPid).toLowerCase()) {
+        res.status(403).json(createApiError('FIN_PROYECTO_DISTINTO',
+          'El egreso debe ser del proyecto activo de la sesión.', undefined, correlationId));
+        return;
+      }
 
-          return pago;
+      const resultado = await registrarEgresoOc({ tenantId, userId }, egreso);
+
+      if (!resultado.idempotente) {
+        const context = { tenant_id: tenantId, proyecto_id: resultado.proyecto_id, user_id: userId, correlation_id: correlationId };
+        for (const d of resultado.detalles) {
+          await publishFinanceDomainEvent(
+            d.saldo_oc_despues <= 0 ? FinanzasEvents.OC_PAGADA_TOTAL : FinanzasEvents.OC_PAGADA_PARCIAL,
+            context,
+            {
+              oc_id: d.oc_id,
+              oc_codigo: d.oc_codigo,
+              proveedor_id: d.proveedor_id,
+              monto_aplicado: d.monto_aplicado,
+              saldo_pendiente: d.saldo_oc_despues,
+              pago_id: resultado.pago_id,
+            } as any,
+          );
+        }
+        await publishFinanceDomainEvent(FinanzasEvents.EGRESO_OC_REGISTRADO, context, {
+          pago_id: resultado.pago_id,
+          proyecto_id: resultado.proyecto_id,
+          fuente: resultado.fuente,
+          cuenta_id: resultado.cuenta_id,
+          tipo_pago: resultado.tipo_pago,
+          referencia: resultado.referencia,
+          fecha_pago: resultado.fecha_pago,
+          monto_total: resultado.monto_total,
+          moneda: 'MXN',
+          detalles: resultado.detalles.map((d) => ({
+            oc_id: d.oc_id,
+            oc_codigo: d.oc_codigo,
+            proveedor_id: d.proveedor_id,
+            proveedor_nombre: d.proveedor_nombre,
+            concepto_id: d.concepto_id,
+            monto_aplicado: d.monto_aplicado,
+          })),
         });
-      });
-
-      // Publicar eventos por OC pagada
-      const correlationId = getCorrelationId(req);
-      const context = { tenant_id: tenantId, proyecto_id: proyecto_id, user_id: userId, correlation_id: correlationId };
-      for (const d of (data as any).detalles) {
-        const isPagadaTotal = Number(d.saldo_oc_despues) <= 0;
-        await publishFinanceDomainEvent(
-          isPagadaTotal ? FinanzasEvents.OC_PAGADA_TOTAL : FinanzasEvents.OC_PAGADA_PARCIAL,
-          context,
-          {
-            oc_id:           d.oc_id,
-            oc_codigo:       d.oc_codigo,
-            proveedor_id:    d.proveedor_id,
-            monto_aplicado:  d.monto_aplicado,
-            saldo_pendiente: d.saldo_oc_despues,
-            pago_id:         (data as any).id_pago,
-          } as any,
-        );
       }
 
-      logInfo(req, 'finanzas', 'finanzas.pago_oc.created', 'Pago OC registrado', { pago_id: (data as any).id_pago, monto: montoTotal });
-      res.status(201).json({ success: true, data });
+      logInfo(req, 'finanzas', 'finanzas.pago_oc.created', 'Egreso OC registrado', {
+        pago_id: resultado.pago_id, monto: resultado.monto_total, ocs: resultado.detalles.length, idempotent: resultado.idempotente,
+      });
+      res.status(resultado.idempotente ? 200 : 201).json(createApiResponse(resultado, tenantId, resultado.proyecto_id, correlationId));
     } catch (error: any) {
-      res.status(error.status ?? 500).json({ success: false, message: error.message });
+      if (error instanceof ErrorFinanzas) {
+        res.status(error.status).json(createApiError(error.code, error.message, undefined, correlationId));
+        return;
+      }
+      if (error?.code === 'P2002') {
+        res.status(409).json(createApiError('FIN_FOLIO_DUPLICADO', 'El folio ya fue registrado por otro egreso concurrente.', undefined, correlationId));
+        return;
+      }
+      logError(req, 'finanzas', 'finanzas.pago_oc.error', 'Error al registrar egreso OC', { error_message: error.message });
+      res.status(500).json(createApiError('FIN_INTERNAL_ERROR', 'Error al registrar el pago.', undefined, correlationId));
     }
   }
 );
@@ -1935,7 +1668,7 @@ function requireInternalService(serviceName: string) {
   return (req: Request, res: Response, next: any) => {
     const header = req.headers['x-internal-service'];
     if (header !== serviceName) {
-      res.status(403).json({ success: false, message: 'Acceso restringido a servicios internos.' });
+      res.status(403).json(createApiError('FIN_SOLO_SERVICIO_INTERNO', 'Acceso restringido a servicios internos.', undefined, getCorrelationId(req)));
       return;
     }
     next();
@@ -1955,8 +1688,8 @@ app.get('/api/v1/finanzas/reportes/pagado-por-concepto',
       const { tenantId, userId } = req.securityContext;
       const proyectoId = (req.query.proyectoId ?? req.query.proyecto_id) as string;
 
-      if (!proyectoId) {
-        res.status(400).json({ success: false, message: 'proyectoId es requerido.' });
+      if (!esUuid(proyectoId)) {
+        res.status(400).json(createApiError('FIN_INVALID_REFERENCE', 'proyectoId (UUID) es requerido.', undefined, getCorrelationId(req)));
         return;
       }
 
@@ -1981,12 +1714,65 @@ app.get('/api/v1/finanzas/reportes/pagado-por-concepto',
         }));
       });
 
-      res.json({ success: true, data });
+      res.json(createApiResponse(data, tenantId, proyectoId, getCorrelationId(req)));
     } catch (error: any) {
-      res.status(500).json({ success: false, message: error.message });
+      responderError(req, res, error, 'finanzas.reporte_pagado.error', 'Error al generar el reporte de pagado por concepto');
     }
   }
 );
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// READINESS (sin auth) — lote P1 del outbox de eventos. Distingue: base, RabbitMQ, despachador, consumidores
+// esperados (colas con consumidor) y backlog/errores de la outbox.
+//   - En modo `direct` (predeterminado) el outbox es informativo: no vuelve el servicio no listo.
+//   - En modo `outbox` el servicio NO está listo si: el despachador está apagado o falló, hay filas en ERROR, hay
+//     pendientes más antiguos que FINANZAS_OUTBOX_MAX_PENDIENTE_SEG (300 s por defecto) o falta la cola de un consumidor.
+// El healthcheck de Docker usa /health, no /ready.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+app.get('/ready', async (_req: Request, res: Response) => {
+  const modo = modoEventos();
+  const despachador = estadoDespachadorOutbox();
+  const consumidores = ultimoInformeConsumidores();
+  const maxPendienteSeg = Number(process.env.FINANZAS_OUTBOX_MAX_PENDIENTE_SEG ?? 300);
+  const checks: Record<string, 'ok' | 'error' | 'degraded' | 'disabled' | 'starting' | 'unknown'> = {
+    database: 'ok', rabbitmq: 'ok', dispatcher: despachador.estado, bindings: 'unknown', backlog: 'ok',
+  };
+  let backlog: Awaited<ReturnType<typeof consultarBacklog>> | null = null;
+  try {
+    backlog = await consultarBacklog();
+  } catch {
+    checks.database = 'error';
+    checks.backlog = 'unknown';
+  }
+  if (!eventBus.isReady()) checks.rabbitmq = 'error';
+  checks.bindings = consumidores.estado === 'ok' ? 'ok'
+    : consumidores.estado === 'degradado' || consumidores.estado === 'error' ? 'degraded'
+    : 'unknown';
+  if (backlog) {
+    const atascado = backlog.mas_antiguo_pendiente_segundos !== null && backlog.mas_antiguo_pendiente_segundos > maxPendienteSeg;
+    checks.backlog = backlog.errores > 0 || atascado ? 'degraded' : 'ok';
+  }
+
+  const base = checks.database === 'ok' && checks.rabbitmq === 'ok';
+  const outboxOk =
+    despachador.estado !== 'error'
+    && !(modo === 'outbox' && despachador.estado === 'disabled')
+    && checks.backlog !== 'degraded'
+    && checks.bindings !== 'degraded';
+  const ready = base && (modo === 'direct' || outboxOk);
+  res.status(ready ? 200 : 503).json({
+    status: ready ? 'ready' : 'not_ready',
+    service: 'finanzas',
+    event_mode: modo,
+    checks,
+    dispatcher: despachador,
+    consumers: consumidores,
+    outbox: backlog
+      ? { ...backlog, max_pendiente_segundos: maxPendienteSeg, metricas: { ...metricasOutbox } }
+      : null,
+    timestamp: new Date().toISOString(),
+  });
+});
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // HEALTH CHECK (sin auth)
@@ -2003,184 +1789,81 @@ app.get('/health', (_req: Request, res: Response) => {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // ARRANQUE
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Una estimación aprobada es una CUENTA POR COBRAR al cliente, no un egreso (F20; openspec
+// cuentas-por-cobrar-estimaciones). Alta idempotente por estimación. Si la estimación ya existe como pago programado
+// (registro previo a este change), no se duplica: la mueve el script migrar-estimaciones-a-cxc.sql.
 export async function handleEstimacionAprobadaEvent(event: BocamEvent): Promise<void> {
-  const {
-    estimacion_id,
-    codigo,
-    total_neto,
-    presupuesto_id,
-    total_conceptos,
-  } = event.payload as {
+  const { estimacion_id, codigo, total_neto, presupuesto_id, total_conceptos } = event.payload as {
     estimacion_id: string;
     codigo: string;
     total_neto: number;
     presupuesto_id?: string;
     total_conceptos?: number;
   };
+  const base = {
+    event_type: event.event_type,
+    correlation_id: event.context.correlation_id,
+    tenant_id: event.context.tenant_id,
+    proyecto_id: event.context.proyecto_id,
+    estimacion_id,
+    presupuesto_id,
+  };
 
-  if (!estimacion_id || !codigo || !total_neto || !presupuesto_id) {
-    console.error(JSON.stringify({
-      action: 'finanzas.event.estimacion_aprobada.invalid_payload',
-      event_type: event.event_type,
-      correlation_id: event.context.correlation_id,
-      tenant_id: event.context.tenant_id,
-      proyecto_id: event.context.proyecto_id,
-      estimacion_id,
-      presupuesto_id,
-    }));
+  const monto = parsearMontoPositivo(total_neto, 'total_neto');
+  if (!esUuid(estimacion_id) || !codigo || monto.motivo !== undefined || !esUuid(presupuesto_id)) {
+    console.error(JSON.stringify({ action: 'finanzas.event.estimacion_aprobada.invalid_payload', ...base }));
     return;
   }
 
-  const result = await createTenantContext(
-    {
-      tenantId: event.context.tenant_id,
-      proyectoId: event.context.proyecto_id,
-      userId: event.context.user_id,
-    },
-    async (prisma) => {
-      const existente = await prisma.programaPagos.findFirst({
-        where: {
-          referencia_modulo: 'control-obra',
-          referencia_entidad: 'Estimacion',
-          referencia_id: estimacion_id,
-        },
-      });
+  const ctx = { tenantId: event.context.tenant_id, proyectoId: event.context.proyecto_id, userId: event.context.user_id };
+  const legado = await createTenantContext(ctx, async (prisma) => prisma.programaPagos.findFirst({
+    where: { referencia_modulo: 'control-obra', referencia_entidad: 'Estimacion', referencia_id: estimacion_id },
+    select: { id_pago: true },
+  }));
+  if (legado) {
+    console.log(JSON.stringify({ action: 'finanzas.event.estimacion_aprobada.legado', ...base, id_pago: legado.id_pago }));
+    return;
+  }
 
-      if (existente) {
-        console.log(JSON.stringify({
-          action: 'finanzas.event.estimacion_aprobada.idempotent',
-          event_type: event.event_type,
-          correlation_id: event.context.correlation_id,
-          tenant_id: event.context.tenant_id,
-          proyecto_id: event.context.proyecto_id,
-          estimacion_id,
-          id_pago: existente.id_pago,
-        }));
-        return;
-      }
-
-      const pago = await prisma.programaPagos.create({
-        data: {
-          tenant_id: event.context.tenant_id,
-          proyecto_id: event.context.proyecto_id,
-          presupuesto_id,
-          concepto: `Estimacion ${codigo} - ${total_conceptos || 0} conceptos`,
-          beneficiario: 'Constructora (Self)',
-          monto_programado: Number(total_neto),
-          fecha_programada: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
-          estado: 'PENDIENTE',
-          referencia_modulo: 'control-obra',
-          referencia_entidad: 'Estimacion',
-          referencia_id: estimacion_id,
-        },
-      });
-
-      console.log(JSON.stringify({
-        action: 'finanzas.event.estimacion_aprobada.created',
-        event_type: event.event_type,
-        correlation_id: event.context.correlation_id,
-        tenant_id: event.context.tenant_id,
-        proyecto_id: event.context.proyecto_id,
-        estimacion_id,
-        presupuesto_id,
-        id_pago: pago.id_pago,
-      }));
-    }
-  );
+  const r = await registrarCuentaPorCobrar(ctx, {
+    origen: 'ESTIMACION',
+    origen_id: estimacion_id,
+    codigo: String(codigo).slice(0, 60),
+    concepto: `Estimacion ${codigo} - ${total_conceptos || 0} conceptos`.slice(0, 255),
+    monto: monto.monto,
+    presupuesto_id,
+  });
+  console.log(JSON.stringify({
+    action: r.idempotente ? 'finanzas.event.estimacion_aprobada.idempotent' : 'finanzas.event.estimacion_aprobada.created',
+    ...base,
+    id_cxc: r.id_cxc,
+  }));
 }
 
+// El avance físico validado certifica obra ejecutada; el documento cobrable es la estimación. Antes este handler
+// creaba un pago programado por el importe del avance (dinero duplicado con la estimación y con signo invertido).
+// Ahora no tiene efecto financiero: valida el contrato del evento y lo registra (openspec cuentas-por-cobrar-estimaciones).
 export async function handleAvanceFisicoValidadoEvent(event: BocamEvent): Promise<void> {
-  const {
-    avance_id,
-    concepto,
-    importe,
-    porcentaje,
-    presupuesto_id,
-  } = event.payload as {
+  const { avance_id, concepto, importe, presupuesto_id } = event.payload as {
     avance_id: string;
     concepto: string;
     importe: number;
     porcentaje?: number;
     presupuesto_id?: string;
   };
-
+  const base = {
+    event_type: event.event_type,
+    correlation_id: event.context.correlation_id,
+    tenant_id: event.context.tenant_id,
+    proyecto_id: event.context.proyecto_id,
+    avance_id,
+    presupuesto_id,
+  };
   if (!avance_id || !concepto || !importe || !presupuesto_id) {
-    console.error(JSON.stringify({
-      action: 'finanzas.event.avance_fisico_validado.invalid_payload',
-      event_type: event.event_type,
-      correlation_id: event.context.correlation_id,
-      tenant_id: event.context.tenant_id,
-      proyecto_id: event.context.proyecto_id,
-      avance_id,
-      presupuesto_id,
-    }));
+    console.error(JSON.stringify({ action: 'finanzas.event.avance_fisico_validado.invalid_payload', ...base }));
     return;
   }
-
-  const result = await createTenantContext(
-    {
-      tenantId: event.context.tenant_id,
-      proyectoId: event.context.proyecto_id,
-      userId: event.context.user_id,
-    },
-    async (prisma) => {
-      const existente = await prisma.programaPagos.findFirst({
-        where: {
-          referencia_modulo: 'control-obra',
-          referencia_entidad: 'AvanceFisicoValidado',
-          referencia_id: avance_id,
-        },
-      });
-
-      if (existente) {
-        console.log(JSON.stringify({
-          action: 'finanzas.event.avance_fisico_validado.idempotent',
-          event_type: event.event_type,
-          correlation_id: event.context.correlation_id,
-          tenant_id: event.context.tenant_id,
-          proyecto_id: event.context.proyecto_id,
-          avance_id,
-          id_pago: existente.id_pago,
-        }));
-        return;
-      }
-
-      const presupuesto = await prisma.presupuestoAsignado.findUnique({
-        where: { id_presupuesto: presupuesto_id },
-      });
-
-      if (!presupuesto) {
-        throw new Error(`Presupuesto ${presupuesto_id} no encontrado para el avance ${avance_id}.`);
-      }
-
-      const pago = await prisma.programaPagos.create({
-        data: {
-          tenant_id: event.context.tenant_id,
-          proyecto_id: event.context.proyecto_id,
-          presupuesto_id,
-          concepto: `Proyeccion por avance validado ${concepto}${porcentaje ? ` (${Number(porcentaje).toFixed(2)}%)` : ''}`,
-          beneficiario: 'Pendiente de estimacion',
-          monto_programado: Number(importe),
-          fecha_programada: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-          estado: 'PENDIENTE',
-          referencia_modulo: 'control-obra',
-          referencia_entidad: 'AvanceFisicoValidado',
-          referencia_id: avance_id,
-        },
-      });
-
-      console.log(JSON.stringify({
-        action: 'finanzas.event.avance_fisico_validado.created',
-        event_type: event.event_type,
-        correlation_id: event.context.correlation_id,
-        tenant_id: event.context.tenant_id,
-        proyecto_id: event.context.proyecto_id,
-        avance_id,
-        presupuesto_id,
-        id_pago: pago.id_pago,
-      }));
-    }
-  );
+  console.log(JSON.stringify({ action: 'finanzas.event.avance_fisico_validado.sin_efecto_financiero', ...base, importe: Number(importe) }));
 }
 
 export async function handleCentroCostosCreadoEvent(event: BocamEvent): Promise<void> {
@@ -2223,6 +1906,29 @@ export async function handleCentroCostosCreadoEvent(event: BocamEvent): Promise<
   }));
 }
 
+// Proyección ocs_por_pagar (egreso-oc.ts). Independiente del compromiso presupuestal: una OC emitida es por pagar
+// aunque su compromiso se haya resuelto por la saga HTTP y no por este evento.
+export async function handleOcPorPagarCreadaEvent(event: BocamEvent): Promise<void> {
+  const { oc_id, codigo, total, proveedor_id, proveedor_nombre, concepto_id } = event.payload as {
+    oc_id: string; codigo: string; total: number; proveedor_id: string; proveedor_nombre?: string; concepto_id?: string | null;
+  };
+  await registrarOcPorPagar(
+    { tenantId: event.context.tenant_id, proyectoId: event.context.proyecto_id, userId: event.context.user_id },
+    { oc_id, codigo, total, proveedor_id, proveedor_nombre, concepto_id },
+  );
+}
+
+export async function handleOcPorPagarCanceladaEvent(event: BocamEvent): Promise<void> {
+  const { oc_id } = event.payload as { oc_id: string };
+  await cancelarOcPorPagar(
+    { tenantId: event.context.tenant_id, proyectoId: event.context.proyecto_id, userId: event.context.user_id },
+    oc_id,
+  );
+}
+
+// F25 (auditoría 5 nov 2026): compras.oc_creada no trae presupuesto_id, así que este handler hoy termina en
+// invalid_payload. El compromiso real ocurre por la saga HTTP (POST /comprometer-fondos). Se conserva como respaldo
+// del contrato del evento; eliminarlo requiere su propio spec. openspec: optimizar-api-y-dashboard-finanzas.
 export async function handleOrdenCompraCreadaEvent(event: BocamEvent): Promise<void> {
   const {
     oc_id,
@@ -2236,7 +1942,7 @@ export async function handleOrdenCompraCreadaEvent(event: BocamEvent): Promise<v
     presupuesto_id?: string;
   };
 
-  if (!oc_id || !codigo || !total || !presupuesto_id) {
+  if (!esUuid(oc_id) || !codigo || !total || !esUuid(presupuesto_id)) {
     console.error(JSON.stringify({
       action: 'finanzas.event.orden_compra_creada.invalid_payload',
       event_type: event.event_type,
@@ -2249,134 +1955,75 @@ export async function handleOrdenCompraCreadaEvent(event: BocamEvent): Promise<v
     return;
   }
 
-  const result = await createTenantContext(
+  const logCtx = {
+    event_type: event.event_type,
+    correlation_id: event.context.correlation_id,
+    tenant_id: event.context.tenant_id,
+    proyecto_id: event.context.proyecto_id,
+    oc_id,
+  };
+
+  // Compromiso único por OC (lock + índice único + tombstone): ver compromiso-oc.ts. La publicación ocurre
+  // después del commit y solo cuando este procesamiento fue el que creó el compromiso.
+  const resultado = await registrarCompromisoOc(
+    { tenantId: event.context.tenant_id, proyectoId: event.context.proyecto_id, userId: event.context.user_id, correlationId: event.context.correlation_id },
     {
-      tenantId: event.context.tenant_id,
-      proyectoId: event.context.proyecto_id,
-      userId: event.context.user_id,
+      publicaEvento: true,
+      ocId: oc_id,
+      ocCodigo: codigo,
+      monto: Number(total),
+      presupuestoId: presupuesto_id,
+      validarSuficiencia: true,
+      concepto: `Fondos comprometidos por OC ${codigo}`,
+      notas: 'Compromiso automatico desde evento compras.oc_creada.',
     },
-    async (prisma) => {
-      const existente = await prisma.movimientoPresupuestal.findFirst({
-        where: {
-          referencia_modulo: 'compras',
-          referencia_entidad: 'OrdenCompra',
-          referencia_id: oc_id,
-          tipo: TipoMovimiento.COMPROMISO,
-        },
-      });
-
-      if (existente) {
-        console.log(JSON.stringify({
-          action: 'finanzas.event.orden_compra_creada.idempotent',
-          event_type: event.event_type,
-          correlation_id: event.context.correlation_id,
-          tenant_id: event.context.tenant_id,
-          proyecto_id: event.context.proyecto_id,
-          oc_id,
-          id_movimiento: existente.id_movimiento,
-        }));
-        return {
-          evento: FinanzasEvents.FONDOS_COMPROMETIDOS,
-          payload: {
-            presupuesto_id,
-            movimiento_id: existente.id_movimiento,
-            monto_comprometido: Number(existente.monto),
-            monto_disponible_restante: 0,
-            referencia_oc_id: oc_id,
-            referencia_oc_codigo: codigo,
-            idempotente: true,
-          } satisfies FondosComprometidosPayload,
-        };
-      }
-
-      const presupuesto = await prisma.presupuestoAsignado.findUnique({
-        where: { id_presupuesto: presupuesto_id },
-      });
-
-      if (!presupuesto) {
-        throw new Error(`Presupuesto ${presupuesto_id} no encontrado para la OC ${codigo}.`);
-      }
-
-      const montoNum = Number(total);
-
-      if (Number(presupuesto.monto_disponible) < montoNum) {
-        console.warn(JSON.stringify({
-          action: 'finanzas.event.orden_compra_creada.insufficient_budget',
-          event_type: event.event_type,
-          correlation_id: event.context.correlation_id,
-          tenant_id: event.context.tenant_id,
-          proyecto_id: event.context.proyecto_id,
-          oc_id,
-          presupuesto_id,
-          monto_solicitado: montoNum,
-          monto_disponible: Number(presupuesto.monto_disponible),
-        }));
-        return {
-          evento: FinanzasEvents.PRESUPUESTO_INSUFICIENTE,
-          payload: {
-            presupuesto_id,
-            monto_solicitado: montoNum,
-            monto_disponible: Number(presupuesto.monto_disponible),
-            deficit: montoNum - Number(presupuesto.monto_disponible),
-            referencia_oc_id: oc_id,
-            referencia_oc_codigo: codigo,
-            idempotente: false,
-          } satisfies PresupuestoInsuficientePayload,
-        };
-      }
-
-      const movimiento = await prisma.movimientoPresupuestal.create({
-        data: {
-          tenant_id: event.context.tenant_id,
-          proyecto_id: event.context.proyecto_id,
-          presupuesto_id,
-          tipo: TipoMovimiento.COMPROMISO,
-          concepto: `Fondos comprometidos por OC ${codigo}`,
-          monto: montoNum,
-          referencia_modulo: 'compras',
-          referencia_entidad: 'OrdenCompra',
-          referencia_id: oc_id,
-          referencia_codigo: codigo,
-          usuario_id: event.context.user_id,
-          notas: 'Compromiso automatico desde evento compras.oc_creada.',
-        },
-      });
-
-      await prisma.presupuestoAsignado.update({
-        where: { id_presupuesto: presupuesto_id },
-        data: {
-          monto_comprometido: { increment: montoNum },
-          monto_disponible: { decrement: montoNum },
-        },
-      });
-
-      console.log(JSON.stringify({
-        action: 'finanzas.event.orden_compra_creada.created',
-        event_type: event.event_type,
-        correlation_id: event.context.correlation_id,
-        tenant_id: event.context.tenant_id,
-        proyecto_id: event.context.proyecto_id,
-        oc_id,
-        presupuesto_id,
-        id_movimiento: movimiento.id_movimiento,
-      }));
-
-      return {
-        evento: FinanzasEvents.FONDOS_COMPROMETIDOS,
-        payload: {
-          presupuesto_id,
-          movimiento_id: movimiento.id_movimiento,
-          monto_comprometido: montoNum,
-          monto_disponible_restante: Number(presupuesto.monto_disponible) - montoNum,
-          referencia_oc_id: oc_id,
-          referencia_oc_codigo: codigo,
-          idempotente: false,
-        } satisfies FondosComprometidosPayload,
-      };
-    }
   );
 
-  await publishFinanceDomainEvent(result.evento, event.context, result.payload);
+  switch (resultado.estado) {
+    case 'presupuesto_no_encontrado':
+      throw new Error(`Presupuesto ${presupuesto_id} no encontrado para la OC ${codigo}.`);
+
+    case 'oc_cancelada':
+      console.warn(JSON.stringify({ action: 'finanzas.event.orden_compra_creada.oc_cancelada', ...logCtx, presupuesto_id }));
+      return;
+
+    case 'idempotente':
+      // No se republica fondos_comprometidos: el saldo que llevaría no sería el del momento del compromiso.
+      console.log(JSON.stringify({ action: 'finanzas.event.orden_compra_creada.idempotent', ...logCtx, id_movimiento: resultado.movimientoId }));
+      return;
+
+    case 'presupuesto_insuficiente':
+      console.warn(JSON.stringify({
+        action: 'finanzas.event.orden_compra_creada.insufficient_budget',
+        ...logCtx,
+        presupuesto_id,
+        monto_solicitado: resultado.montoSolicitado,
+        monto_disponible: resultado.montoDisponible,
+      }));
+      if (!resultado.eventoEncolado) await publishFinanceDomainEvent(FinanzasEvents.PRESUPUESTO_INSUFICIENTE, event.context, {
+        presupuesto_id,
+        monto_solicitado: resultado.montoSolicitado,
+        monto_disponible: resultado.montoDisponible,
+        deficit: resultado.montoSolicitado - resultado.montoDisponible,
+        referencia_oc_id: oc_id,
+        referencia_oc_codigo: codigo,
+        idempotente: false,
+      } satisfies PresupuestoInsuficientePayload);
+      return;
+
+    case 'creado':
+      console.log(JSON.stringify({ action: 'finanzas.event.orden_compra_creada.created', ...logCtx, presupuesto_id, id_movimiento: resultado.movimientoId }));
+      if (!resultado.eventoEncolado) await publishFinanceDomainEvent(FinanzasEvents.FONDOS_COMPROMETIDOS, event.context, {
+        presupuesto_id,
+        movimiento_id: resultado.movimientoId,
+        monto_comprometido: resultado.monto,
+        monto_disponible_restante: resultado.montoDisponibleRestante,
+        referencia_oc_id: oc_id,
+        referencia_oc_codigo: codigo,
+        idempotente: false,
+      } satisfies FondosComprometidosPayload);
+      return;
+  }
 }
 
 export async function handleOrdenCompraCanceladaEvent(event: BocamEvent): Promise<void> {
@@ -2392,7 +2039,7 @@ export async function handleOrdenCompraCanceladaEvent(event: BocamEvent): Promis
     presupuesto_id?: string;
   };
 
-  if (!oc_id || !codigo || !total || !presupuesto_id) {
+  if (!esUuid(oc_id) || !codigo || !total || !esUuid(presupuesto_id)) {
     console.error(JSON.stringify({
       action: 'finanzas.event.orden_compra_cancelada.invalid_payload',
       event_type: event.event_type,
@@ -2405,134 +2052,49 @@ export async function handleOrdenCompraCanceladaEvent(event: BocamEvent): Promis
     return;
   }
 
-  const result = await createTenantContext(
+  const logCtx = {
+    event_type: event.event_type,
+    correlation_id: event.context.correlation_id,
+    tenant_id: event.context.tenant_id,
+    proyecto_id: event.context.proyecto_id,
+    oc_id,
+  };
+
+  // Siempre deja el tombstone; libera únicamente el compromiso exacto de esta OC (monto y presupuesto del propio
+  // movimiento, no los del payload ni saldos agregados). Sin compromiso no libera nada.
+  const resultado = await registrarCancelacionOc(
+    { tenantId: event.context.tenant_id, proyectoId: event.context.proyecto_id, userId: event.context.user_id, correlationId: event.context.correlation_id },
     {
-      tenantId: event.context.tenant_id,
-      proyectoId: event.context.proyecto_id,
-      userId: event.context.user_id,
+      publicaEvento: true,
+      ocId: oc_id,
+      ocCodigo: codigo,
+      origen: 'EVENTO',
+      concepto: `Liberacion de fondos por OC ${codigo}`,
+      notas: 'Liberacion automatica desde evento compras.oc_cancelada.',
     },
-    async (prisma) => {
-      const existente = await prisma.movimientoPresupuestal.findFirst({
-        where: {
-          referencia_modulo: 'compras',
-          referencia_entidad: 'OrdenCompra',
-          referencia_id: oc_id,
-          tipo: TipoMovimiento.LIBERACION,
-        },
-      });
-
-      if (existente) {
-        console.log(JSON.stringify({
-          action: 'finanzas.event.orden_compra_cancelada.idempotent',
-          event_type: event.event_type,
-          correlation_id: event.context.correlation_id,
-          tenant_id: event.context.tenant_id,
-          proyecto_id: event.context.proyecto_id,
-          oc_id,
-          id_movimiento: existente.id_movimiento,
-        }));
-        return {
-          evento: FinanzasEvents.FONDOS_LIBERADOS,
-          payload: {
-            presupuesto_id,
-            movimiento_id: existente.id_movimiento,
-            monto_liberado: Number(existente.monto),
-            referencia_oc_id: oc_id,
-            referencia_oc_codigo: codigo,
-            idempotente: true,
-          } satisfies FondosLiberadosPayload,
-        };
-      }
-
-      const presupuesto = await prisma.presupuestoAsignado.findUnique({
-        where: { id_presupuesto: presupuesto_id },
-      });
-
-      if (!presupuesto) {
-        throw new Error(`Presupuesto ${presupuesto_id} no encontrado para la cancelacion de OC ${codigo}.`);
-      }
-
-      const montoNum = Number(total);
-
-      if (Number(presupuesto.monto_comprometido) < montoNum) {
-        console.warn(JSON.stringify({
-          action: 'finanzas.event.orden_compra_cancelada.insufficient_commitment',
-          event_type: event.event_type,
-          correlation_id: event.context.correlation_id,
-          tenant_id: event.context.tenant_id,
-          proyecto_id: event.context.proyecto_id,
-          oc_id,
-          presupuesto_id,
-          monto_liberar: montoNum,
-          monto_comprometido: Number(presupuesto.monto_comprometido),
-        }));
-        return {
-          evento: FinanzasEvents.FONDOS_LIBERADOS,
-          payload: {
-            presupuesto_id,
-            movimiento_id: '',
-            monto_liberado: 0,
-            referencia_oc_id: oc_id,
-            referencia_oc_codigo: codigo,
-            idempotente: false,
-          } satisfies FondosLiberadosPayload,
-          skipPublish: true,
-        };
-      }
-
-      const movimiento = await prisma.movimientoPresupuestal.create({
-        data: {
-          tenant_id: event.context.tenant_id,
-          proyecto_id: event.context.proyecto_id,
-          presupuesto_id,
-          tipo: TipoMovimiento.LIBERACION,
-          concepto: `Liberacion de fondos por OC ${codigo}`,
-          monto: montoNum,
-          referencia_modulo: 'compras',
-          referencia_entidad: 'OrdenCompra',
-          referencia_id: oc_id,
-          referencia_codigo: codigo,
-          usuario_id: event.context.user_id,
-          notas: 'Liberacion automatica desde evento compras.oc_cancelada.',
-        },
-      });
-
-      await prisma.presupuestoAsignado.update({
-        where: { id_presupuesto: presupuesto_id },
-        data: {
-          monto_comprometido: { decrement: montoNum },
-          monto_disponible: { increment: montoNum },
-        },
-      });
-
-      console.log(JSON.stringify({
-        action: 'finanzas.event.orden_compra_cancelada.created',
-        event_type: event.event_type,
-        correlation_id: event.context.correlation_id,
-        tenant_id: event.context.tenant_id,
-        proyecto_id: event.context.proyecto_id,
-        oc_id,
-        presupuesto_id,
-        id_movimiento: movimiento.id_movimiento,
-      }));
-
-      return {
-        evento: FinanzasEvents.FONDOS_LIBERADOS,
-        payload: {
-          presupuesto_id,
-          movimiento_id: movimiento.id_movimiento,
-          monto_liberado: montoNum,
-          referencia_oc_id: oc_id,
-          referencia_oc_codigo: codigo,
-          idempotente: false,
-        } satisfies FondosLiberadosPayload,
-      };
-    }
   );
 
-  if (!result.skipPublish) {
-    await publishFinanceDomainEvent(result.evento, event.context, result.payload);
+  if (resultado.estado === 'sin_compromiso') {
+    console.warn(JSON.stringify({ action: 'finanzas.event.orden_compra_cancelada.sin_compromiso', ...logCtx, presupuesto_id }));
+    return;
   }
+
+  const idempotente = resultado.estado === 'idempotente';
+  console.log(JSON.stringify({
+    action: idempotente ? 'finanzas.event.orden_compra_cancelada.idempotent' : 'finanzas.event.orden_compra_cancelada.created',
+    ...logCtx,
+    presupuesto_id: resultado.presupuestoId,
+    id_movimiento: resultado.movimientoId,
+  }));
+
+  if (!resultado.eventoEncolado) await publishFinanceDomainEvent(FinanzasEvents.FONDOS_LIBERADOS, event.context, {
+    presupuesto_id: resultado.presupuestoId,
+    movimiento_id: resultado.movimientoId,
+    monto_liberado: resultado.monto,
+    referencia_oc_id: oc_id,
+    referencia_oc_codigo: codigo,
+    idempotente,
+  } satisfies FondosLiberadosPayload);
 }
 
 // ─── Sincronización de presupuesto por partida (Gerencia Técnica) ─────────────
@@ -2570,36 +2132,26 @@ export async function handleSaldoPartidaCreadoEvent(event: BocamEvent): Promise<
   const tenantId = event.context.tenant_id;
   const proyectoId = event.context.proyecto_id;
 
-  await createTenantContext({ tenantId, proyectoId, userId: event.context.user_id }, async (prisma) => {
-    for (const partida of partidas) {
-      const monto = Number(partida.monto_aprobado);
-      const capitulo = CATEGORIA_A_CAPITULO[partida.categoria_predominante || ''] || 'INDIRECTOS';
-
-      await prisma.presupuestoAsignado.upsert({
-        where: {
-          uq_presupuesto_concepto: { tenant_id: tenantId, proyecto_id: proyectoId, concepto_id: partida.concepto_id },
-        },
-        update: {
-          monto_autorizado: monto,
-          monto_disponible: monto,
-          concepto_clave: partida.concepto_clave,
-          capitulo,
-        },
-        create: {
-          tenant_id: tenantId,
-          proyecto_id: proyectoId,
-          concepto_id: partida.concepto_id,
-          concepto_clave: partida.concepto_clave,
-          codigo: partida.concepto_clave,
-          descripcion: partida.concepto_desc,
-          monto_autorizado: monto,
-          monto_disponible: monto,
-          capitulo,
-          estatus: 'ACTIVO',
-        },
-      });
-    }
-  });
+  // Alta idempotente o actualización relativa: el disponible respeta comprometido y ejercido (F18).
+  // openspec: blindar-movimientos-y-sincronizacion-gt.
+  const sobregiradas = await createTenantContext({ tenantId, proyectoId, userId: event.context.user_id }, async (prisma) =>
+    sincronizarPartidasGt(prisma, { tenantId, proyectoId, userId: event.context.user_id },
+      partidas
+        .filter((p) => Number.isFinite(Number(p.monto_aprobado)) && Number(p.monto_aprobado) >= 0)
+        .map((p) => ({
+          concepto_id: p.concepto_id,
+          concepto_clave: p.concepto_clave,
+          concepto_desc: p.concepto_desc,
+          monto: new Prisma.Decimal(String(p.monto_aprobado)),
+          capitulo: CATEGORIA_A_CAPITULO[p.categoria_predominante || ''] || 'INDIRECTOS',
+        }))));
+  for (const s of sobregiradas) {
+    console.warn(JSON.stringify({
+      action: 'finanzas.event.saldo_partida_creado.sobregiro',
+      tenant_id: tenantId, proyecto_id: proyectoId, concepto_id: s.concepto_id, monto_disponible: s.disponible,
+      mensaje: 'GT redujo el autorizado por debajo de lo comprometido y ejercido.',
+    }));
+  }
 
   console.log(JSON.stringify({
     action: 'finanzas.event.saldo_partida_creado.processed',
@@ -2622,7 +2174,7 @@ export async function handlePartidaComprometidaEvent(event: BocamEvent): Promise
     concepto_id: string; monto: number; referencia_id: string; referencia_codigo?: string; tipo: string;
   };
 
-  if (!concepto_id || !monto || !referencia_id) {
+  if (!esUuid(concepto_id) || !monto || !esUuid(referencia_id)) {
     console.error(JSON.stringify({
       action: 'finanzas.event.partida_comprometida.invalid_payload',
       event_type: event.event_type,
@@ -2634,41 +2186,36 @@ export async function handlePartidaComprometidaEvent(event: BocamEvent): Promise
   const tenantId = event.context.tenant_id;
   const proyectoId = event.context.proyecto_id;
 
-  await createTenantContext({ tenantId, proyectoId, userId: event.context.user_id }, async (prisma) => {
-    const existente = await prisma.movimientoPresupuestal.findFirst({
-      where: { referencia_modulo: 'compras', referencia_entidad: 'OrdenCompra', referencia_id, tipo: TipoMovimiento.COMPROMISO },
-    });
-    if (existente) {
-      console.log(JSON.stringify({ action: 'finanzas.event.partida_comprometida.idempotent', referencia_id }));
-      return;
-    }
+  // Mismo punto de escritura que oc_creada y comprometer-fondos (lock + índice único + tombstone). Gerencia Técnica
+  // es la fuente de verdad del saldo por partida, por lo que aquí no se revalida suficiencia (como antes).
+  const resultado = await registrarCompromisoOc(
+    { tenantId, proyectoId, userId: event.context.user_id },
+    {
+      ocId: referencia_id,
+      ocCodigo: referencia_codigo || referencia_id,
+      monto: Number(monto),
+      conceptoId: concepto_id,
+      validarSuficiencia: false,
+      concepto: `Compromiso por ${tipo} ${referencia_codigo || referencia_id}`,
+      notas: 'Compromiso sincronizado desde evento gerencia_tecnica.partida_comprometida.',
+    },
+  );
 
-    const presupuesto = await prisma.presupuestoAsignado.findFirst({
-      where: { tenant_id: tenantId, proyecto_id: proyectoId, concepto_id },
-    });
-    if (!presupuesto) {
-      console.warn(JSON.stringify({
-        action: 'finanzas.event.partida_comprometida.sin_presupuesto_sincronizado',
-        tenant_id: tenantId, proyecto_id: proyectoId, concepto_id, referencia_id,
-      }));
-      return;
-    }
-
-    const montoNum = Number(monto);
-    await prisma.movimientoPresupuestal.create({
-      data: {
-        tenant_id: tenantId, proyecto_id: proyectoId, presupuesto_id: presupuesto.id_presupuesto,
-        tipo: TipoMovimiento.COMPROMISO, concepto: `Compromiso por ${tipo} ${referencia_codigo || referencia_id}`, monto: montoNum,
-        referencia_modulo: 'compras', referencia_entidad: 'OrdenCompra', referencia_id, referencia_codigo: referencia_codigo || null,
-        usuario_id: event.context.user_id,
-        notas: 'Compromiso sincronizado desde evento gerencia_tecnica.partida_comprometida.',
-      },
-    });
-    await prisma.presupuestoAsignado.update({
-      where: { id_presupuesto: presupuesto.id_presupuesto },
-      data: { monto_comprometido: { increment: montoNum }, monto_disponible: { decrement: montoNum } },
-    });
-  });
+  if (resultado.estado === 'idempotente') {
+    console.log(JSON.stringify({ action: 'finanzas.event.partida_comprometida.idempotent', referencia_id }));
+    return;
+  }
+  if (resultado.estado === 'oc_cancelada') {
+    console.warn(JSON.stringify({ action: 'finanzas.event.partida_comprometida.oc_cancelada', referencia_id, tenant_id: tenantId, proyecto_id: proyectoId }));
+    return;
+  }
+  if (resultado.estado === 'presupuesto_no_encontrado') {
+    console.warn(JSON.stringify({
+      action: 'finanzas.event.partida_comprometida.sin_presupuesto_sincronizado',
+      tenant_id: tenantId, proyecto_id: proyectoId, concepto_id, referencia_id,
+    }));
+    return;
+  }
 
   console.log(JSON.stringify({ action: 'finanzas.event.partida_comprometida.processed', concepto_id, referencia_id, tenant_id: tenantId, proyecto_id: proyectoId }));
 }
@@ -2689,6 +2236,15 @@ export async function handleNominaAutorizadaEvent(event: BocamEvent): Promise<vo
   };
   const tenantId = event.context.tenant_id;
   const proyectoId = event.context.proyecto_id;
+
+  // Proyección para el pago por Finanzas (nomina-pagada-por-finanzas), independiente del presupuesto MANO_OBRA.
+  const alta = parsearNominaAutorizada(event.payload);
+  if (alta) {
+    const nueva = await registrarNominaPorPagar({ tenantId, proyectoId, userId: event.context.user_id }, alta);
+    console.log(JSON.stringify({ action: nueva ? 'finanzas.event.nomina_autorizada.por_pagar' : 'finanzas.event.nomina_autorizada.por_pagar_idempotent', prenomina_id }));
+  } else {
+    console.warn(JSON.stringify({ action: 'finanzas.event.nomina_autorizada.invalid_payload', prenomina_id, tenant_id: tenantId, proyecto_id: proyectoId }));
+  }
 
   await createTenantContext({ tenantId, proyectoId, userId: event.context.user_id }, async (prisma) => {
     const existente = await prisma.movimientoPresupuestal.findFirst({
@@ -2744,6 +2300,21 @@ export async function handleNominaPagadaEvent(event: BocamEvent): Promise<void> 
       return;
     }
 
+    // Con nomina-pagada-por-finanzas el presupuesto se aplica al pagar en Finanzas. Este evento (que Personal emite al
+    // confirmar el pago) solo aplica a pagos previos al change, y solo si existe el compromiso que va a devengar.
+    const pagadaEnFinanzas = await prisma.nominaPorPagar.findFirst({ where: { tenant_id: tenantId, prenomina_id, estado: 'PAGADA' } });
+    if (pagadaEnFinanzas) {
+      console.log(JSON.stringify({ action: 'finanzas.event.nomina_pagada.pagada_en_finanzas', prenomina_id }));
+      return;
+    }
+    const compromiso = await prisma.movimientoPresupuestal.findFirst({
+      where: { referencia_modulo: 'personal', referencia_entidad: 'PreNomina', referencia_id: prenomina_id, tipo: TipoMovimiento.COMPROMISO },
+    });
+    if (!compromiso) {
+      console.warn(JSON.stringify({ action: 'finanzas.event.nomina_pagada.sin_compromiso', prenomina_id, tenant_id: tenantId, proyecto_id: proyectoId }));
+      return;
+    }
+
     const presupuesto = await resolvePresupuestoManoObra(tenantId, proyectoId, prisma);
     if (!presupuesto) {
       console.warn(JSON.stringify({
@@ -2792,6 +2363,7 @@ export async function startServer() {
     console.log(`[Finanzas] 📥 EVENTO recibido: OC Creada`);
     console.log(`           └─ OC: ${codigo} | Total: $${Number(total).toLocaleString()} | Proveedor: ${proveedor_id}`);
     console.log(`           └─ Tenant: ${event.context.tenant_id.substring(0, 8)}... | Proyecto: ${event.context.proyecto_id.substring(0, 8)}...`);
+    await handleOcPorPagarCreadaEvent(event);
     await handleOrdenCompraCreadaEvent(event);
   });
 
@@ -2799,6 +2371,7 @@ export async function startServer() {
     const { oc_id, codigo } = event.payload as any;
     console.log(`[Finanzas] 📥 EVENTO recibido: OC Cancelada`);
     console.log(`           └─ OC: ${codigo} | Liberando fondos comprometidos`);
+    await handleOcPorPagarCanceladaEvent(event);
     await handleOrdenCompraCanceladaEvent(event);
   });
 
@@ -2851,6 +2424,21 @@ export async function startServer() {
     console.log(`[Finanzas] 📥 EVENTO recibido: Nómina Pagada`);
     await handleNominaPagadaEvent(event);
   });
+
+  // ─── OUTBOX DE EVENTOS (lote P1) ────────────────────────────────────────────────
+  // Predeterminado: FINANZAS_EVENT_MODE=direct y despachador/limpieza apagados. Solo el valor exacto `on` los enciende.
+  console.log(JSON.stringify({ action: 'finanzas.outbox.modo', event_mode: modoEventos(), variable: VARIABLE_MODO_EVENTOS }));
+  configurarDespachadorOutbox(eventBus, {
+    valor: process.env[VARIABLE_DESPACHADOR],
+    intervaloMs: Number(process.env.FINANZAS_OUTBOX_INTERVALO_MS ?? 5000),
+    maxAttempts: Number(process.env.FINANZAS_OUTBOX_MAX_INTENTOS ?? 10),
+  });
+  configurarLimpiezaOutbox({
+    valor: process.env[VARIABLE_LIMPIEZA],
+    retencionDias: Number(process.env.FINANZAS_OUTBOX_RETENCION_DIAS ?? 90),
+    lote: Number(process.env.FINANZAS_OUTBOX_LIMPIEZA_LOTE ?? 100),
+  });
+  iniciarVerificacionConsumidores(Number(process.env.FINANZAS_OUTBOX_VERIFICACION_MS ?? 60_000));
 
   console.log('[Finanzas] 📡 Suscrito a: compras.oc_creada, compras.oc_cancelada, control_obra.estimacion_aprobada, control_obra.avance_fisico_validado, control_obra.avance_fisico_registrado, auth.centro_costos_creado, gerencia_tecnica.saldo_partida_creado, personal.nomina_autorizada, personal.nomina_pagada');
 });

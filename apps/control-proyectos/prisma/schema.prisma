@@ -265,12 +265,18 @@ model AvanceFisico {
   estimacion_id          String?  @db.Uuid
   estimacion             Estimacion? @relation(fields: [estimacion_id], references: [id_estimacion])
 
+  // Estimación de referencia bajo la cual el residente registró el avance
+  // (openspec avances-residencia-por-estimacion). Distinta de estimacion_id,
+  // que significa "incluido en la estimación". Sin FK: se valida en código.
+  estimacion_referencia_id String? @db.Uuid
+
   created_at             DateTime @default(now())
   updated_at             DateTime @updatedAt
 
   @@index([tenant_id, proyecto_id])
   @@index([tenant_id, proyecto_id, estado])
   @@index([tenant_id, proyecto_id, concepto_id])
+  @@index([tenant_id, proyecto_id, estimacion_referencia_id], map: "avances_fisicos_est_ref_idx")
   @@map("avances_fisicos")
 }
 

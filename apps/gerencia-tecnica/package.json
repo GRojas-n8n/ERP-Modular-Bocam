@@ -13,14 +13,22 @@
     "test:integration:presupuesto-activo-precio-cantidad": "node -r ts-node/register/transpile-only test/integration/presupuesto-activo-precio-cantidad.integration.test.ts",
     "test:integration:presupuestos-unicidad-clave": "node -r ts-node/register/transpile-only test/integration/presupuestos-unicidad-clave.integration.test.ts",
     "test:integration:presupuestos-catalogo-maestro": "node -r ts-node/register/transpile-only test/integration/presupuestos-catalogo-maestro.integration.test.ts",
-    "test:integration:presupuestos-capitulos": "node -r ts-node/register/transpile-only test/integration/presupuestos-capitulos.integration.test.ts"
+    "test:integration:presupuestos-capitulos": "node -r ts-node/register/transpile-only test/integration/presupuestos-capitulos.integration.test.ts",
+    "test:integration:presupuestos-requieren-proyecto": "node -r ts-node/register/transpile-only test/integration/presupuestos-requieren-proyecto.integration.test.ts",
+    "test:integration:aislamiento-insumos-por-proyecto": "node -r ts-node/register/transpile-only test/integration/aislamiento-insumos-por-proyecto.integration.test.ts",
+    "test:integration:backfill-proyecto-id-insumos": "node -r ts-node/register/transpile-only test/integration/backfill-proyecto-id-insumos.integration.test.ts",
+    "test:integration:importar-lote-insumos-longitud-invalida": "node -r ts-node/register/transpile-only test/integration/importar-lote-insumos-longitud-invalida.integration.test.ts",
+    "test:integration:eliminar-fichas-tecnicas-admin": "node -r ts-node/register/transpile-only test/integration/eliminar-fichas-tecnicas-admin.integration.test.ts",
+    "test:integration:eliminar-presupuesto-admin": "node -r ts-node/register/transpile-only test/integration/eliminar-presupuesto-admin.integration.test.ts",
+    "test:integration:revertir-lote-insumos": "node -r ts-node/register/transpile-only test/integration/revertir-lote-insumos.integration.test.ts",
+    "test:integration:eliminar-composicion-apu": "node -r ts-node/register/transpile-only test/integration/eliminar-composicion-apu.integration.test.ts"
   },
   "dependencies": {
     "@bocam/rate-limiter": "^1.0.0",
     "@prisma/client": "^5.0.0",
     "amqplib": "^0.10.3",
-    "express": "^4.18.2",
-    "multer": "^2.1.1",
+    "express": "^4.22.3",
+    "multer": "^2.4.0",
     "redis": "^4.6.7"
   },
   "devDependencies": {

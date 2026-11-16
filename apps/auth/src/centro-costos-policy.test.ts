@@ -4,6 +4,9 @@ import {
   ensamblarCodigoCentroCostos,
   validarEmpresaGrupo,
   siguienteConsecutivo,
+  siguienteConsecutivoDesdeMaximo,
+  validarConsecutivo,
+  CONSECUTIVO_MAXIMO,
   migrarEstatusLegacy,
   validarEstatus,
   EMPRESAS_VALIDAS,
@@ -85,4 +88,42 @@ test('validarEstatus acepta solo el vocabulario vigente', () => {
   }
   assert.equal(validarEstatus('CONSTRUCCION'), false);
   assert.equal(validarEstatus(''), false);
+});
+
+// ── siguienteConsecutivoDesdeMaximo (max + 1, tolera huecos) ─────────────────
+
+test('siguienteConsecutivoDesdeMaximo sin existentes (null) retorna 1', () => {
+  assert.equal(siguienteConsecutivoDesdeMaximo(null), 1);
+});
+
+test('siguienteConsecutivoDesdeMaximo con máximo 2 retorna 3 (igual que conteo+1 sin huecos)', () => {
+  assert.equal(siguienteConsecutivoDesdeMaximo(2), 3);
+});
+
+test('siguienteConsecutivoDesdeMaximo con huecos (001, 002, 005) retorna 6, no 4', () => {
+  // conteo+1 daría 4 y luego chocaría con el 005 manual; max+1 nunca colisiona.
+  assert.equal(siguienteConsecutivoDesdeMaximo(5), 6);
+});
+
+test('siguienteConsecutivoDesdeMaximo con máximo 998 retorna 999', () => {
+  assert.equal(siguienteConsecutivoDesdeMaximo(998), 999);
+});
+
+test('siguienteConsecutivoDesdeMaximo con máximo 999 lanza CONSECUTIVO_AGOTADO', () => {
+  assert.throws(() => siguienteConsecutivoDesdeMaximo(999), /CONSECUTIVO_AGOTADO/);
+});
+
+// ── validarConsecutivo (entero 1..999) ───────────────────────────────────────
+
+test('validarConsecutivo acepta los límites 1 y 999', () => {
+  assert.equal(CONSECUTIVO_MAXIMO, 999);
+  assert.equal(validarConsecutivo(1), true);
+  assert.equal(validarConsecutivo(999), true);
+  assert.equal(validarConsecutivo(10), true);
+});
+
+test('validarConsecutivo rechaza 0, 1000, negativos, decimales y no numéricos', () => {
+  for (const invalido of [0, 1000, -1, 1.5, NaN, Infinity, '3', null, undefined, {}]) {
+    assert.equal(validarConsecutivo(invalido as unknown), false, `${String(invalido)} debe ser inválido`);
+  }
 });

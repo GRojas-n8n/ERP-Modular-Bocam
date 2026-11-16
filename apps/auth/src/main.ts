@@ -26,11 +26,13 @@ import { sesionExcedeLimite } from './sesion-policy';
 import { secretsMatch } from './master-secret-policy';
 import { validarPasswordNueva } from './password-policy';
 import {
+  CONSECUTIVO_MAXIMO,
   ensamblarCodigoCentroCostos,
-  siguienteConsecutivo,
+  siguienteConsecutivoDesdeMaximo,
   validarEmpresaGrupo,
   validarEstatus,
 } from './centro-costos-policy';
+import type { PrismaClient } from './generated/prisma';
 import { parseOrRespond } from './validation/parse-or-respond';
 import { loginSchema } from './validation/schemas/login.schema';
 import { registerSchema } from './validation/schemas/register.schema';
@@ -38,11 +40,15 @@ import { refreshSchema } from './validation/schemas/refresh.schema';
 import { logoutSchema, cambiarPasswordSchema } from './validation/schemas/sesion.schema';
 import { switchProjectSchema } from './validation/schemas/switch-project.schema';
 import { crearUsuarioSchema, actualizarUsuarioSchema } from './validation/schemas/admin-users.schema';
-import { crearProyectoSchema, actualizarProyectoSchema } from './validation/schemas/admin-proyectos.schema';
+import { crearProyectoSchema, actualizarProyectoSchema, siguienteConsecutivoQuerySchema } from './validation/schemas/admin-proyectos.schema';
 import { crearTenantSchema, actualizarTenantSchema } from './validation/schemas/master-tenants.schema';
 
 const TIPOS_ESPECIALES = ['OFICINA', 'TALLER', 'ALMACÉN'] as const;
 const ROLES_ALTA_CENTRO_COSTOS = ['admin', 'gerencia_tecnica', 'control_proyectos'];
+// Lectura de Proyectos: además de quien puede dar de alta/editar, control_obra
+// puede ver el listado (acceso desde su propio menú), pero no crear/editar.
+// Ver openspec/changes/acceso-proyectos-gt-control-obra.
+const ROLES_VER_CENTRO_COSTOS = [...ROLES_ALTA_CENTRO_COSTOS, 'control_obra'];
 
 export const eventBus = createEventBus(process.env.AUTH_EVENT_BUS_NAME || 'auth');
 
@@ -388,7 +394,7 @@ app.post('/api/v1/auth/register', async (req: Request, res: Response) => {
             email: normalizedEmail,
             password_hash: passwordHash,
             nombre,
-            rol_global: roles || ['resident'],
+            rol_global: roles || ['residencia'],
             proyectos_acceso: Array.isArray(proyecto_ids) && proyecto_ids.length > 0
               ? {
                   create: proyecto_ids.map((pid: string) => ({ proyecto_id: pid })),
@@ -943,7 +949,7 @@ app.post('/api/v1/auth/admin/users', requireAdminRole as express.RequestHandler,
       prisma.user.create({
         data: {
           tenant_id: tenantId, email, password_hash: passwordHash, nombre,
-          rol_global: Array.isArray(userRoles) ? userRoles : ['resident'],
+          rol_global: Array.isArray(userRoles) ? userRoles : ['residencia'],
           limite_aprobacion_financiera: limite_aprobacion || 0,
           proyectos_acceso: Array.isArray(proyecto_ids) && proyecto_ids.length > 0
             ? { create: proyecto_ids.map((pid: string) => ({ proyecto_id: pid })) }
@@ -953,7 +959,7 @@ app.post('/api/v1/auth/admin/users', requireAdminRole as express.RequestHandler,
     );
     res.status(201).json({ success: true, data: { id: user.id_usuario, email: user.email, nombre: user.nombre, roles: user.rol_global } });
   } catch (err) {
-    res.status(500).json({ success: false, error: { code: 'ADMIN_ERROR', message: String(err) } });
+    res.status(500).json({ success: false, error: { code: 'ADMIN_ERROR', message: 'Error al crear el usuario.' } });
   }
 });
 
@@ -964,9 +970,10 @@ app.patch('/api/v1/auth/admin/users/:id', requireAdminRole as express.RequestHan
     const { id } = req.params;
     const parsed = parseOrRespond(actualizarUsuarioSchema, req.body, res);
     if (!parsed) return;
-    const { nombre, roles: userRoles, activo, limite_aprobacion, password, proyecto_ids } = parsed;
+    const { nombre, email, roles: userRoles, activo, limite_aprobacion, password, proyecto_ids } = parsed;
     const updateData: Record<string, unknown> = {};
     if (nombre !== undefined) updateData.nombre = nombre;
+    if (email !== undefined) updateData.email = email;
     if (userRoles !== undefined) updateData.rol_global = userRoles;
     if (activo !== undefined) updateData.activo = activo;
     if (limite_aprobacion !== undefined) updateData.limite_aprobacion_financiera = limite_aprobacion;
@@ -990,8 +997,12 @@ app.patch('/api/v1/auth/admin/users/:id', requireAdminRole as express.RequestHan
       return updated;
     });
     res.json({ success: true, data: { id: user.id_usuario, email: user.email, nombre: user.nombre, roles: user.rol_global, activo: user.activo } });
-  } catch (err) {
-    res.status(500).json({ success: false, error: { code: 'ADMIN_ERROR', message: String(err) } });
+  } catch (err: any) {
+    if (err?.code === 'P2002') {
+      res.status(409).json({ success: false, error: { code: 'ADMIN_EMAIL_DUPLICADO', message: 'Ese email ya está en uso por otro usuario.' } });
+      return;
+    }
+    res.status(500).json({ success: false, error: { code: 'ADMIN_ERROR', message: 'Error al actualizar el usuario.' } });
   }
 });
 
@@ -1017,13 +1028,90 @@ app.get('/api/v1/auth/usuarios', requireRoles('personal_rh', 'admin') as express
 });
 
 // ─── GET /api/v1/auth/admin/proyectos ────────────────────────────────────────
-app.get('/api/v1/auth/admin/proyectos', requireRoles(...ROLES_ALTA_CENTRO_COSTOS) as express.RequestHandler, async (req: Request, res: Response) => {
+app.get('/api/v1/auth/admin/proyectos', requireRoles(...ROLES_VER_CENTRO_COSTOS) as express.RequestHandler, async (req: Request, res: Response) => {
   try {
     const { tenantId } = req.securityContext;
     const proyectos = await createTenantContext({ tenantId }, async (prisma) =>
       prisma.proyecto.findMany({ where: { tenant_id: tenantId }, orderBy: { created_at: 'asc' } })
     );
     res.json({ success: true, data: proyectos });
+  } catch (err) {
+    res.status(500).json({ success: false, error: { code: 'ADMIN_ERROR', message: String(err) } });
+  }
+});
+
+// ─── Consecutivo del Centro de Costos (vista previa + alta) ──────────────────
+// Ver openspec/changes/centro-costos-confirmar-y-editar-consecutivo.
+
+/** Se lanza dentro de la transacción de alta cuando el consecutivo confirmado ya existe. */
+class ConsecutivoOcupadoError extends Error {
+  constructor(public readonly consecutivoSugerido: number | null) {
+    super('ADMIN_CODIGO_DUPLICADO');
+  }
+}
+
+function esConsecutivoAgotado(err: unknown): boolean {
+  return err instanceof Error && err.message.startsWith('CONSECUTIVO_AGOTADO');
+}
+
+/** Siguiente consecutivo libre, o null si ya se agotaron los 999. */
+function sugerirConsecutivo(maximoExistente: number | null): number | null {
+  try {
+    return siguienteConsecutivoDesdeMaximo(maximoExistente);
+  } catch (err) {
+    if (esConsecutivoAgotado(err)) return null;
+    throw err;
+  }
+}
+
+/**
+ * Máximo consecutivo ya asignado para (tenant, empresa, año, cliente). Cuenta
+ * también los proyectos archivados: el único (tenant, código) los incluye.
+ */
+async function maximoConsecutivoExistente(
+  prisma: PrismaClient,
+  tenantId: string,
+  empresaGrupo: string,
+  anio: number,
+  clienteId: string,
+): Promise<number | null> {
+  const agg = await prisma.proyecto.aggregate({
+    _max: { consecutivo_centro_costos: true },
+    where: { tenant_id: tenantId, empresa_grupo: empresaGrupo, anio_centro_costos: anio, cliente_id: clienteId },
+  });
+  return agg._max.consecutivo_centro_costos ?? null;
+}
+
+// ─── GET /api/v1/auth/admin/proyectos/siguiente-consecutivo ──────────────────
+// Vista previa sin efectos: el código completo que se asignaría hoy. No reserva.
+app.get('/api/v1/auth/admin/proyectos/siguiente-consecutivo', requireRoles(...ROLES_ALTA_CENTRO_COSTOS) as express.RequestHandler, async (req: Request, res: Response) => {
+  try {
+    const { tenantId } = req.securityContext;
+    const q = parseOrRespond(siguienteConsecutivoQuerySchema, req.query, res);
+    if (!q) return;
+    if (!validarEmpresaGrupo(q.empresa_grupo)) {
+      res.status(400).json({ success: false, error: { code: 'ADMIN_EMPRESA_INVALIDA', message: 'empresa_grupo debe ser uno de: CIB, HCO, HSE, SEO.' } });
+      return;
+    }
+
+    const maximo = await createTenantContext({ tenantId }, (prisma) =>
+      maximoConsecutivoExistente(prisma, tenantId, q.empresa_grupo, q.anio_centro_costos, q.cliente_id)
+    );
+    const consecutivo = sugerirConsecutivo(maximo);
+    if (consecutivo === null) {
+      res.status(409).json({ success: false, error: { code: 'ADMIN_CONSECUTIVO_AGOTADO', message: `Ya se asignó el consecutivo máximo (${CONSECUTIVO_MAXIMO}) para esta empresa, año y cliente.` } });
+      return;
+    }
+
+    res.json({
+      success: true,
+      data: {
+        consecutivo,
+        codigo_centro_costos: ensamblarCodigoCentroCostos({
+          empresa: q.empresa_grupo, anio: q.anio_centro_costos, codigoCliente: q.codigo_cliente, consecutivo,
+        }),
+      },
+    });
   } catch (err) {
     res.status(500).json({ success: false, error: { code: 'ADMIN_ERROR', message: String(err) } });
   }
@@ -1039,6 +1127,7 @@ app.post('/api/v1/auth/admin/proyectos', requireRoles(...ROLES_ALTA_CENTRO_COSTO
       nombre_oficial, tipo_contrato, moneda_base, estatus,
       es_especial, tipo_especial, codigo_centro_costos: codigoEspecialInput,
       empresa_grupo, anio_centro_costos, cliente_id, codigo_cliente,
+      consecutivo_centro_costos: consecutivoExplicito,
       monto_total_vendido, periodo_ejecucion, periodo_ejecucion_unidad,
       total_dias_naturales, total_dias_laborables,
     } = parsed;
@@ -1091,7 +1180,7 @@ app.post('/api/v1/auth/admin/proyectos', requireRoles(...ROLES_ALTA_CENTRO_COSTO
       camposCentroCostos = { es_especial: false, empresa_grupo, anio_centro_costos, cliente_id };
     }
 
-    const proyecto = await createTenantContext({ tenantId }, async (prisma) => {
+    const crearEnTransaccion = () => createTenantContext({ tenantId }, async (prisma) => {
       let nuevo;
       if (es_especial) {
         nuevo = await prisma.proyecto.create({
@@ -1107,38 +1196,38 @@ app.post('/api/v1/auth/admin/proyectos', requireRoles(...ROLES_ALTA_CENTRO_COSTO
           } as any,
         });
       } else {
-        // Cálculo del consecutivo dentro de la misma transacción, con
-        // reintento ante colisión de unicidad (creación concurrente).
-        for (let intento = 0; intento < 3; intento++) {
-          const countExistente = await prisma.proyecto.count({
-            where: { tenant_id: tenantId, empresa_grupo, anio_centro_costos, cliente_id },
+        // empresa_grupo/anio_centro_costos/codigo_cliente ya se validaron como
+        // presentes arriba (guard clauses del bloque `else` de es_especial) antes
+        // de llegar a este punto — los `!` reflejan esa garantía en runtime.
+        const maximo = await maximoConsecutivoExistente(prisma, tenantId, empresa_grupo!, anio_centro_costos!, cliente_id!);
+        // Consecutivo confirmado por el usuario, o el siguiente libre (max + 1).
+        const consecutivo = consecutivoExplicito ?? siguienteConsecutivoDesdeMaximo(maximo);
+        const codigo = ensamblarCodigoCentroCostos({ empresa: empresa_grupo!, anio: anio_centro_costos!, codigoCliente: codigo_cliente!, consecutivo });
+
+        if (consecutivoExplicito !== undefined) {
+          // "Lo que ves es lo que se guarda": si el código confirmado ya existe NO se
+          // reasigna otro consecutivo en silencio; se avisa con el siguiente libre.
+          const ocupado = await prisma.proyecto.findFirst({
+            where: { tenant_id: tenantId, codigo_centro_costos: codigo },
+            select: { id_proyecto: true },
           });
-          const consecutivo = siguienteConsecutivo(countExistente) + intento;
-          // empresa_grupo/anio_centro_costos/codigo_cliente ya se validaron como
-          // presentes arriba (guard clauses del bloque `else` de es_especial) antes
-          // de llegar a este punto — los `!` reflejan esa garantía en runtime.
-          const codigo = ensamblarCodigoCentroCostos({ empresa: empresa_grupo!, anio: anio_centro_costos!, codigoCliente: codigo_cliente!, consecutivo });
-          try {
-            nuevo = await prisma.proyecto.create({
-              data: {
-                tenant_id: tenantId, nombre_oficial,
-                tipo_contrato: tipo_contrato || 'PRECIOS_UNITARIOS',
-                moneda_base: moneda_base || 'MXN',
-                estatus: estatus || 'ABIERTO',
-                ...camposCentroCostos,
-                consecutivo_centro_costos: consecutivo,
-                codigo_centro_costos: codigo,
-                fecha_inicio_real, fecha_firma_contrato, fecha_programada_inicio, fecha_programada_fin,
-                monto_total_vendido, periodo_ejecucion, periodo_ejecucion_unidad,
-                total_dias_naturales, total_dias_laborables,
-              },
-            });
-            break;
-          } catch (err: any) {
-            if (err?.code === 'P2002' && intento < 2) continue; // colisión de unicidad — reintentar
-            throw err;
-          }
+          if (ocupado) throw new ConsecutivoOcupadoError(sugerirConsecutivo(maximo));
         }
+
+        nuevo = await prisma.proyecto.create({
+          data: {
+            tenant_id: tenantId, nombre_oficial,
+            tipo_contrato: tipo_contrato || 'PRECIOS_UNITARIOS',
+            moneda_base: moneda_base || 'MXN',
+            estatus: estatus || 'ABIERTO',
+            ...camposCentroCostos,
+            consecutivo_centro_costos: consecutivo,
+            codigo_centro_costos: codigo,
+            fecha_inicio_real, fecha_firma_contrato, fecha_programada_inicio, fecha_programada_fin,
+            monto_total_vendido, periodo_ejecucion, periodo_ejecucion_unidad,
+            total_dias_naturales, total_dias_laborables,
+          },
+        });
       }
 
       // Auto-asignar los usuarios con rol elegible (ver project-access-policy.ts)
@@ -1158,6 +1247,42 @@ app.post('/api/v1/auth/admin/proyectos', requireRoles(...ROLES_ALTA_CENTRO_COSTO
 
       return nuevo!;
     });
+
+    let proyecto!: Awaited<ReturnType<typeof crearEnTransaccion>>;
+    for (let intento = 0; ; intento++) {
+      try {
+        proyecto = await crearEnTransaccion();
+        break;
+      } catch (err: any) {
+        // Colisión por creación concurrente SIN consecutivo confirmado: un P2002
+        // aborta la transacción de Postgres (no se puede seguir dentro de ella), así
+        // que se reintenta la transacción completa y se recalcula el consecutivo.
+        if (err?.code === 'P2002' && !es_especial && consecutivoExplicito === undefined && intento < 2) continue;
+
+        // Consecutivo confirmado que otro usuario tomó entre la vista previa y el guardado.
+        if (err instanceof ConsecutivoOcupadoError || (err?.code === 'P2002' && !es_especial && consecutivoExplicito !== undefined)) {
+          const sugerido = err instanceof ConsecutivoOcupadoError
+            ? err.consecutivoSugerido
+            : sugerirConsecutivo(await createTenantContext({ tenantId }, (prisma) =>
+                maximoConsecutivoExistente(prisma, tenantId, empresa_grupo!, anio_centro_costos!, cliente_id!)));
+          res.status(409).json({
+            success: false,
+            error: {
+              code: 'ADMIN_CODIGO_DUPLICADO',
+              message: 'Ese consecutivo ya está asignado a otro Centro de Costos.',
+              consecutivo_sugerido: sugerido,
+            },
+          });
+          return;
+        }
+
+        if (esConsecutivoAgotado(err)) {
+          res.status(409).json({ success: false, error: { code: 'ADMIN_CONSECUTIVO_AGOTADO', message: `Ya se asignó el consecutivo máximo (${CONSECUTIVO_MAXIMO}) para esta empresa, año y cliente.` } });
+          return;
+        }
+        throw err;
+      }
+    }
 
     void publishCentroCostosCreado(
       {

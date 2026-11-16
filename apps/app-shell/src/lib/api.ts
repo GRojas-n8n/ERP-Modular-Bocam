@@ -208,6 +208,9 @@ export const comprasApi = {
   createRequisicion:   (data: unknown) => api.post('/api/v1/compras/requisiciones', data),
   getOrdenesCompra:    ()         => api.get('/api/v1/compras/ordenes-compra'),
   getProveedores:      ()         => api.get('/api/v1/compras/proveedores'),
+  getProveedoresIncluirArchivados: () => api.get('/api/v1/compras/proveedores?incluir_archivados=true'),
+  archivarProveedor:   (id: string) => api.post(`/api/v1/compras/proveedores/${id}/archivar`),
+  activarProveedor:    (id: string) => api.post(`/api/v1/compras/proveedores/${id}/activar`),
   importarProveedoresLote: (registros: unknown[]) => api.post('/api/v1/compras/proveedores/importar-lote', { registros }),
   getComparativas:     ()         => api.get('/api/v1/compras/comparativas'),
   getComparativa:      (id: string) => api.get(`/api/v1/compras/comparativas/${id}`),
@@ -295,6 +298,7 @@ export const asistenteApi = {
 export const ventasApi = {
   getClientes:     ()         => api.get('/api/v1/ventas/clientes'),
   createCliente:   (data: unknown) => api.post('/api/v1/ventas/clientes', data),
+  updateCliente:   (id: string, data: unknown) => api.put(`/api/v1/ventas/clientes/${id}`, data),
   importarClientesLote: (registros: unknown[]) => api.post('/api/v1/ventas/clientes/importar-lote', { registros }),
   getCotizaciones: ()         => api.get('/api/v1/ventas/cotizaciones'),
   createCotizacion:(data: unknown) => api.post('/api/v1/ventas/cotizaciones', data),

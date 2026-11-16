@@ -63,6 +63,65 @@ export enum FinanzasEvents {
   OC_PAGADA_TOTAL = 'finanzas.oc_pagada_total',
   /** Se registró un pago parcial de una OC. */
   OC_PAGADA_PARCIAL = 'finanzas.oc_pagada_parcial',
+  /** Un egreso (cheque, transferencia, SPEI, efectivo) liquidó una o más OCs de un proyecto. Lo consume Contabilidad. */
+  EGRESO_OC_REGISTRADO = 'finanzas.egreso_oc_registrado',
+  /** Se cobró (parcial o total) una cuenta por cobrar (estimación). Lo consumen Contabilidad (póliza de ingreso)
+   *  y Control de Proyectos (estado de la estimación). openspec: cuentas-por-cobrar-estimaciones. */
+  COBRO_REGISTRADO = 'finanzas.cobro_registrado',
+  /** Finanzas pagó una prenómina desde una cuenta bancaria. Personal la marca PAGADA; Control de Proyectos la suma
+   *  al costo real de mano de obra. openspec: nomina-pagada-por-finanzas. */
+  NOMINA_PAGADA = 'finanzas.nomina_pagada',
+}
+
+export interface NominaPagadaFinanzasPayload {
+  prenomina_id: string;
+  proyecto_id: string;
+  codigo: string;
+  total_neto: number;
+  total_empleados: number;
+  periodo_inicio: string | null;
+  periodo_fin: string | null;
+  cuenta_id: string;
+  referencia: string;
+  fecha_pago: string;
+  efecto_presupuestal: 'devengado' | 'ejercido_directo' | 'sin_presupuesto';
+}
+
+export interface CobroRegistradoPayload {
+  id_cobro: string;
+  cxc_id: string;
+  proyecto_id: string;
+  origen: string;
+  origen_id: string;
+  codigo: string;
+  cuenta_id: string;
+  folio: string;
+  monto: number;
+  moneda: string;
+  fecha_cobro: string;
+  cobrado_total: number;
+  saldo: number;
+  estado: 'POR_COBRAR' | 'COBRO_PARCIAL' | 'COBRADA' | 'CANCELADA';
+}
+
+export interface EgresoOcRegistradoPayload {
+  pago_id: string;
+  proyecto_id: string;
+  fuente: 'ANTICIPO' | 'CUENTA_BANCARIA';
+  cuenta_id: string | null;
+  tipo_pago: 'TRANSFERENCIA' | 'SPEI' | 'CHEQUE' | 'EFECTIVO';
+  referencia: string;
+  fecha_pago: string;
+  monto_total: number;
+  moneda: string;
+  detalles: Array<{
+    oc_id: string;
+    oc_codigo: string;
+    proveedor_id: string;
+    proveedor_nombre: string;
+    concepto_id: string | null;
+    monto_aplicado: number;
+  }>;
 }
 
 // ─── Tipos de Eventos CONSUMIDOS por Finanzas ───────────────────────────────
@@ -117,6 +176,8 @@ export interface PagoRegistradoPayload {
   referencia_id?: string;
   concepto: string;
   beneficiario: string;
+  /** Cuenta bancaria de la que salió el pago (aditivo; openspec: corregir-ejecucion-programa-pagos). */
+  cuenta_id?: string;
 }
 
 export interface TransferenciaPresupuestalPayload {
