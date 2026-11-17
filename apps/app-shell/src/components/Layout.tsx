@@ -214,6 +214,7 @@ export const ALL_NAV_ITEMS: NavItem[] = [
       { id: 'usuarios',   label: 'Usuarios',           icon: IconUsers,       roles: ['admin'] },
       { id: 'proyectos',  label: 'Proyectos',           icon: IconBriefcase,  roles: ['admin', 'gerencia_tecnica', 'control_proyectos', 'control_obra'] },
       { id: 'categorias', label: 'Categorías de Gasto', icon: IconTrendingUp, roles: ['admin'] },
+      { id: 'auditoria',  label: 'Auditoría',           icon: IconClock,      roles: ['admin'] },
     ],
   },
 ];
