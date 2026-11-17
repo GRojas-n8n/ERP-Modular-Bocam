@@ -24,6 +24,8 @@
     "test:integration:outbox-dispatcher-arranque": "node -r ts-node/register/transpile-only test/integration/outbox-dispatcher-arranque.integration.test.ts",
     "test:integration:finanzas-eventos-idempotencia-event-id": "node -r ts-node/register/transpile-only test/integration/finanzas-eventos-idempotencia-event-id.integration.test.ts",
     "test:integration:oc-transiciones-eventos-finanzas": "node -r ts-node/register/transpile-only test/integration/oc-transiciones-eventos-finanzas.integration.test.ts",
+    "test:unit:oc-eventos": "node -r ts-node/register/transpile-only --test src/oc-eventos.test.ts",
+    "test:integration:oc-creada-contrato-consumidores": "node -r ts-node/register/transpile-only test/integration/oc-creada-contrato-consumidores.integration.test.ts",
     "test:integration:oc-snapshot-insumo": "node -r ts-node/register/transpile-only test/integration/oc-snapshot-insumo.integration.test.ts",
     "test:integration:recepcion-oc-compras-almacen": "node -r ts-node/register/transpile-only test/integration/recepcion-oc-compras-almacen.integration.test.ts",
     "test:integration:editar-proveedor": "node -r ts-node/register/transpile-only test/integration/editar-proveedor.integration.test.ts",
