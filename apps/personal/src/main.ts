@@ -980,48 +980,99 @@ app.patch('/api/v1/personal/prenominas/:id/autorizar', async (req: Request, res:
   }
 });
 
-// Marcar pre-nómina como PAGADA (RBAC: admin | personal_rh)
+// La nómina la paga Finanzas desde una cuenta bancaria (openspec: personal-nomina-pagada-por-finanzas). Personal ya no
+// mueve el estado a PAGADA a mano: lo hace al recibir finanzas.nomina_pagada. Se conserva la ruta para responder con
+// un código claro a pantallas o integraciones anteriores.
 app.patch('/api/v1/personal/prenominas/:id/pagar', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { tenantId, proyectoId, userId, roles } = req.securityContext;
-    if (!roles.includes('admin') && !roles.includes('personal_rh')) {
-      res.status(403).json(createApiError('PER_FORBIDDEN', 'Solo admin o personal_rh pueden marcar una nómina como pagada.'));
-      return;
-    }
-    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
-      const pn = await prisma.preNomina.findUnique({ where: { id_prenomina: id } });
-      if (!pn) throw new Error('Pre-nómina no encontrada.');
-      if (pn.estado !== EstadoPreNomina.AUTORIZADA) throw new Error(`Solo se puede marcar como PAGADA una pre-nómina AUTORIZADA. Estado actual: ${pn.estado}`);
-      return await prisma.preNomina.update({
-        where: { id_prenomina: id },
-        data: { estado: EstadoPreNomina.PAGADA },
-      });
-    });
-    void eventBus.publish({
-      event_type: 'personal.nomina_pagada',
-      timestamp: new Date().toISOString(),
-      context: { tenant_id: tenantId, proyecto_id: proyectoId, user_id: userId },
-      payload: {
-        prenomina_id:          data.id_prenomina,
-        codigo:                data.codigo,
-        periodo_tipo:          data.periodo_tipo,
-        periodo_inicio:        data.periodo_inicio.toISOString(),
-        periodo_fin:           data.periodo_fin.toISOString(),
-        total_percepciones:    Number(data.total_percepciones),
-        total_deducciones:     Number(data.total_deducciones),
-        total_neto:            Number(data.total_neto),
-        total_empleados:       Number(data.total_empleados),
-        autorizado_por_id:     data.autorizado_por ?? userId,
-        autorizado_por_nombre: data.autorizado_por ?? userId,
-      },
-    }).catch((err: any) => console.error('[Personal] eventBus.publish error (nomina_pagada):', err.message));
-    console.log(`[Personal] ✅ Pre-nómina ${data.codigo} PAGADA`);
-    res.json(createApiResponse(data, tenantId, proyectoId));
-  } catch (error: any) {
-    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+  const { roles } = req.securityContext;
+  if (!roles.includes('admin') && !roles.includes('personal_rh')) {
+    res.status(403).json(createApiError('PER_FORBIDDEN', 'Solo admin o personal_rh pueden consultar el pago de una nómina.'));
+    return;
   }
+  res.status(409).json(createApiError('PER_PAGO_EN_FINANZAS',
+    'La nómina autorizada la paga Finanzas desde una cuenta bancaria; Personal la marca PAGADA al confirmarse el pago.'));
 });
+
+/** Publica personal.nomina_pagada (lo consumen Contabilidad para la póliza PAGO_NOMINA y Finanzas). */
+async function publicarNominaPagada(
+  ctx: { tenant_id: string; proyecto_id: string; user_id: string; correlation_id?: string },
+  data: any,
+  pago: { cuenta_id: string; referencia: string; fecha_pago: string },
+) {
+  await eventBus.publish({
+    event_type: 'personal.nomina_pagada',
+    timestamp: new Date().toISOString(),
+    context: ctx,
+    payload: {
+      prenomina_id:          data.id_prenomina,
+      codigo:                data.codigo,
+      periodo_tipo:          data.periodo_tipo,
+      periodo_inicio:        data.periodo_inicio.toISOString(),
+      periodo_fin:           data.periodo_fin.toISOString(),
+      total_percepciones:    Number(data.total_percepciones),
+      total_deducciones:     Number(data.total_deducciones),
+      total_neto:            Number(data.total_neto),
+      total_empleados:       Number(data.total_empleados),
+      autorizado_por_id:     data.autorizado_por ?? ctx.user_id,
+      autorizado_por_nombre: data.autorizado_por ?? ctx.user_id,
+      cuenta_id:             pago.cuenta_id,
+      referencia:            pago.referencia,
+      fecha_pago:            pago.fecha_pago,
+    },
+  });
+}
+
+/**
+ * finanzas.nomina_pagada → la prenómina AUTORIZADA del proyecto pasa a PAGADA y se publica personal.nomina_pagada.
+ * UPDATE condicional por estado y proyecto: reentregas y carreras no duplican. Si ya estaba PAGADA se vuelve a
+ * publicar (los consumidores son idempotentes): así una publicación fallida se recupera con el reintento del evento.
+ */
+export async function handleNominaPagadaFinanzasEvent(event: any): Promise<void> {
+  const p = event.payload ?? {};
+  const ctx = {
+    tenant_id: event.context?.tenant_id,
+    proyecto_id: event.context?.proyecto_id,
+    user_id: event.context?.user_id,
+    correlation_id: event.context?.correlation_id,
+  };
+  const base = { event_type: event.event_type, ...ctx, prenomina_id: p.prenomina_id };
+  if (!p.prenomina_id || !p.cuenta_id || !p.referencia || !p.fecha_pago || !ctx.tenant_id || !ctx.proyecto_id) {
+    console.error(JSON.stringify({ action: 'personal.event.finanzas.nomina_pagada.invalid_payload', ...base }));
+    return;
+  }
+
+  const resultado = await createTenantContext({ tenantId: ctx.tenant_id, proyectoId: ctx.proyecto_id, userId: ctx.user_id }, async (prisma) => {
+    const n = await prisma.preNomina.updateMany({
+      where: { id_prenomina: p.prenomina_id, proyecto_id: ctx.proyecto_id, estado: EstadoPreNomina.AUTORIZADA },
+      data: { estado: EstadoPreNomina.PAGADA },
+    });
+    const pn = await prisma.preNomina.findFirst({ where: { id_prenomina: p.prenomina_id, proyecto_id: ctx.proyecto_id } });
+    if (!pn) return { estado: 'not_found' as const };
+    if (pn.estado !== EstadoPreNomina.PAGADA) return { estado: 'estado_invalido' as const, actual: pn.estado };
+    return { estado: n.count === 1 ? ('applied' as const) : ('idempotent' as const), pn };
+  });
+
+  if (resultado.estado === 'applied' || resultado.estado === 'idempotent') {
+    await publicarNominaPagada(ctx, resultado.pn, { cuenta_id: p.cuenta_id, referencia: p.referencia, fecha_pago: p.fecha_pago });
+  }
+  const log = resultado.estado === 'estado_invalido' ? console.error : console.log;
+  log(JSON.stringify({
+    action: `personal.event.finanzas.nomina_pagada.${resultado.estado}`, ...base,
+    ...(resultado.estado === 'estado_invalido' ? { estado_actual: resultado.actual } : {}),
+  }));
+}
+
+/** Cola propia con reintento y DLQ: una caída de la BD no pierde la confirmación de pago. */
+export const COLA_NOMINA_PAGADA_FINANZAS = {
+  queueName: 'personal.finanzas_nomina_pagada.v1',
+  queueArguments: {
+    'x-message-ttl': undefined,
+    'x-dead-letter-exchange': '',
+    'x-dead-letter-routing-key': 'personal.finanzas_nomina_pagada.v1.dlq',
+  } as Record<string, unknown>,
+  retry: { maxAttempts: Number(process.env.PERSONAL_EVENTOS_MAX_INTENTOS ?? 5), delayMs: Number(process.env.PERSONAL_EVENTOS_ESPERA_MS ?? 30_000) },
+  deadLetter: true as const,
+};
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // DASHBOARD DE PERSONAL
@@ -2419,6 +2470,7 @@ export async function handleCentroCostosCreadoEvent(event: any): Promise<void> {
 export async function initEventBus() {
   await eventBus.connect();
   await eventBus.subscribe('auth.centro_costos_creado', handleCentroCostosCreadoEvent);
+  await eventBus.subscribe('finanzas.nomina_pagada', handleNominaPagadaFinanzasEvent, COLA_NOMINA_PAGADA_FINANZAS);
 }
 
 export async function shutdownEventBus() {
@@ -2428,6 +2480,7 @@ export async function shutdownEventBus() {
 async function startServer() {
   await eventBus.connect();
   await eventBus.subscribe('auth.centro_costos_creado', handleCentroCostosCreadoEvent);
+  await eventBus.subscribe('finanzas.nomina_pagada', handleNominaPagadaFinanzasEvent, COLA_NOMINA_PAGADA_FINANZAS);
   app.listen(PORT, () => {
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('  👷  Módulo: PERSONAL / RRHH');

@@ -22,7 +22,8 @@
     "test:integration:compras-oc": "node -r ts-node/register/transpile-only test/integration/compras.oc-creada.integration.test.ts",
     "test:integration:finanzas-pago": "node -r ts-node/register/transpile-only test/integration/finanzas.pago-registrado.integration.test.ts",
     "test:integration:finanzas-transferencia": "node -r ts-node/register/transpile-only test/integration/finanzas.transferencia.integration.test.ts",
-    "test:integration:rbac-rol-finanzas": "node -r ts-node/register/transpile-only test/integration/rbac-rol-finanzas.integration.test.ts"
+    "test:integration:rbac-rol-finanzas": "node -r ts-node/register/transpile-only test/integration/rbac-rol-finanzas.integration.test.ts",
+    "test:integration:finanzas-egreso-cobro": "node -r ts-node/register/transpile-only test/integration/finanzas.egreso-cobro.integration.test.ts"
   },
   "dependencies": {
     "@bocam/rate-limiter": "^1.0.0",

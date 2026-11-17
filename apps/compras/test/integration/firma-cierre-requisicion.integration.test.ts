@@ -89,7 +89,7 @@ async function seedCuadroFirmable(conRequisicion: boolean) {
 async function testFirmaRegistraRevisionEnRequisicion() {
   const s = await seedCuadroFirmable(true);
   try {
-    const token = signTenantToken({ userId: randomUUID(), tenantId: s.tenantId, proyectoId: s.proyectoId, roles: ['resident'] });
+    const token = signTenantToken({ userId: randomUUID(), tenantId: s.tenantId, proyectoId: s.proyectoId, roles: ['residencia'] });
 
     const response = await fetch(`${comprasBaseUrl}/api/v1/compras/comparativas/${s.cuadroId}/firmar`, {
       method: 'POST',
@@ -119,7 +119,7 @@ async function testFirmaRegistraRevisionEnRequisicion() {
 async function testFirmaConRequisicionHuerfanaNoFalla() {
   const s = await seedCuadroFirmable(false); // requisicion_id = randomUUID() sin fila real
   try {
-    const token = signTenantToken({ userId: randomUUID(), tenantId: s.tenantId, proyectoId: s.proyectoId, roles: ['resident'] });
+    const token = signTenantToken({ userId: randomUUID(), tenantId: s.tenantId, proyectoId: s.proyectoId, roles: ['residencia'] });
 
     const response = await fetch(`${comprasBaseUrl}/api/v1/compras/comparativas/${s.cuadroId}/firmar`, {
       method: 'POST',

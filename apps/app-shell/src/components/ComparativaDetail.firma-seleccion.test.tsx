@@ -8,7 +8,7 @@ import type { ComparativaLocal } from './ComparativaDetail';
  */
 
 vi.mock('../context/TenantContext', () => ({
-  useTenant: () => ({ user: { id: 'user-1', name: 'Residente de Prueba', role: ['resident'] } }),
+  useTenant: () => ({ user: { id: 'user-1', name: 'Residente de Prueba', role: ['residencia'] } }),
 }));
 
 vi.mock('../context/NotificationContext', () => ({

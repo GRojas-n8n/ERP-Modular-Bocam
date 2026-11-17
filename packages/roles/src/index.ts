@@ -79,6 +79,7 @@ export const ROLES: readonly DefinicionRol[] = [
     estado: 'asignable',
     nota: 'Inventario, movimientos y activos fijos.',
   },
+  { id: 'seguridad_hse',    label: 'Seguridad HSE',           estado: 'asignable' },
 
   // ── Reconocidos pero sin endpoints propios ───────────────────────────────
   // Los módulos existen en el menú, pero sus servicios exigen otros roles.
@@ -90,41 +91,10 @@ export const ROLES: readonly DefinicionRol[] = [
     nota: 'El servicio de Contabilidad exige admin o finanzas; este rol todavía no abre nada.',
   },
   {
-    id: 'seguridad_hse',
-    label: 'Seguridad HSE',
-    estado: 'sin-backend',
-    nota: 'El servicio de Seguridad todavía no comprueba este rol en sus endpoints.',
-  },
-  {
     id: 'ventas',
     label: 'Ventas',
     estado: 'sin-backend',
     nota: 'El servicio de Ventas solo comprueba admin por ahora.',
-  },
-
-  // ── Alias históricos ─────────────────────────────────────────────────────
-  // Siguen apareciendo en requireRoles de algunos servicios, así que un JWT que
-  // los traiga debe seguir funcionando. No se ofrecen para usuarios nuevos.
-  {
-    id: 'resident',
-    label: 'Residencia de Obra (heredado)',
-    estado: 'alias',
-    canonico: 'residencia',
-    nota: 'Compras lo acepta; Personal y Control de Proyectos no. Usar residencia.',
-  },
-  {
-    id: 'compras',
-    label: 'Compras (heredado)',
-    estado: 'alias',
-    canonico: 'procurement',
-    nota: 'Solo lo reconoce el menú del app-shell; ningún backend lo exige. Usar procurement.',
-  },
-  {
-    id: 'technical',
-    label: 'Gerencia Técnica (heredado)',
-    estado: 'alias',
-    canonico: 'gerencia_tecnica',
-    nota: 'Aparece en dos endpoints de Gerencia Técnica. Usar gerencia_tecnica.',
   },
 ] as const;
 

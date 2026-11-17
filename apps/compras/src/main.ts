@@ -29,6 +29,7 @@ import { calcularBloqueosRequisicion, calcularBloqueosProveedor, Bloqueo } from 
 import { parseOrRespond } from './validation/parse-or-respond';
 import { longitudProveedorSchema } from './validation/schemas/proveedor.schema';
 import { OC_STATUS, TRANSICIONES_EVENTO_FINANZAS, transicionarEstadoOc } from './oc-estados';
+import { buildOcCanceladaPayload, buildOcCreadaPayload } from './oc-eventos';
 import { randomUUID } from 'node:crypto';
 import {
   registrarEventoRecepcion, configurarDespachadorOutbox, estadoDespachadorOutbox, VARIABLE_DESPACHADOR, reconstruirPayloadRecepcion, problemasDePayload, snapshotDeItemOc,
@@ -497,7 +498,7 @@ app.patch(
 
 app.patch(
   '/api/v1/compras/requisiciones/:reqId/items/:itemId/specs',
-  requireRoles('resident', 'residencia', 'admin'),
+  requireRoles('residencia', 'admin'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
@@ -596,7 +597,7 @@ app.get('/api/v1/compras/requisiciones/:id', async (req: Request, res: Response)
 
 app.put(
   '/api/v1/compras/requisiciones/:reqId/items/:itemId/especificaciones',
-  requireRoles('resident', 'residencia', 'admin'),
+  requireRoles('residencia', 'admin'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
@@ -671,7 +672,7 @@ app.put(
 // especificacion-tecnica-fuente-unica).
 app.put(
   '/api/v1/compras/requisiciones/:reqId/items/:itemId/especificacion-simple',
-  requireRoles('resident', 'residencia', 'admin'),
+  requireRoles('residencia', 'admin'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
@@ -1029,7 +1030,7 @@ app.put(
 
 app.get(
   '/api/v1/compras/requisiciones/:reqId/solicitud-cotizacion/proveedores/:scpId/pdf',
-  requireRoles('procurement', 'admin', 'superintendent', 'resident', 'residencia'),
+  requireRoles('procurement', 'admin', 'superintendent', 'residencia'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
@@ -1117,7 +1118,7 @@ app.get(
  */
 app.get(
   '/api/v1/compras/trazabilidad/materiales',
-  requireRoles('procurement', 'admin', 'superintendent', 'resident', 'residencia', 'gerencia_tecnica'),
+  requireRoles('procurement', 'admin', 'superintendent', 'residencia', 'gerencia_tecnica'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
@@ -1311,7 +1312,7 @@ app.get(
  */
 app.get(
   '/api/v1/compras/trazabilidad/concepto/:conceptoId',
-  requireRoles('procurement', 'admin', 'superintendent', 'resident', 'residencia', 'gerencia_tecnica'),
+  requireRoles('procurement', 'admin', 'superintendent', 'residencia', 'gerencia_tecnica'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
@@ -2660,7 +2661,7 @@ app.get('/api/v1/compras/comparativas', async (req: Request, res: Response) => {
 
 // GET pendientes-evaluacion — bandeja del Residente
 app.get('/api/v1/compras/comparativas/pendientes-evaluacion',
-  requireRoles('resident', 'residencia', 'control_obra', 'superintendent'),
+  requireRoles('residencia', 'control_obra', 'superintendent'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
@@ -3257,20 +3258,21 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
             timestamp: new Date().toISOString(),
             context: buildEventContext(req),
             payload: {
-              oc_id:          oc.id_orden,
-              codigo:         oc.codigo,
-              total:          oc.total.toNumber(),
-              proveedor_id:   oc.proveedor_id,
+              ...buildOcCreadaPayload({
+                oc,
+                proyectoId,
+                // Siempre definido aquí: la ruta responde 400/422 antes de crear la OC si no lo resuelve.
+                presupuestoId:  presupuesto_id as string,
+                requisicionId:  loteData.requisicionId,
+                conceptoId:     loteData.conceptoId,
+                items:          grupo.detalles.map((d: any) => {
+                  const reqLineId = d.detalle_req_id ?? (d.insumo_id ? loteData.lineaMap.get(d.insumo_id) ?? null : null);
+                  const cantidad  = reqLineId ? (loteData.cantidadMap.get(reqLineId) ?? 1) : 1;
+                  return { insumo_id: d.insumo_id, cantidad, precio_unitario: d.precio_ofertado.toNumber() };
+                }),
+              }),
               // Aditivo (openspec: oc-creada-con-nombre-proveedor): Finanzas lo guarda en ocs_por_pagar.
               proveedor_nombre: oc.proveedor?.razon_social ?? null,
-              proyecto_id:    proyectoId,
-              requisicion_id: loteData.requisicionId || null,
-              concepto_id:    loteData.conceptoId   || null,
-              items:          grupo.detalles.map((d: any) => {
-                const reqLineId = d.detalle_req_id ?? (d.insumo_id ? loteData.lineaMap.get(d.insumo_id) ?? null : null);
-                const cantidad  = reqLineId ? (loteData.cantidadMap.get(reqLineId) ?? 1) : 1;
-                return { insumo_id: d.insumo_id, cantidad, precio_unitario: d.precio_ofertado.toNumber() };
-              }),
             },
           });
         } catch (_) { /* best-effort */ }
@@ -3636,7 +3638,7 @@ app.patch('/api/v1/compras/comparativas/:id/enviar-evaluacion',
 
 // 2.2 PATCH evaluar — Residente registra evaluación técnica por renglón
 app.patch('/api/v1/compras/comparativas/:id/evaluar',
-  requireRoles('resident', 'residencia', 'control_obra', 'superintendent', 'procurement', 'admin'),
+  requireRoles('residencia', 'control_obra', 'superintendent', 'procurement', 'admin'),
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -3797,7 +3799,7 @@ app.patch('/api/v1/compras/comparativas/:id/evaluar',
 // renglón (ComparativaDetalle.evaluacion_tecnica) se recalcula
 // automáticamente como el peor caso entre sus características.
 app.patch('/api/v1/compras/comparativas/:id/evaluar-especificaciones',
-  requireRoles('resident', 'residencia', 'control_obra', 'superintendent', 'procurement', 'admin'),
+  requireRoles('residencia', 'control_obra', 'superintendent', 'procurement', 'admin'),
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -3933,7 +3935,7 @@ app.patch('/api/v1/compras/comparativas/:id/evaluar-especificaciones',
 
 // 2.3 PATCH enviar-gt — Residente/Compras envía al Gerente Técnico
 app.patch('/api/v1/compras/comparativas/:id/enviar-gt',
-  requireRoles('resident', 'residencia', 'control_obra', 'procurement', 'superintendent'),
+  requireRoles('residencia', 'control_obra', 'procurement', 'superintendent'),
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -4328,7 +4330,7 @@ app.get('/api/v1/compras/resumen-dashboard',
 );
 
 app.get('/api/v1/compras/dashboard',
-  requireRoles('superintendent', 'procurement', 'admin', 'resident'),
+  requireRoles('superintendent', 'procurement', 'admin', 'residencia'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
@@ -4543,7 +4545,7 @@ app.get('/api/v1/compras/reportes/ocs-por-concepto',
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 app.get('/api/v1/compras/catalog/insumos',
-  requireRoles('procurement', 'admin', 'superintendent', 'resident', 'residencia', 'gerencia_tecnica'),
+  requireRoles('procurement', 'admin', 'superintendent', 'residencia', 'gerencia_tecnica'),
   async (req: Request, res: Response) => {
     try {
       const { default: axios } = await import('axios');
@@ -4578,7 +4580,7 @@ app.post('/api/v1/compras/catalog/insumos',
 );
 
 app.get('/api/v1/compras/presupuesto-activo',
-  requireRoles('procurement', 'admin', 'superintendent', 'resident', 'residencia', 'gerencia_tecnica'),
+  requireRoles('procurement', 'admin', 'superintendent', 'residencia', 'gerencia_tecnica'),
   async (req: Request, res: Response) => {
     try {
       const { default: axios } = await import('axios');
@@ -4736,13 +4738,7 @@ app.post('/api/v1/compras/ordenes-compra/:id/cancelar', requireRoles('admin', 's
           event_type: 'compras.oc_cancelada',
           timestamp: new Date().toISOString(),
           context: buildEventContext(req),
-          payload: {
-            oc_id:          cancelada.id_orden,
-            codigo:         cancelada.codigo,
-            total:          cancelada.total.toNumber(),
-            presupuesto_id: cancelada.presupuesto_id,
-            requisicion_id: cancelada.requisicion_id,
-          },
+          payload: buildOcCanceladaPayload(cancelada),
         });
 
         return cancelada;
@@ -4907,13 +4903,7 @@ app.post('/api/v1/compras/ordenes-compra/:id/reconciliar-finanzas', requireRoles
         event_type: 'compras.oc_cancelada',
         timestamp: new Date().toISOString(),
         context: buildEventContext(req),
-        payload: {
-          oc_id:          updated.id_orden,
-          codigo:         updated.codigo,
-          total:          updated.total.toNumber(),
-          presupuesto_id: updated.presupuesto_id,
-          requisicion_id: updated.requisicion_id,
-        },
+        payload: buildOcCanceladaPayload(updated),
       });
 
       const response = buildTerminalHttpResponse({
@@ -5435,7 +5425,7 @@ if (require.main === module) {
 
 // 8.2 PUT seleccion — Residente actualiza primera/segunda opción de proveedor
 app.put('/api/v1/compras/comparativas/:id/seleccion',
-  requireRoles('resident', 'residencia', 'admin'),
+  requireRoles('residencia', 'admin'),
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -5502,7 +5492,7 @@ app.put('/api/v1/compras/comparativas/:id/seleccion',
 
 // 5.1 POST firmar — Residente firma y bloquea el cuadro (FIRMADO_BLOQUEADO)
 app.post('/api/v1/compras/comparativas/:id/firmar',
-  requireRoles('resident', 'residencia', 'admin'),
+  requireRoles('residencia', 'admin'),
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -5771,7 +5761,7 @@ app.post('/api/v1/compras/comparativas/:id/nueva-revision',
 
 // 7.1 POST aclaraciones — Crear aclaración en una celda del cuadro
 app.post('/api/v1/compras/comparativas/:id/aclaraciones',
-  requireRoles('procurement', 'resident', 'residencia', 'admin'),
+  requireRoles('procurement', 'residencia', 'admin'),
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -5873,7 +5863,7 @@ app.get('/api/v1/compras/comparativas/:id/aclaraciones',
 
 // 7.3 PATCH aclaraciones/:aid — Marcar aclaración como resuelta
 app.patch('/api/v1/compras/comparativas/:id/aclaraciones/:aid',
-  requireRoles('procurement', 'resident', 'residencia', 'admin'),
+  requireRoles('procurement', 'residencia', 'admin'),
   async (req: Request, res: Response) => {
     try {
       const { id, aid } = req.params;
@@ -5929,7 +5919,7 @@ app.patch('/api/v1/compras/comparativas/:id/aclaraciones/:aid',
 
 app.post(
   '/api/v1/compras/comparativas/:id/anotaciones-spec',
-  requireRoles('resident', 'residencia', 'procurement', 'admin'),
+  requireRoles('residencia', 'procurement', 'admin'),
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -5986,7 +5976,7 @@ app.post(
 
 // ── POST revision-con-preguntas — Residente guarda eval con "?" y crea revisión ──
 app.post('/api/v1/compras/comparativas/:id/revision-con-preguntas',
-  requireRoles('resident', 'residencia', 'admin'),
+  requireRoles('residencia', 'admin'),
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -6473,7 +6463,7 @@ app.put('/api/v1/compras/comparativas/:id/responder-preguntas',
 
 // ── PUT veredicto — Residente guarda veredicto y proveedores sugeridos ────────
 app.put('/api/v1/compras/comparativas/:id/veredicto',
-  requireRoles('resident', 'residencia', 'admin'),
+  requireRoles('residencia', 'admin'),
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;

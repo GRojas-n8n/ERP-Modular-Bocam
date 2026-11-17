@@ -298,6 +298,28 @@ async function aplicarPagoPreNominaAlEvm(
   }
 }
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// SUSCRIPTOR: finanzas.nomina_pagada (openspec: evm-mano-obra-desde-finanzas)
+// Finanzas paga la nómina autorizada desde una cuenta (nomina-pagada-por-finanzas). El monto se suma al costo real
+// de mano de obra del proyecto (AC del EVM) con la misma rutina idempotente que el pago de PreNomina, usando la
+// prenómina como llave: una reentrega no duplica.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+export async function handleNominaPagadaFinanzasEvent(event: any): Promise<void> {
+  const p = event.payload ?? {};
+  const monto = Number(p.total_neto);
+  if (!p.prenomina_id || !Number.isFinite(monto) || monto <= 0 || !event.context?.tenant_id || !event.context?.proyecto_id) {
+    console.error(JSON.stringify({
+      action: 'control_proyectos.event.finanzas.nomina_pagada.invalid_payload',
+      correlation_id: event.context?.correlation_id, tenant_id: event.context?.tenant_id, prenomina_id: p.prenomina_id,
+    }));
+    return;
+  }
+  await aplicarPagoPreNominaAlEvm(
+    { tenantId: event.context.tenant_id, proyectoId: event.context.proyecto_id, userId: event.context.user_id },
+    { id_pago: p.prenomina_id, monto },
+  );
+}
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // SUSCRIPTOR: finanzas.pago_registrado (migrado de control-obra)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -488,6 +510,64 @@ export async function handlePagoRegistradoEvent(event: any): Promise<void> {
       extras: { referencia_id, id_pago },
     });
   }
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// SUSCRIPTOR: finanzas.cobro_registrado (openspec: estimacion-cobrada-por-finanzas)
+// Finanzas registra la estimación aprobada como cuenta por cobrar (cuentas-por-cobrar-estimaciones) y ya no emite
+// pago_registrado para ella. Cuando el cobro la liquida (estado COBRADA), la estimación pasa a FACTURADA, igual que
+// hacía el pago registrado. Un cobro parcial solo deja nota. UPDATE condicional: reentregas y carreras no duplican.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+export async function handleCobroRegistradoEvent(event: any): Promise<void> {
+  const { id_cobro, origen, origen_id, monto, folio, fecha_cobro, estado } = (event.payload ?? {}) as {
+    id_cobro?: string;
+    origen?: string;
+    origen_id?: string;
+    monto?: number;
+    folio?: string;
+    fecha_cobro?: string;
+    estado?: string;
+  };
+  const base = {
+    event_type: event.event_type,
+    correlation_id: event.context?.correlation_id,
+    tenant_id: event.context?.tenant_id,
+    proyecto_id: event.context?.proyecto_id,
+    id_cobro,
+    origen_id,
+  };
+
+  if (!id_cobro || !origen || !origen_id || !estado) {
+    console.error(JSON.stringify({ action: 'control_proyectos.event.finanzas.cobro_registrado.invalid_payload', ...base }));
+    return;
+  }
+  if (origen !== 'ESTIMACION') {
+    console.log(JSON.stringify({ action: 'control_proyectos.event.finanzas.cobro_registrado.ignored', ...base, origen }));
+    return;
+  }
+
+  const ctx = { tenantId: event.context.tenant_id, proyectoId: event.context.proyecto_id, userId: event.context.user_id };
+  const nota = `Cobro registrado en Finanzas. Cobro: ${id_cobro}. Folio: ${folio ?? 'N/A'}. Monto: ${Number(monto || 0).toFixed(2)}. Fecha: ${fecha_cobro || 'N/A'}.`;
+
+  const resultado = await createTenantContext(ctx, async (prisma) => {
+    // Filtro explícito por proyecto además del RLS: un cobro de otro proyecto nunca factura esta estimación.
+    const estimacion = await prisma.estimacion.findFirst({ where: { id_estimacion: origen_id, proyecto_id: ctx.proyectoId } });
+    if (!estimacion) return 'estimacion_not_found' as const;
+    if (estimacion.notas?.includes(`Cobro: ${id_cobro}.`)) return 'idempotent' as const;
+    const notas = estimacion.notas ? `${estimacion.notas}\n${nota}` : nota;
+
+    if (estado !== 'COBRADA') {
+      await prisma.estimacion.updateMany({ where: { id_estimacion: origen_id, proyecto_id: ctx.proyectoId }, data: { notas } });
+      return 'nota_parcial' as const;
+    }
+    const n = await prisma.estimacion.updateMany({
+      where: { id_estimacion: origen_id, proyecto_id: ctx.proyectoId, estado: { not: EstadoEstimacion.FACTURADA } },
+      data: { estado: EstadoEstimacion.FACTURADA, notas },
+    });
+    return n.count === 1 ? ('applied' as const) : ('idempotent' as const);
+  });
+
+  console.log(JSON.stringify({ action: `control_proyectos.event.finanzas.cobro_registrado.${resultado}`, ...base, estado }));
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -2460,6 +2540,11 @@ async function initEventSubscribers(): Promise<void> {
 
     // Pago registrado en Finanzas → reconciliar estimación (migrado de control-obra)
     await eventBus.subscribe('finanzas.pago_registrado', handlePagoRegistradoEvent);
+
+    // Cobro registrado en Finanzas → estimación liquidada pasa a FACTURADA (estimacion-cobrada-por-finanzas)
+    await eventBus.subscribe('finanzas.cobro_registrado', handleCobroRegistradoEvent);
+    // Nómina pagada por Finanzas → costo real de mano de obra (evm-mano-obra-desde-finanzas)
+    await eventBus.subscribe('finanzas.nomina_pagada', handleNominaPagadaFinanzasEvent);
 
     // Salida de almacén hacia obra → costo real por concepto (migrado de control-obra)
     await eventBus.subscribe('almacen.salida_obra', handleSalidaObraEvent);

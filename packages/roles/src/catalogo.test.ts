@@ -105,6 +105,30 @@ test('todo rol asignable puede seleccionarse al crear un usuario', () => {
   );
 });
 
+test('ningún rol marcado sin-backend está ya exigido por el backend', () => {
+  // Reproduce el lapso de rbac-seguridad-rol-catalogo-desactualizado: un fix
+  // de backend (df8b858) agregó requireRoles('seguridad_hse', ...) a
+  // apps/seguridad sin actualizar el catálogo, que siguió anunciando el rol
+  // como sin-backend con una nota ya falsa.
+  const backend = rolesExigidosPorBackend();
+  const desactualizados: string[] = [];
+
+  for (const rol of ROLES) {
+    if (rol.estado !== 'sin-backend') continue;
+    const servicios = backend.get(rol.id);
+    if (servicios && servicios.length > 0) {
+      desactualizados.push(`${rol.id} (ya exigido por ${servicios.join(', ')})`);
+    }
+  }
+
+  assert.deepEqual(
+    desactualizados,
+    [],
+    `Roles marcados sin-backend que ya están protegidos por el backend real:\n  ${desactualizados.join('\n  ')}\n` +
+      "Actualiza su estado a 'asignable' en packages/roles/src/index.ts."
+  );
+});
+
 test('los alias declaran un rol canónico que existe', () => {
   for (const rol of ROLES) {
     if (rol.estado !== 'alias') continue;
@@ -113,6 +137,27 @@ test('los alias declaran un rol canónico que existe', () => {
     const destino = ROLES.find(r => r.id === rol.canonico);
     assert.notEqual(destino?.estado, 'alias', `el alias ${rol.id} apunta a otro alias`);
   }
+});
+
+test('ningún alias catalogado quedó huérfano de backend', () => {
+  // Simétrico al guardián de 'sin-backend': si un alias ya no aparece en
+  // ningún requireRoles real, dejó de ser "sinónimo histórico aún exigido" y
+  // debe retirarse del catálogo en el mismo cambio que lo retira del backend,
+  // no quedar como nota desactualizada (ver rbac-migracion-alias-resident-technical-compras).
+  const backend = rolesExigidosPorBackend();
+  const huerfanos: string[] = [];
+
+  for (const rol of ROLES) {
+    if (rol.estado !== 'alias') continue;
+    if (!backend.get(rol.id)?.length) huerfanos.push(rol.id);
+  }
+
+  assert.deepEqual(
+    huerfanos,
+    [],
+    `Alias catalogados que ningún requireRoles real exige ya:\n  ${huerfanos.join('\n  ')}\n` +
+      'Retíralos de packages/roles/src/index.ts en vez de dejarlos como alias huérfano.'
+  );
 });
 
 test('no hay ids repetidos y todos tienen etiqueta', () => {

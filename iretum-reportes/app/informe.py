@@ -50,7 +50,7 @@ async def recolectar(cfg, lunes: date, notas: list[str], anterior: dict | None) 
                                         archivos_fijos=("MADUREZ.md",),
                                         carpetas_modificadas=("docs/decisiones",))
         junior = await gh.recolectar(cfg.repo_junior, lunes, True,
-                                     carpetas_por_fecha=("reports", "reportes"),
+                                     carpetas_por_fecha=("reports", "reportes", "planes"),
                                      archivos_fijos=(f"planes/{lunes.isoformat()}.md",))
     finally:
         await gh.cerrar()
