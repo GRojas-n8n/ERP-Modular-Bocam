@@ -46,7 +46,7 @@ Auditoría de Finanzas del 5 nov 2026, M6.
 ## Impact
 
 - Servicio: `apps/finanzas` (tesoreria, egreso-oc, programa-pagos, nomina-por-pagar, cuentas-por-cobrar, main).
-- Migración `20261114120000_libro_bancario` con `rollback.sql`; RLS 9g en `rls-policies.sql`.
+- Migración `20261117120000_libro_bancario` con `rollback.sql`; RLS 9g en `rls-policies.sql`.
 - Producción migra como `bocam_app` con RLS forzado: el saldo inicial NO se carga en la migración (vería 0 cuentas).
   Se carga después del despliegue con el script, como `bocam_admin`.
 - La pantalla no cambia: solo usa `id_cuenta`, `banco`, `alias` y `saldo`.

@@ -2,7 +2,7 @@
 - [x] 1.1 `libro-bancario.integration.test.ts` (8 casos): alta con saldo inicial y enmascarado; PATCH con saldo 400; ajustes (idempotencia, 409, validaciones, límite, rol, otro tenant); egreso, pago programado, nómina y cobro con su origen y libro cuadrado; 10 cargos simultáneos; consulta paginada; inmutabilidad, CHECK y migración re-ejecutable; script de saldo inicial (simulación, aplicar, re-ejecutable).
 
 ## 2. Implementar
-- [x] 2.1 Modelo `MovimientoBancario`; migración `20261114120000_libro_bancario` y `rollback.sql`; RLS 9g.
+- [x] 2.1 Modelo `MovimientoBancario`; migración `20261117120000_libro_bancario` y `rollback.sql`; RLS 9g.
 - [x] 2.2 `src/tesoreria.ts`: movimiento en la misma sentencia que el saldo (CTE), alta, edición, ajuste, consulta y enmascarado.
 - [x] 2.3 Origen en egreso-oc, programa-pagos, nomina-por-pagar y cuentas-por-cobrar.
 - [x] 2.4 Endpoints en `main.ts`.

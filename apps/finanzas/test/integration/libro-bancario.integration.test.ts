@@ -34,7 +34,7 @@ const dbUrl =
 process.env.DATABASE_URL = dbUrl;
 const admin = new PrismaClient({ datasources: { db: { url: dbUrl } } });
 const MIGRACIONES = join(__dirname, '..', '..', 'prisma', 'migrations');
-const MIGRACION = join(MIGRACIONES, '20261114120000_libro_bancario', 'migration.sql');
+const MIGRACION = join(MIGRACIONES, '20261117120000_libro_bancario', 'migration.sql');
 const PREVIAS = ['20261109120000_egreso_oc_multiproveedor', '20261112120000_cuentas_por_cobrar', '20261113120000_nominas_por_pagar'];
 const SCRIPT_SALDO_INICIAL = join(REPO_ROOT, 'scripts', 'finanzas', 'saldo-inicial-libro-bancario.sql');
 

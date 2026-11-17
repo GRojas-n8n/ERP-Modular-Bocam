@@ -91,7 +91,7 @@ describe('parsearArchivoExplosion', () => {
       Array(6).fill('REPRESENTANTE LEGAL'),
     ];
 
-    const insumos = parsearArchivoExplosion(rows);
+    const { insumos } = parsearArchivoExplosion(rows);
 
     expect(insumos.some(i => i.clave === FIRMA.toUpperCase())).toBe(false);
     expect(insumos.find(i => i.clave === 'MATG-001')).toBeDefined();
@@ -103,7 +103,7 @@ describe('parsearArchivoExplosion', () => {
       ['', 'MATG-001', 'ACERO ESTRUCTURAL HABILITADO EN MOLDE', 'KG', '6867.7268', 32.23],
     ];
 
-    const insumos = parsearArchivoExplosion(rows);
+    const { insumos } = parsearArchivoExplosion(rows);
 
     expect(insumos).toEqual([
       expect.objectContaining({ clave: 'MATG-001', unidad_medida: 'KG', costo_base: 32.23 }),
@@ -127,7 +127,7 @@ describe('parsearArchivoExplosion', () => {
       ['', 'HH', 'HERRAMIENTA MENOR', '(%)mo', '', 5, 3527.82],
     ];
 
-    const insumos = parsearArchivoExplosion(rows);
+    const { insumos } = parsearArchivoExplosion(rows);
 
     expect(insumos).toEqual([
       expect.objectContaining({ clave: 'HH', costo_base: 3527.82 }),
@@ -140,7 +140,7 @@ describe('parsearArchivoExplosion', () => {
       ['', 'HS-002', 'EQUIPO DE SEGURIDAD BASICO INDUSTRIAL', '(%)mo', '', 3, 1200.5],
     ];
 
-    const insumos = parsearArchivoExplosion(rows);
+    const { insumos } = parsearArchivoExplosion(rows);
 
     expect(insumos).toEqual([
       expect.objectContaining({ clave: 'HS-002', costo_base: 1200.5 }),
@@ -153,7 +153,7 @@ describe('parsearArchivoExplosion', () => {
       ['', 'MATG-001', 'ACERO ESTRUCTURAL HABILITADO EN MOLDE', 'KG', '6867.7268', 32.23, 221364.87],
     ];
 
-    const insumos = parsearArchivoExplosion(rows);
+    const { insumos } = parsearArchivoExplosion(rows);
 
     expect(insumos).toEqual([
       expect.objectContaining({ clave: 'MATG-001', costo_base: 32.23 }),
@@ -166,7 +166,7 @@ describe('parsearArchivoExplosion', () => {
       ['', 'HH', 'HERRAMIENTA MENOR', '(%)mo', '', 5],
     ];
 
-    const insumos = parsearArchivoExplosion(rows);
+    const { insumos } = parsearArchivoExplosion(rows);
 
     expect(insumos).toEqual([
       expect.objectContaining({ clave: 'HH', costo_base: 5 }),

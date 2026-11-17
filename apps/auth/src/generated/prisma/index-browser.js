@@ -206,6 +206,18 @@ exports.Prisma.MasterAuditLogScalarFieldEnum = {
   created_at: 'created_at'
 };
 
+exports.Prisma.TenantAuditLogScalarFieldEnum = {
+  id: 'id',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  actor_user_id: 'actor_user_id',
+  event_type: 'event_type',
+  entity_id: 'entity_id',
+  payload: 'payload',
+  correlation_id: 'correlation_id',
+  created_at: 'created_at'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -239,7 +251,8 @@ exports.Prisma.ModelName = {
   User: 'User',
   UserProjectAccess: 'UserProjectAccess',
   RefreshToken: 'RefreshToken',
-  MasterAuditLog: 'MasterAuditLog'
+  MasterAuditLog: 'MasterAuditLog',
+  TenantAuditLog: 'TenantAuditLog'
 };
 
 /**

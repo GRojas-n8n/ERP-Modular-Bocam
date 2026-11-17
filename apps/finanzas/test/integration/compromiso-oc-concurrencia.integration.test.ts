@@ -302,7 +302,8 @@ async function main() {
     await mov('LIBERACION');
     await assert.rejects(() => mov('LIBERACION'), /Unique constraint|duplicate key/i, 'segunda LIBERACION');
     await mov('EJERCIDO'); await mov('EJERCIDO'); // otros tipos no están sujetos a la regla
-    await mov('COMPROMISO', 'PreNomina', 'personal'); await mov('COMPROMISO', 'PreNomina', 'personal'); // otras entidades tampoco
+    // otras entidades tampoco (PreNomina tiene su propio índice desde blindar-consumidores-finanzas)
+    await mov('COMPROMISO', 'Estimacion', 'control-obra'); await mov('COMPROMISO', 'Estimacion', 'control-obra');
     // (otro tenant con la misma OC: cubierto en la suite de RLS)
   });
 
