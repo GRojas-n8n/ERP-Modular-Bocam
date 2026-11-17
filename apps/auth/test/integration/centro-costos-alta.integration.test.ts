@@ -62,17 +62,17 @@ async function testRolNoAutorizadoRecibe403() {
   const tenantId = randomUUID();
   await seedTenant(tenantId);
   try {
-    const token = signTenantToken({ userId: randomUUID(), tenantId, proyectoId: randomUUID(), roles: ['resident'] });
+    const token = signTenantToken({ userId: randomUUID(), tenantId, proyectoId: randomUUID(), roles: ['residencia'] });
     const r = await post('/api/v1/auth/admin/proyectos', token, {
       empresa_grupo: 'HCO', anio_centro_costos: 2026, cliente_id: clienteIdTest,
       nombre_oficial: 'Proyecto No Autorizado',
     });
-    assert.equal(r.status, 403, 'rol resident debe recibir 403 al intentar crear un centro de costos');
+    assert.equal(r.status, 403, 'rol residencia debe recibir 403 al intentar crear un centro de costos');
 
     const enBd = await prisma.proyecto.findMany({ where: { tenant_id: tenantId } });
     assert.equal(enBd.length, 0, 'no debe haberse creado ningún proyecto');
 
-    console.log('ok - 5.3 rol no autorizado (resident) recibe 403 y no crea el registro');
+    console.log('ok - 5.3 rol no autorizado (residencia) recibe 403 y no crea el registro');
   } finally {
     await cleanupTenant(tenantId);
   }
