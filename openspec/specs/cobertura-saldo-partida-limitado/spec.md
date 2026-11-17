@@ -1,7 +1,6 @@
 # Spec: cobertura-saldo-partida-limitado
 
-## Propósito
-
+## Purpose
 Garantiza que la suite de regresión de `presupuesto-tope-partida`
 (`apps/gerencia-tecnica/test/integration/saldo-partida.integration.test.ts`)
 ejerza de verdad el estado `LIMITADO` del tope por partida, no solo
@@ -11,9 +10,7 @@ ejerza de verdad el estado `LIMITADO` del tope por partida, no solo
 ## Requirements
 
 ### Requirement: La suite de regresión de tope por partida SHALL ejercer el estado LIMITADO
-La suite de tests de integración de `presupuesto-tope-partida`
-(`apps/gerencia-tecnica/test/integration/saldo-partida.integration.test.ts`)
-SHALL incluir al menos un escenario donde, tras comprometer fondos de una
+La suite de tests de integración de `presupuesto-tope-partida` (`apps/gerencia-tecnica/test/integration/saldo-partida.integration.test.ts`) SHALL incluir al menos un escenario donde, tras comprometer fondos de una
 partida, el `monto_disponible` resultante quede entre 1% y 20% del
 `monto_aprobado` — el rango que produce `estado_tope = 'LIMITADO'` según
 `calcularEstadoTope` — y verificar que el sistema efectivamente reporta

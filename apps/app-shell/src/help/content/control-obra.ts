@@ -103,6 +103,15 @@ export const controlObra: ModuleHelp = {
         { tipo: 'aviso', nivel: 'info', titulo: 'Acceso restringido', texto: 'Solo visible para roles control_obra/admin.' },
       ],
     },
+    {
+      id: 'proyectos',
+      titulo: 'Proyectos',
+      proposito: 'Acceso directo al listado de Proyectos (Centros de Costos) sin salir de Control de Obra.',
+      bloques: [
+        { tipo: 'parrafo', texto: 'Es la misma pantalla de Proyectos de Administración — un atajo para no tener que cambiar de módulo.' },
+        { tipo: 'aviso', nivel: 'info', titulo: 'Solo lectura', texto: 'control_obra puede ver el listado, pero crear o editar un proyecto sigue reservado a admin/gerencia_tecnica/control_proyectos.' },
+      ],
+    },
   ],
   erroresComunes: [
     {

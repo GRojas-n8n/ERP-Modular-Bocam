@@ -8,6 +8,7 @@
     "dev": "ts-node-dev --transpile-only src/main.ts",
     "dev:worker-sat": "ts-node-dev --transpile-only src/sat-worker.ts",
     "test:integration:compras-oc-cancelada": "node -r ts-node/register/transpile-only test/integration/compras.oc-cancelada.integration.test.ts",
+    "test:integration:finanzas-fondos-idempotencia-event-id": "node -r ts-node/register/transpile-only test/integration/finanzas.fondos-idempotencia-event-id.integration.test.ts",
     "test:integration:finanzas-compromiso-conciliacion": "node -r ts-node/register/transpile-only test/integration/finanzas.fondos-comprometidos.conciliacion.integration.test.ts",
     "test:integration:finanzas-liberacion-conciliacion": "node -r ts-node/register/transpile-only test/integration/finanzas.fondos-liberados.conciliacion.integration.test.ts",
     "test:integration:finanzas-pago-cfdi": "node -r ts-node/register/transpile-only test/integration/finanzas.pago-cfdi.conciliacion.integration.test.ts",
@@ -21,14 +22,15 @@
     "test:integration:compras-oc": "node -r ts-node/register/transpile-only test/integration/compras.oc-creada.integration.test.ts",
     "test:integration:finanzas-pago": "node -r ts-node/register/transpile-only test/integration/finanzas.pago-registrado.integration.test.ts",
     "test:integration:finanzas-transferencia": "node -r ts-node/register/transpile-only test/integration/finanzas.transferencia.integration.test.ts",
-    "test:integration:rbac-rol-finanzas": "node -r ts-node/register/transpile-only test/integration/rbac-rol-finanzas.integration.test.ts"
+    "test:integration:rbac-rol-finanzas": "node -r ts-node/register/transpile-only test/integration/rbac-rol-finanzas.integration.test.ts",
+    "test:integration:finanzas-egreso-cobro": "node -r ts-node/register/transpile-only test/integration/finanzas.egreso-cobro.integration.test.ts"
   },
   "dependencies": {
     "@bocam/rate-limiter": "^1.0.0",
     "@prisma/client": "^5.0.0",
     "amqplib": "^0.10.3",
     "exceljs": "^4.4.0",
-    "express": "^4.18.2",
+    "express": "^4.22.3",
     "jsonwebtoken": "^9.0.2",
     "uuid": "^14.0.0"
   },

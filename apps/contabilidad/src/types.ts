@@ -260,6 +260,47 @@ export enum ContabilidadConsumedEvents {
   NOMINA_AUTORIZADA = 'personal.nomina_autorizada',
   NOMINA_PAGADA = 'personal.nomina_pagada',
   CENTRO_COSTOS_CREADO = 'auth.centro_costos_creado',
+  /** Egreso multiproveedor de Finanzas (openspec: poliza-egreso-oc-y-cobro). */
+  EGRESO_OC_REGISTRADO = 'finanzas.egreso_oc_registrado',
+  /** Cobro de una cuenta por cobrar (estimación) en Finanzas (openspec: poliza-egreso-oc-y-cobro). */
+  COBRO_REGISTRADO = 'finanzas.cobro_registrado',
+}
+
+export interface EgresoOcRegistradoPayload {
+  pago_id: string;
+  proyecto_id: string;
+  fuente: 'ANTICIPO' | 'CUENTA_BANCARIA';
+  cuenta_id: string | null;
+  tipo_pago: string;
+  referencia: string;
+  fecha_pago: string;
+  monto_total: number;
+  moneda?: string;
+  detalles: Array<{
+    oc_id: string;
+    oc_codigo: string;
+    proveedor_id: string;
+    proveedor_nombre: string;
+    concepto_id: string | null;
+    monto_aplicado: number;
+  }>;
+}
+
+export interface CobroRegistradoPayload {
+  id_cobro: string;
+  cxc_id: string;
+  proyecto_id: string;
+  origen: string;
+  origen_id: string;
+  codigo: string;
+  cuenta_id: string;
+  folio: string;
+  monto: number;
+  moneda?: string;
+  fecha_cobro: string;
+  cobrado_total: number;
+  saldo: number;
+  estado: string;
 }
 
 export interface NominaAutorizadaPayload {
@@ -293,7 +334,9 @@ export interface CentroCostosCreadoPayload {
 export interface EstimacionAprobadaPayload {
   estimacion_id: string;
   codigo: string;
-  monto_total: number;
+  /** Contrato histórico de esta prueba; Control de Proyectos publica total_neto (F27). */
+  monto_total?: number;
+  total_neto?: number;
   moneda?: string;
   concepto?: string;
   proyecto_nombre?: string;

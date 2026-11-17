@@ -103,6 +103,12 @@ export const gerenciaTecnica: ModuleHelp = {
       proposito: 'Seguir, por concepto, el hilo completo desde presupuesto hasta pago.',
       bloques: [{ tipo: 'parrafo', texto: 'Resumen por concepto: cuánto se presupuestó, cuánto se ha requisitado/comprometido en OC y cuánto se ha pagado — útil para auditar un concepto específico de punta a punta.' }],
     },
+    {
+      id: 'proyectos',
+      titulo: 'Proyectos',
+      proposito: 'Acceso directo al listado de Proyectos (Centros de Costos) sin salir de Gerencia Técnica.',
+      bloques: [{ tipo: 'parrafo', texto: 'Es la misma pantalla de Proyectos de Administración — un atajo para no tener que cambiar de módulo. La creación y edición de proyectos sigue reservada a admin/gerencia_tecnica/control_proyectos.' }],
+    },
   ],
   erroresComunes: [
     {

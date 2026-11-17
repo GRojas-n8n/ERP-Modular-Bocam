@@ -1,4 +1,10 @@
-## ADDED Requirements
+# ficha-tecnica-carga-unica Specification
+
+## Purpose
+
+Define dónde se sube y dónde solo se consulta la ficha técnica de un insumo en el flujo Requisición a Orden de Compra: la carga ocurre únicamente en Nueva Requisición y el Cuadro Comparativo la muestra en modo solo lectura.
+
+## Requirements
 
 ### Requirement: La carga de ficha técnica por insumo SHALL ocurrir únicamente desde el formulario de Nueva Requisición
 El sistema SHALL exponer el control de carga de ficha técnica

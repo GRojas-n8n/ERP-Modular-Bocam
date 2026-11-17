@@ -27,8 +27,13 @@ async function assertNoSideEffects(tenantId: string) {
     where: { tenant_id: tenantId },
   });
 
+  const cxc = await prisma.cuentaPorCobrar.count({
+    where: { tenant_id: tenantId },
+  });
+
   assert.equal(movimientos, 0);
   assert.equal(pagos, 0);
+  assert.equal(cxc, 0);
 }
 
 async function main() {

@@ -38,6 +38,8 @@ async function waitFor(assertion: () => Promise<void>, timeoutMs = 10000) {
 
 async function cleanupTenantData(tenantId: string, proyectoId: string) {
   await createTenantContext({ tenantId, proyectoId, userId: 'system' }, async (tx) => {
+    await tx.cobroCxc.deleteMany({ where: { tenant_id: tenantId } });
+    await tx.cuentaPorCobrar.deleteMany({ where: { tenant_id: tenantId } });
     await tx.programaPagos.deleteMany({ where: { tenant_id: tenantId } });
     await tx.movimientoPresupuestal.deleteMany({ where: { tenant_id: tenantId } });
     await tx.presupuestoAsignado.deleteMany({ where: { tenant_id: tenantId } });
@@ -113,16 +115,16 @@ async function main() {
     await publishEvent();
 
     await waitFor(async () => {
-      const pagos = await withCtx((tx) => tx.programaPagos.findMany({
-        where: {
-          tenant_id: seeded.tenantId,
-          referencia_modulo: 'control-obra',
-          referencia_entidad: 'Estimacion',
-          referencia_id: estimacionId,
-        },
+      // Una estimación aprobada es cuenta por cobrar, no pago programado (openspec: cuentas-por-cobrar-estimaciones).
+      const cxc = await withCtx((tx) => tx.cuentaPorCobrar.findMany({
+        where: { tenant_id: seeded.tenantId, origen: 'ESTIMACION', origen_id: estimacionId },
       }));
+      const pagos = await withCtx((tx) => tx.programaPagos.count({ where: { tenant_id: seeded.tenantId } }));
 
-      assert.equal(pagos.length, 1);
+      assert.equal(cxc.length, 1);
+      assert.equal(Number(cxc[0].monto), 4200);
+      assert.equal(cxc[0].estado, 'POR_COBRAR');
+      assert.equal(pagos, 0);
     });
 
     await waitFor(async () => {
@@ -137,16 +139,16 @@ async function main() {
     await publishEvent();
 
     await waitFor(async () => {
-      const pagos = await withCtx((tx) => tx.programaPagos.findMany({
-        where: {
-          tenant_id: seeded.tenantId,
-          referencia_modulo: 'control-obra',
-          referencia_entidad: 'Estimacion',
-          referencia_id: estimacionId,
-        },
+      // Una estimación aprobada es cuenta por cobrar, no pago programado (openspec: cuentas-por-cobrar-estimaciones).
+      const cxc = await withCtx((tx) => tx.cuentaPorCobrar.findMany({
+        where: { tenant_id: seeded.tenantId, origen: 'ESTIMACION', origen_id: estimacionId },
       }));
+      const pagos = await withCtx((tx) => tx.programaPagos.count({ where: { tenant_id: seeded.tenantId } }));
 
-      assert.equal(pagos.length, 1);
+      assert.equal(cxc.length, 1);
+      assert.equal(Number(cxc[0].monto), 4200);
+      assert.equal(cxc[0].estado, 'POR_COBRAR');
+      assert.equal(pagos, 0);
     });
 
     await waitFor(async () => {
@@ -158,7 +160,7 @@ async function main() {
       );
     });
 
-    console.log('ok - integracion real control-obra -> finanzas via RabbitMQ crea pago e idempotencia');
+    console.log('ok - integracion real control-obra -> finanzas via RabbitMQ crea cuenta por cobrar e idempotencia');
   } finally {
     await publisher.close();
     await consumer.close();

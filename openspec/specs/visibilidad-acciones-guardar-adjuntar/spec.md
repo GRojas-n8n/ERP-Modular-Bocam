@@ -9,8 +9,7 @@ claro y oscuro, con un estilo consistente entre vistas.
 ## Requirements
 
 ### Requirement: El botón "Guardar" SHALL ser visible en tema claro y oscuro
-Todo botón que confirme el guardado de un formulario o registro en el app-shell
-(texto "Guardar" o equivalente de confirmación de guardado) SHALL usar fondo
+Todo botón que confirme el guardado de un formulario o registro en el app-shell (texto "Guardar" o equivalente de confirmación de guardado) SHALL usar fondo
 verde sólido `#059669` con texto blanco (`#ffffff`) en estado habilitado, y
 `#047857` en `hover`. El botón NO SHALL depender de opacidad reducida ni de
 tintes de color por debajo del 100% de opacidad de fondo para su estado
@@ -35,8 +34,7 @@ habilitado normal.
   misma reducción de opacidad
 
 ### Requirement: La zona de "Subir PDF / adjuntar" SHALL ser visible en tema claro y oscuro
-Toda zona de arrastrar-y-soltar o botón para adjuntar/subir un archivo PDF en el
-app-shell SHALL usar borde punteado verde y texto verde oscuro reales (no gris
+Toda zona de arrastrar-y-soltar o botón para adjuntar/subir un archivo PDF en el app-shell SHALL usar borde punteado verde y texto verde oscuro reales (no gris
 sobre gris ni un tinte de color con opacidad de fondo menor al 10%), con un
 fondo de tinte verde suave perceptible sobre el fondo de página o tarjeta que lo
 contiene.
@@ -53,8 +51,7 @@ contiene.
   el fondo oscuro de la página o tarjeta
 
 ### Requirement: El mismo estilo de "Guardar" y de "Subir PDF" SHALL ser consistente entre vistas
-Todas las vistas del app-shell que contengan un botón de "Guardar" o una zona de
-"Subir PDF/adjuntar" SHALL usar exactamente el mismo par de estilos (colores,
+Todas las vistas del app-shell que contengan un botón de "Guardar" o una zona de "Subir PDF/adjuntar" SHALL usar exactamente el mismo par de estilos (colores,
 bordes, pesos de texto) definidos en este spec, sin variaciones de tono por
 vista.
 

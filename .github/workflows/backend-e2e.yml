@@ -83,6 +83,8 @@ jobs:
           npx prisma generate --schema apps/finanzas/prisma/schema.prisma
           npx prisma generate --schema apps/control-proyectos/prisma/schema.prisma
           npx prisma generate --schema apps/contabilidad/prisma/schema.prisma
+          npx prisma generate --schema apps/almacen/prisma/schema.prisma
+          npx prisma generate --schema apps/personal/prisma/schema.prisma
 
       # ── Aplicar schemas al DB ─────────────────────────────────────────────────
       # Cada modulo usa su propio PostgreSQL schema para evitar que db push
@@ -95,6 +97,21 @@ jobs:
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"          npx prisma db push --schema apps/finanzas/prisma/schema.prisma          --skip-generate --accept-data-loss
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=control_proyectos" npx prisma db push --schema apps/control-proyectos/prisma/schema.prisma --skip-generate --accept-data-loss
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=contabilidad"      npx prisma db push --schema apps/contabilidad/prisma/schema.prisma      --skip-generate --accept-data-loss
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=almacen"           npx prisma db push --schema apps/almacen/prisma/schema.prisma           --skip-generate --accept-data-loss
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=personal"          npx prisma db push --schema apps/personal/prisma/schema.prisma           --skip-generate --accept-data-loss
+
+      # ── SQL crudo de migraciones (no expresable en schema.prisma) ─────────────
+      # db push no crea el índice único parcial ni el RLS del tombstone de Finanzas
+      # (openspec: blindar-compromiso-oc-concurrencia-y-orden-eventos). En producción los
+      # aplica `prisma migrate deploy`; aquí se aplican tras db push. Es idempotente.
+      - name: Aplicar SQL de migraciones de Finanzas
+        run: |
+          PGPASSWORD=postgres psql -h localhost -U postgres -d bocam_ci -v ON_ERROR_STOP=1             -c "SET search_path TO finanzas;"             -f apps/finanzas/prisma/migrations/20260930120000_blindar_compromiso_oc/migration.sql
+          PGPASSWORD=postgres psql -h localhost -U postgres -d bocam_ci -v ON_ERROR_STOP=1             -c "SET search_path TO finanzas;"             -f apps/finanzas/prisma/migrations/20260930180000_outbox_eventos_finanzas/migration.sql
+          PGPASSWORD=postgres psql -h localhost -U postgres -d bocam_ci -v ON_ERROR_STOP=1             -c "SET search_path TO finanzas;"             -f apps/finanzas/prisma/migrations/20261109120000_egreso_oc_multiproveedor/migration.sql
+          PGPASSWORD=postgres psql -h localhost -U postgres -d bocam_ci -v ON_ERROR_STOP=1             -c "SET search_path TO finanzas;"             -f apps/finanzas/prisma/migrations/20261111120000_unicidad_transferencias/migration.sql
+          PGPASSWORD=postgres psql -h localhost -U postgres -d bocam_ci -v ON_ERROR_STOP=1             -c "SET search_path TO finanzas;"             -f apps/finanzas/prisma/migrations/20261112120000_cuentas_por_cobrar/migration.sql
+          PGPASSWORD=postgres psql -h localhost -U postgres -d bocam_ci -v ON_ERROR_STOP=1             -c "SET search_path TO finanzas;"             -f apps/finanzas/prisma/migrations/20261113120000_nominas_por_pagar/migration.sql
 
       # ── Seed del catálogo de cuentas contables ────────────────────────────────
       # Sin esto, resolveCuentaId (apps/contabilidad/src/mapper.ts) nunca
@@ -113,10 +130,32 @@ jobs:
           npx tsc --noEmit -p apps/finanzas/tsconfig.json
           npx tsc --noEmit -p apps/control-proyectos/tsconfig.json
           npx tsc --noEmit -p apps/contabilidad/tsconfig.json
+          npx tsc --noEmit -p apps/almacen/tsconfig.json
 
       # ── Tests ─────────────────────────────────────────────────────────────────
       - name: Run RabbitMQ integration
         run: npm run test:integration:event-bus
+
+      # ── Almacén: consumo de recepciones de OC (change fix-ingresos-almacen-por-recepcion-oc) ──
+      # Requiere PostgreSQL (schema almacen) y RabbitMQ reales.
+      - name: Run Almacén reception events integration
+        run: |
+          ALMACEN_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=almacen" npm run test:integration:almacen-eventos-oc
+          ALMACEN_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=almacen" npm run test:integration:almacen-recepcion-oc-v1
+          ALMACEN_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=almacen" npm run test:integration:almacen-recepcion-oc-suscripcion
+          ALMACEN_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=almacen" npm run test:integration:almacen-recepcion-oc-retencion
+
+      # ── Compras: outbox transaccional de recepciones de OC ──
+      - name: Run Compras outbox integration
+        run: |
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=compras" npm run test:integration:compras-outbox-recepcion-oc
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=compras" npm run test:integration:compras-outbox-recepcion-oc-rabbitmq
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=compras" npm run test:integration:compras-outbox-dispatcher-arranque
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=compras" npm run test:integration:compras-oc-snapshot-insumo
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=compras" npm run test:integration:compras-oc-creada-proveedor-nombre
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=compras" npm run test:integration:compras-oc-transiciones
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=compras" npm run test:integration:finanzas-eventos-idempotencia-event-id -w @bocam/compras
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=compras" ALMACEN_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=almacen" npm run test:integration:compras-recepcion-oc-compras-almacen
 
       # ── Tests inter-modulo ────────────────────────────────────────────────────
       # Cada test recibe DATABASE_URL apuntando al schema de SU modulo.
@@ -134,11 +173,15 @@ jobs:
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"          npm run test:integration:compras-events       -w @bocam/finanzas
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=compras"           npm run test:integration:finanzas-feedback    -w @bocam/compras
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=control_proyectos" npm run test:integration:finanzas-pago-feedback -w @bocam/control-proyectos
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=control_proyectos" npm run test:integration:finanzas-cobro -w @bocam/control-proyectos
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=control_proyectos" npm run test:integration:finanzas-nomina -w @bocam/control-proyectos
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:finanzas-pago        -w @bocam/contabilidad
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=contabilidad"   npm run test:integration:compras-oc           -w @bocam/contabilidad
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=contabilidad"   npm run test:integration:compras-oc-cancelada -w @bocam/contabilidad
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=contabilidad"   npm run test:integration:finanzas-egreso-cobro -w @bocam/contabilidad
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=contabilidad"   npm run test:integration:finanzas-compromiso-conciliacion  -w @bocam/contabilidad
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=contabilidad"   npm run test:integration:finanzas-liberacion-conciliacion  -w @bocam/contabilidad
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=contabilidad"   npm run test:integration:finanzas-fondos-idempotencia-event-id  -w @bocam/contabilidad
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:finanzas-pago-cfdi   -w @bocam/contabilidad
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:finanzas-sat-externo -w @bocam/contabilidad
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:finanzas-sat-worker  -w @bocam/contabilidad
@@ -146,6 +189,50 @@ jobs:
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:finanzas-banco-lote  -w @bocam/contabilidad
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:finanzas-banco-archivo -w @bocam/contabilidad
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:finanzas-transferencia -w @bocam/contabilidad
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=personal" npm run test:integration:finanzas-nomina-pagada -w @bocam/personal
+
+      # ── Finanzas: compromiso/liberación de OC (concurrencia real, orden de eventos y RLS) ──
+      - name: Run Finanzas compromiso OC (concurrencia, RLS y migración)
+        run: |
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas" npm run test:integration:compromiso-oc-concurrencia -w @bocam/finanzas
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas" npm run test:integration:compromiso-oc-rls -w @bocam/finanzas
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas" npm run test:integration:compromiso-oc-migracion -w @bocam/finanzas
+
+      # ── Finanzas: egreso multiproveedor (openspec: corregir-egreso-oc-multiproveedor) ──
+      - name: Run Finanzas egreso OC multiproveedor
+        run: |
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas" npm run test:integration:egreso-oc -w @bocam/finanzas
+
+      # ── Finanzas: presupuesto blindado (openspec: blindar-movimientos-y-sincronizacion-gt) ──
+      - name: Run Finanzas presupuesto blindado
+        run: |
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas" npm run test:integration:presupuesto-blindado -w @bocam/finanzas
+
+      # ── Finanzas: programa de pagos (openspec: corregir-ejecucion-programa-pagos) ──
+      - name: Run Finanzas programa de pagos
+        run: |
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas" npm run test:integration:programa-pagos -w @bocam/finanzas
+
+      # ── Finanzas: cuentas por cobrar de estimaciones (openspec: cuentas-por-cobrar-estimaciones) ──
+      - name: Run Finanzas cuentas por cobrar
+        run: |
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas" npm run test:integration:cuentas-por-cobrar -w @bocam/finanzas
+
+      # ── Finanzas: API y dashboard (openspec: optimizar-api-y-dashboard-finanzas) ──
+      - name: Run Finanzas API y dashboard
+        run: |
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas" npm run test:integration:api-dashboard -w @bocam/finanzas
+
+      # ── Finanzas: nómina pagada por Finanzas (openspec: nomina-pagada-por-finanzas) ──
+      - name: Run Finanzas nómina por pagar
+        run: |
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas" npm run test:integration:nomina-por-pagar -w @bocam/finanzas
+      # ── Finanzas: outbox transaccional de eventos (lote P1, modo direct por defecto; PostgreSQL y RabbitMQ reales) ──
+      - name: Run Finanzas outbox de eventos (flujo, RLS, /ready y migración)
+        run: |
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas" npm run test:integration:outbox-eventos -w @bocam/finanzas
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas" npm run test:integration:outbox-eventos-rls-ready -w @bocam/finanzas
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas" npm run test:integration:outbox-eventos-migracion -w @bocam/finanzas
 
       - name: Run event contract hardening suite
         run: npm run test:integration:event-contracts

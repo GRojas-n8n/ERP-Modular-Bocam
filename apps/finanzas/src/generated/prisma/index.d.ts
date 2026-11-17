@@ -24,6 +24,11 @@ export type PresupuestoAsignado = $Result.DefaultSelection<Prisma.$PresupuestoAs
  */
 export type MovimientoPresupuestal = $Result.DefaultSelection<Prisma.$MovimientoPresupuestalPayload>
 /**
+ * Model OcCancelacionTombstone
+ * 
+ */
+export type OcCancelacionTombstone = $Result.DefaultSelection<Prisma.$OcCancelacionTombstonePayload>
+/**
  * Model ProgramaPagos
  * 
  */
@@ -48,6 +53,11 @@ export type PagoOC = $Result.DefaultSelection<Prisma.$PagoOCPayload>
  * 
  */
 export type DetallePagoOC = $Result.DefaultSelection<Prisma.$DetallePagoOCPayload>
+/**
+ * Model OutboxEvento
+ * 
+ */
+export type OutboxEvento = $Result.DefaultSelection<Prisma.$OutboxEventoPayload>
 
 /**
  * ##  Prisma Client ʲˢ
@@ -193,6 +203,16 @@ export class PrismaClient<
   get movimientoPresupuestal(): Prisma.MovimientoPresupuestalDelegate<ExtArgs>;
 
   /**
+   * `prisma.ocCancelacionTombstone`: Exposes CRUD operations for the **OcCancelacionTombstone** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more OcCancelacionTombstones
+    * const ocCancelacionTombstones = await prisma.ocCancelacionTombstone.findMany()
+    * ```
+    */
+  get ocCancelacionTombstone(): Prisma.OcCancelacionTombstoneDelegate<ExtArgs>;
+
+  /**
    * `prisma.programaPagos`: Exposes CRUD operations for the **ProgramaPagos** model.
     * Example usage:
     * ```ts
@@ -241,6 +261,16 @@ export class PrismaClient<
     * ```
     */
   get detallePagoOC(): Prisma.DetallePagoOCDelegate<ExtArgs>;
+
+  /**
+   * `prisma.outboxEvento`: Exposes CRUD operations for the **OutboxEvento** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more OutboxEventos
+    * const outboxEventos = await prisma.outboxEvento.findMany()
+    * ```
+    */
+  get outboxEvento(): Prisma.OutboxEventoDelegate<ExtArgs>;
 }
 
 export namespace Prisma {
@@ -684,11 +714,13 @@ export namespace Prisma {
   export const ModelName: {
     PresupuestoAsignado: 'PresupuestoAsignado',
     MovimientoPresupuestal: 'MovimientoPresupuestal',
+    OcCancelacionTombstone: 'OcCancelacionTombstone',
     ProgramaPagos: 'ProgramaPagos',
     CuentaBancaria: 'CuentaBancaria',
     ProyectoFinanzas: 'ProyectoFinanzas',
     PagoOC: 'PagoOC',
-    DetallePagoOC: 'DetallePagoOC'
+    DetallePagoOC: 'DetallePagoOC',
+    OutboxEvento: 'OutboxEvento'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -704,7 +736,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "presupuestoAsignado" | "movimientoPresupuestal" | "programaPagos" | "cuentaBancaria" | "proyectoFinanzas" | "pagoOC" | "detallePagoOC"
+      modelProps: "presupuestoAsignado" | "movimientoPresupuestal" | "ocCancelacionTombstone" | "programaPagos" | "cuentaBancaria" | "proyectoFinanzas" | "pagoOC" | "detallePagoOC" | "outboxEvento"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -845,6 +877,76 @@ export namespace Prisma {
           count: {
             args: Prisma.MovimientoPresupuestalCountArgs<ExtArgs>
             result: $Utils.Optional<MovimientoPresupuestalCountAggregateOutputType> | number
+          }
+        }
+      }
+      OcCancelacionTombstone: {
+        payload: Prisma.$OcCancelacionTombstonePayload<ExtArgs>
+        fields: Prisma.OcCancelacionTombstoneFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.OcCancelacionTombstoneFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OcCancelacionTombstonePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.OcCancelacionTombstoneFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OcCancelacionTombstonePayload>
+          }
+          findFirst: {
+            args: Prisma.OcCancelacionTombstoneFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OcCancelacionTombstonePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.OcCancelacionTombstoneFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OcCancelacionTombstonePayload>
+          }
+          findMany: {
+            args: Prisma.OcCancelacionTombstoneFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OcCancelacionTombstonePayload>[]
+          }
+          create: {
+            args: Prisma.OcCancelacionTombstoneCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OcCancelacionTombstonePayload>
+          }
+          createMany: {
+            args: Prisma.OcCancelacionTombstoneCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.OcCancelacionTombstoneCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OcCancelacionTombstonePayload>[]
+          }
+          delete: {
+            args: Prisma.OcCancelacionTombstoneDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OcCancelacionTombstonePayload>
+          }
+          update: {
+            args: Prisma.OcCancelacionTombstoneUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OcCancelacionTombstonePayload>
+          }
+          deleteMany: {
+            args: Prisma.OcCancelacionTombstoneDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.OcCancelacionTombstoneUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.OcCancelacionTombstoneUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OcCancelacionTombstonePayload>
+          }
+          aggregate: {
+            args: Prisma.OcCancelacionTombstoneAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateOcCancelacionTombstone>
+          }
+          groupBy: {
+            args: Prisma.OcCancelacionTombstoneGroupByArgs<ExtArgs>
+            result: $Utils.Optional<OcCancelacionTombstoneGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.OcCancelacionTombstoneCountArgs<ExtArgs>
+            result: $Utils.Optional<OcCancelacionTombstoneCountAggregateOutputType> | number
           }
         }
       }
@@ -1195,6 +1297,76 @@ export namespace Prisma {
           count: {
             args: Prisma.DetallePagoOCCountArgs<ExtArgs>
             result: $Utils.Optional<DetallePagoOCCountAggregateOutputType> | number
+          }
+        }
+      }
+      OutboxEvento: {
+        payload: Prisma.$OutboxEventoPayload<ExtArgs>
+        fields: Prisma.OutboxEventoFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.OutboxEventoFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OutboxEventoPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.OutboxEventoFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OutboxEventoPayload>
+          }
+          findFirst: {
+            args: Prisma.OutboxEventoFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OutboxEventoPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.OutboxEventoFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OutboxEventoPayload>
+          }
+          findMany: {
+            args: Prisma.OutboxEventoFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OutboxEventoPayload>[]
+          }
+          create: {
+            args: Prisma.OutboxEventoCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OutboxEventoPayload>
+          }
+          createMany: {
+            args: Prisma.OutboxEventoCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.OutboxEventoCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OutboxEventoPayload>[]
+          }
+          delete: {
+            args: Prisma.OutboxEventoDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OutboxEventoPayload>
+          }
+          update: {
+            args: Prisma.OutboxEventoUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OutboxEventoPayload>
+          }
+          deleteMany: {
+            args: Prisma.OutboxEventoDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.OutboxEventoUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.OutboxEventoUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OutboxEventoPayload>
+          }
+          aggregate: {
+            args: Prisma.OutboxEventoAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateOutboxEvento>
+          }
+          groupBy: {
+            args: Prisma.OutboxEventoGroupByArgs<ExtArgs>
+            result: $Utils.Optional<OutboxEventoGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.OutboxEventoCountArgs<ExtArgs>
+            result: $Utils.Optional<OutboxEventoCountAggregateOutputType> | number
           }
         }
       }
@@ -3694,6 +3866,908 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: MovimientoPresupuestalInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model OcCancelacionTombstone
+   */
+
+  export type AggregateOcCancelacionTombstone = {
+    _count: OcCancelacionTombstoneCountAggregateOutputType | null
+    _min: OcCancelacionTombstoneMinAggregateOutputType | null
+    _max: OcCancelacionTombstoneMaxAggregateOutputType | null
+  }
+
+  export type OcCancelacionTombstoneMinAggregateOutputType = {
+    tenant_id: string | null
+    oc_id: string | null
+    proyecto_id: string | null
+    oc_codigo: string | null
+    origen: string | null
+    usuario_id: string | null
+    created_at: Date | null
+  }
+
+  export type OcCancelacionTombstoneMaxAggregateOutputType = {
+    tenant_id: string | null
+    oc_id: string | null
+    proyecto_id: string | null
+    oc_codigo: string | null
+    origen: string | null
+    usuario_id: string | null
+    created_at: Date | null
+  }
+
+  export type OcCancelacionTombstoneCountAggregateOutputType = {
+    tenant_id: number
+    oc_id: number
+    proyecto_id: number
+    oc_codigo: number
+    origen: number
+    usuario_id: number
+    created_at: number
+    _all: number
+  }
+
+
+  export type OcCancelacionTombstoneMinAggregateInputType = {
+    tenant_id?: true
+    oc_id?: true
+    proyecto_id?: true
+    oc_codigo?: true
+    origen?: true
+    usuario_id?: true
+    created_at?: true
+  }
+
+  export type OcCancelacionTombstoneMaxAggregateInputType = {
+    tenant_id?: true
+    oc_id?: true
+    proyecto_id?: true
+    oc_codigo?: true
+    origen?: true
+    usuario_id?: true
+    created_at?: true
+  }
+
+  export type OcCancelacionTombstoneCountAggregateInputType = {
+    tenant_id?: true
+    oc_id?: true
+    proyecto_id?: true
+    oc_codigo?: true
+    origen?: true
+    usuario_id?: true
+    created_at?: true
+    _all?: true
+  }
+
+  export type OcCancelacionTombstoneAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which OcCancelacionTombstone to aggregate.
+     */
+    where?: OcCancelacionTombstoneWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OcCancelacionTombstones to fetch.
+     */
+    orderBy?: OcCancelacionTombstoneOrderByWithRelationInput | OcCancelacionTombstoneOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: OcCancelacionTombstoneWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OcCancelacionTombstones from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OcCancelacionTombstones.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned OcCancelacionTombstones
+    **/
+    _count?: true | OcCancelacionTombstoneCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: OcCancelacionTombstoneMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: OcCancelacionTombstoneMaxAggregateInputType
+  }
+
+  export type GetOcCancelacionTombstoneAggregateType<T extends OcCancelacionTombstoneAggregateArgs> = {
+        [P in keyof T & keyof AggregateOcCancelacionTombstone]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateOcCancelacionTombstone[P]>
+      : GetScalarType<T[P], AggregateOcCancelacionTombstone[P]>
+  }
+
+
+
+
+  export type OcCancelacionTombstoneGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OcCancelacionTombstoneWhereInput
+    orderBy?: OcCancelacionTombstoneOrderByWithAggregationInput | OcCancelacionTombstoneOrderByWithAggregationInput[]
+    by: OcCancelacionTombstoneScalarFieldEnum[] | OcCancelacionTombstoneScalarFieldEnum
+    having?: OcCancelacionTombstoneScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: OcCancelacionTombstoneCountAggregateInputType | true
+    _min?: OcCancelacionTombstoneMinAggregateInputType
+    _max?: OcCancelacionTombstoneMaxAggregateInputType
+  }
+
+  export type OcCancelacionTombstoneGroupByOutputType = {
+    tenant_id: string
+    oc_id: string
+    proyecto_id: string
+    oc_codigo: string | null
+    origen: string
+    usuario_id: string
+    created_at: Date
+    _count: OcCancelacionTombstoneCountAggregateOutputType | null
+    _min: OcCancelacionTombstoneMinAggregateOutputType | null
+    _max: OcCancelacionTombstoneMaxAggregateOutputType | null
+  }
+
+  type GetOcCancelacionTombstoneGroupByPayload<T extends OcCancelacionTombstoneGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<OcCancelacionTombstoneGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof OcCancelacionTombstoneGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], OcCancelacionTombstoneGroupByOutputType[P]>
+            : GetScalarType<T[P], OcCancelacionTombstoneGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type OcCancelacionTombstoneSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    tenant_id?: boolean
+    oc_id?: boolean
+    proyecto_id?: boolean
+    oc_codigo?: boolean
+    origen?: boolean
+    usuario_id?: boolean
+    created_at?: boolean
+  }, ExtArgs["result"]["ocCancelacionTombstone"]>
+
+  export type OcCancelacionTombstoneSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    tenant_id?: boolean
+    oc_id?: boolean
+    proyecto_id?: boolean
+    oc_codigo?: boolean
+    origen?: boolean
+    usuario_id?: boolean
+    created_at?: boolean
+  }, ExtArgs["result"]["ocCancelacionTombstone"]>
+
+  export type OcCancelacionTombstoneSelectScalar = {
+    tenant_id?: boolean
+    oc_id?: boolean
+    proyecto_id?: boolean
+    oc_codigo?: boolean
+    origen?: boolean
+    usuario_id?: boolean
+    created_at?: boolean
+  }
+
+
+  export type $OcCancelacionTombstonePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "OcCancelacionTombstone"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      tenant_id: string
+      oc_id: string
+      proyecto_id: string
+      oc_codigo: string | null
+      origen: string
+      usuario_id: string
+      created_at: Date
+    }, ExtArgs["result"]["ocCancelacionTombstone"]>
+    composites: {}
+  }
+
+  type OcCancelacionTombstoneGetPayload<S extends boolean | null | undefined | OcCancelacionTombstoneDefaultArgs> = $Result.GetResult<Prisma.$OcCancelacionTombstonePayload, S>
+
+  type OcCancelacionTombstoneCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<OcCancelacionTombstoneFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: OcCancelacionTombstoneCountAggregateInputType | true
+    }
+
+  export interface OcCancelacionTombstoneDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['OcCancelacionTombstone'], meta: { name: 'OcCancelacionTombstone' } }
+    /**
+     * Find zero or one OcCancelacionTombstone that matches the filter.
+     * @param {OcCancelacionTombstoneFindUniqueArgs} args - Arguments to find a OcCancelacionTombstone
+     * @example
+     * // Get one OcCancelacionTombstone
+     * const ocCancelacionTombstone = await prisma.ocCancelacionTombstone.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends OcCancelacionTombstoneFindUniqueArgs>(args: SelectSubset<T, OcCancelacionTombstoneFindUniqueArgs<ExtArgs>>): Prisma__OcCancelacionTombstoneClient<$Result.GetResult<Prisma.$OcCancelacionTombstonePayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one OcCancelacionTombstone that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {OcCancelacionTombstoneFindUniqueOrThrowArgs} args - Arguments to find a OcCancelacionTombstone
+     * @example
+     * // Get one OcCancelacionTombstone
+     * const ocCancelacionTombstone = await prisma.ocCancelacionTombstone.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends OcCancelacionTombstoneFindUniqueOrThrowArgs>(args: SelectSubset<T, OcCancelacionTombstoneFindUniqueOrThrowArgs<ExtArgs>>): Prisma__OcCancelacionTombstoneClient<$Result.GetResult<Prisma.$OcCancelacionTombstonePayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first OcCancelacionTombstone that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OcCancelacionTombstoneFindFirstArgs} args - Arguments to find a OcCancelacionTombstone
+     * @example
+     * // Get one OcCancelacionTombstone
+     * const ocCancelacionTombstone = await prisma.ocCancelacionTombstone.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends OcCancelacionTombstoneFindFirstArgs>(args?: SelectSubset<T, OcCancelacionTombstoneFindFirstArgs<ExtArgs>>): Prisma__OcCancelacionTombstoneClient<$Result.GetResult<Prisma.$OcCancelacionTombstonePayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first OcCancelacionTombstone that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OcCancelacionTombstoneFindFirstOrThrowArgs} args - Arguments to find a OcCancelacionTombstone
+     * @example
+     * // Get one OcCancelacionTombstone
+     * const ocCancelacionTombstone = await prisma.ocCancelacionTombstone.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends OcCancelacionTombstoneFindFirstOrThrowArgs>(args?: SelectSubset<T, OcCancelacionTombstoneFindFirstOrThrowArgs<ExtArgs>>): Prisma__OcCancelacionTombstoneClient<$Result.GetResult<Prisma.$OcCancelacionTombstonePayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more OcCancelacionTombstones that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OcCancelacionTombstoneFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all OcCancelacionTombstones
+     * const ocCancelacionTombstones = await prisma.ocCancelacionTombstone.findMany()
+     * 
+     * // Get first 10 OcCancelacionTombstones
+     * const ocCancelacionTombstones = await prisma.ocCancelacionTombstone.findMany({ take: 10 })
+     * 
+     * // Only select the `tenant_id`
+     * const ocCancelacionTombstoneWithTenant_idOnly = await prisma.ocCancelacionTombstone.findMany({ select: { tenant_id: true } })
+     * 
+     */
+    findMany<T extends OcCancelacionTombstoneFindManyArgs>(args?: SelectSubset<T, OcCancelacionTombstoneFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OcCancelacionTombstonePayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a OcCancelacionTombstone.
+     * @param {OcCancelacionTombstoneCreateArgs} args - Arguments to create a OcCancelacionTombstone.
+     * @example
+     * // Create one OcCancelacionTombstone
+     * const OcCancelacionTombstone = await prisma.ocCancelacionTombstone.create({
+     *   data: {
+     *     // ... data to create a OcCancelacionTombstone
+     *   }
+     * })
+     * 
+     */
+    create<T extends OcCancelacionTombstoneCreateArgs>(args: SelectSubset<T, OcCancelacionTombstoneCreateArgs<ExtArgs>>): Prisma__OcCancelacionTombstoneClient<$Result.GetResult<Prisma.$OcCancelacionTombstonePayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many OcCancelacionTombstones.
+     * @param {OcCancelacionTombstoneCreateManyArgs} args - Arguments to create many OcCancelacionTombstones.
+     * @example
+     * // Create many OcCancelacionTombstones
+     * const ocCancelacionTombstone = await prisma.ocCancelacionTombstone.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends OcCancelacionTombstoneCreateManyArgs>(args?: SelectSubset<T, OcCancelacionTombstoneCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many OcCancelacionTombstones and returns the data saved in the database.
+     * @param {OcCancelacionTombstoneCreateManyAndReturnArgs} args - Arguments to create many OcCancelacionTombstones.
+     * @example
+     * // Create many OcCancelacionTombstones
+     * const ocCancelacionTombstone = await prisma.ocCancelacionTombstone.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many OcCancelacionTombstones and only return the `tenant_id`
+     * const ocCancelacionTombstoneWithTenant_idOnly = await prisma.ocCancelacionTombstone.createManyAndReturn({ 
+     *   select: { tenant_id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends OcCancelacionTombstoneCreateManyAndReturnArgs>(args?: SelectSubset<T, OcCancelacionTombstoneCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OcCancelacionTombstonePayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a OcCancelacionTombstone.
+     * @param {OcCancelacionTombstoneDeleteArgs} args - Arguments to delete one OcCancelacionTombstone.
+     * @example
+     * // Delete one OcCancelacionTombstone
+     * const OcCancelacionTombstone = await prisma.ocCancelacionTombstone.delete({
+     *   where: {
+     *     // ... filter to delete one OcCancelacionTombstone
+     *   }
+     * })
+     * 
+     */
+    delete<T extends OcCancelacionTombstoneDeleteArgs>(args: SelectSubset<T, OcCancelacionTombstoneDeleteArgs<ExtArgs>>): Prisma__OcCancelacionTombstoneClient<$Result.GetResult<Prisma.$OcCancelacionTombstonePayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one OcCancelacionTombstone.
+     * @param {OcCancelacionTombstoneUpdateArgs} args - Arguments to update one OcCancelacionTombstone.
+     * @example
+     * // Update one OcCancelacionTombstone
+     * const ocCancelacionTombstone = await prisma.ocCancelacionTombstone.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends OcCancelacionTombstoneUpdateArgs>(args: SelectSubset<T, OcCancelacionTombstoneUpdateArgs<ExtArgs>>): Prisma__OcCancelacionTombstoneClient<$Result.GetResult<Prisma.$OcCancelacionTombstonePayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more OcCancelacionTombstones.
+     * @param {OcCancelacionTombstoneDeleteManyArgs} args - Arguments to filter OcCancelacionTombstones to delete.
+     * @example
+     * // Delete a few OcCancelacionTombstones
+     * const { count } = await prisma.ocCancelacionTombstone.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends OcCancelacionTombstoneDeleteManyArgs>(args?: SelectSubset<T, OcCancelacionTombstoneDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more OcCancelacionTombstones.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OcCancelacionTombstoneUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many OcCancelacionTombstones
+     * const ocCancelacionTombstone = await prisma.ocCancelacionTombstone.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends OcCancelacionTombstoneUpdateManyArgs>(args: SelectSubset<T, OcCancelacionTombstoneUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one OcCancelacionTombstone.
+     * @param {OcCancelacionTombstoneUpsertArgs} args - Arguments to update or create a OcCancelacionTombstone.
+     * @example
+     * // Update or create a OcCancelacionTombstone
+     * const ocCancelacionTombstone = await prisma.ocCancelacionTombstone.upsert({
+     *   create: {
+     *     // ... data to create a OcCancelacionTombstone
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the OcCancelacionTombstone we want to update
+     *   }
+     * })
+     */
+    upsert<T extends OcCancelacionTombstoneUpsertArgs>(args: SelectSubset<T, OcCancelacionTombstoneUpsertArgs<ExtArgs>>): Prisma__OcCancelacionTombstoneClient<$Result.GetResult<Prisma.$OcCancelacionTombstonePayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of OcCancelacionTombstones.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OcCancelacionTombstoneCountArgs} args - Arguments to filter OcCancelacionTombstones to count.
+     * @example
+     * // Count the number of OcCancelacionTombstones
+     * const count = await prisma.ocCancelacionTombstone.count({
+     *   where: {
+     *     // ... the filter for the OcCancelacionTombstones we want to count
+     *   }
+     * })
+    **/
+    count<T extends OcCancelacionTombstoneCountArgs>(
+      args?: Subset<T, OcCancelacionTombstoneCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], OcCancelacionTombstoneCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a OcCancelacionTombstone.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OcCancelacionTombstoneAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends OcCancelacionTombstoneAggregateArgs>(args: Subset<T, OcCancelacionTombstoneAggregateArgs>): Prisma.PrismaPromise<GetOcCancelacionTombstoneAggregateType<T>>
+
+    /**
+     * Group by OcCancelacionTombstone.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OcCancelacionTombstoneGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends OcCancelacionTombstoneGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: OcCancelacionTombstoneGroupByArgs['orderBy'] }
+        : { orderBy?: OcCancelacionTombstoneGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, OcCancelacionTombstoneGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetOcCancelacionTombstoneGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the OcCancelacionTombstone model
+   */
+  readonly fields: OcCancelacionTombstoneFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for OcCancelacionTombstone.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__OcCancelacionTombstoneClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the OcCancelacionTombstone model
+   */ 
+  interface OcCancelacionTombstoneFieldRefs {
+    readonly tenant_id: FieldRef<"OcCancelacionTombstone", 'String'>
+    readonly oc_id: FieldRef<"OcCancelacionTombstone", 'String'>
+    readonly proyecto_id: FieldRef<"OcCancelacionTombstone", 'String'>
+    readonly oc_codigo: FieldRef<"OcCancelacionTombstone", 'String'>
+    readonly origen: FieldRef<"OcCancelacionTombstone", 'String'>
+    readonly usuario_id: FieldRef<"OcCancelacionTombstone", 'String'>
+    readonly created_at: FieldRef<"OcCancelacionTombstone", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * OcCancelacionTombstone findUnique
+   */
+  export type OcCancelacionTombstoneFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OcCancelacionTombstone
+     */
+    select?: OcCancelacionTombstoneSelect<ExtArgs> | null
+    /**
+     * Filter, which OcCancelacionTombstone to fetch.
+     */
+    where: OcCancelacionTombstoneWhereUniqueInput
+  }
+
+  /**
+   * OcCancelacionTombstone findUniqueOrThrow
+   */
+  export type OcCancelacionTombstoneFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OcCancelacionTombstone
+     */
+    select?: OcCancelacionTombstoneSelect<ExtArgs> | null
+    /**
+     * Filter, which OcCancelacionTombstone to fetch.
+     */
+    where: OcCancelacionTombstoneWhereUniqueInput
+  }
+
+  /**
+   * OcCancelacionTombstone findFirst
+   */
+  export type OcCancelacionTombstoneFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OcCancelacionTombstone
+     */
+    select?: OcCancelacionTombstoneSelect<ExtArgs> | null
+    /**
+     * Filter, which OcCancelacionTombstone to fetch.
+     */
+    where?: OcCancelacionTombstoneWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OcCancelacionTombstones to fetch.
+     */
+    orderBy?: OcCancelacionTombstoneOrderByWithRelationInput | OcCancelacionTombstoneOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for OcCancelacionTombstones.
+     */
+    cursor?: OcCancelacionTombstoneWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OcCancelacionTombstones from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OcCancelacionTombstones.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OcCancelacionTombstones.
+     */
+    distinct?: OcCancelacionTombstoneScalarFieldEnum | OcCancelacionTombstoneScalarFieldEnum[]
+  }
+
+  /**
+   * OcCancelacionTombstone findFirstOrThrow
+   */
+  export type OcCancelacionTombstoneFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OcCancelacionTombstone
+     */
+    select?: OcCancelacionTombstoneSelect<ExtArgs> | null
+    /**
+     * Filter, which OcCancelacionTombstone to fetch.
+     */
+    where?: OcCancelacionTombstoneWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OcCancelacionTombstones to fetch.
+     */
+    orderBy?: OcCancelacionTombstoneOrderByWithRelationInput | OcCancelacionTombstoneOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for OcCancelacionTombstones.
+     */
+    cursor?: OcCancelacionTombstoneWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OcCancelacionTombstones from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OcCancelacionTombstones.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OcCancelacionTombstones.
+     */
+    distinct?: OcCancelacionTombstoneScalarFieldEnum | OcCancelacionTombstoneScalarFieldEnum[]
+  }
+
+  /**
+   * OcCancelacionTombstone findMany
+   */
+  export type OcCancelacionTombstoneFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OcCancelacionTombstone
+     */
+    select?: OcCancelacionTombstoneSelect<ExtArgs> | null
+    /**
+     * Filter, which OcCancelacionTombstones to fetch.
+     */
+    where?: OcCancelacionTombstoneWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OcCancelacionTombstones to fetch.
+     */
+    orderBy?: OcCancelacionTombstoneOrderByWithRelationInput | OcCancelacionTombstoneOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing OcCancelacionTombstones.
+     */
+    cursor?: OcCancelacionTombstoneWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OcCancelacionTombstones from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OcCancelacionTombstones.
+     */
+    skip?: number
+    distinct?: OcCancelacionTombstoneScalarFieldEnum | OcCancelacionTombstoneScalarFieldEnum[]
+  }
+
+  /**
+   * OcCancelacionTombstone create
+   */
+  export type OcCancelacionTombstoneCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OcCancelacionTombstone
+     */
+    select?: OcCancelacionTombstoneSelect<ExtArgs> | null
+    /**
+     * The data needed to create a OcCancelacionTombstone.
+     */
+    data: XOR<OcCancelacionTombstoneCreateInput, OcCancelacionTombstoneUncheckedCreateInput>
+  }
+
+  /**
+   * OcCancelacionTombstone createMany
+   */
+  export type OcCancelacionTombstoneCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many OcCancelacionTombstones.
+     */
+    data: OcCancelacionTombstoneCreateManyInput | OcCancelacionTombstoneCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * OcCancelacionTombstone createManyAndReturn
+   */
+  export type OcCancelacionTombstoneCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OcCancelacionTombstone
+     */
+    select?: OcCancelacionTombstoneSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many OcCancelacionTombstones.
+     */
+    data: OcCancelacionTombstoneCreateManyInput | OcCancelacionTombstoneCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * OcCancelacionTombstone update
+   */
+  export type OcCancelacionTombstoneUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OcCancelacionTombstone
+     */
+    select?: OcCancelacionTombstoneSelect<ExtArgs> | null
+    /**
+     * The data needed to update a OcCancelacionTombstone.
+     */
+    data: XOR<OcCancelacionTombstoneUpdateInput, OcCancelacionTombstoneUncheckedUpdateInput>
+    /**
+     * Choose, which OcCancelacionTombstone to update.
+     */
+    where: OcCancelacionTombstoneWhereUniqueInput
+  }
+
+  /**
+   * OcCancelacionTombstone updateMany
+   */
+  export type OcCancelacionTombstoneUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update OcCancelacionTombstones.
+     */
+    data: XOR<OcCancelacionTombstoneUpdateManyMutationInput, OcCancelacionTombstoneUncheckedUpdateManyInput>
+    /**
+     * Filter which OcCancelacionTombstones to update
+     */
+    where?: OcCancelacionTombstoneWhereInput
+  }
+
+  /**
+   * OcCancelacionTombstone upsert
+   */
+  export type OcCancelacionTombstoneUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OcCancelacionTombstone
+     */
+    select?: OcCancelacionTombstoneSelect<ExtArgs> | null
+    /**
+     * The filter to search for the OcCancelacionTombstone to update in case it exists.
+     */
+    where: OcCancelacionTombstoneWhereUniqueInput
+    /**
+     * In case the OcCancelacionTombstone found by the `where` argument doesn't exist, create a new OcCancelacionTombstone with this data.
+     */
+    create: XOR<OcCancelacionTombstoneCreateInput, OcCancelacionTombstoneUncheckedCreateInput>
+    /**
+     * In case the OcCancelacionTombstone was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<OcCancelacionTombstoneUpdateInput, OcCancelacionTombstoneUncheckedUpdateInput>
+  }
+
+  /**
+   * OcCancelacionTombstone delete
+   */
+  export type OcCancelacionTombstoneDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OcCancelacionTombstone
+     */
+    select?: OcCancelacionTombstoneSelect<ExtArgs> | null
+    /**
+     * Filter which OcCancelacionTombstone to delete.
+     */
+    where: OcCancelacionTombstoneWhereUniqueInput
+  }
+
+  /**
+   * OcCancelacionTombstone deleteMany
+   */
+  export type OcCancelacionTombstoneDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which OcCancelacionTombstones to delete
+     */
+    where?: OcCancelacionTombstoneWhereInput
+  }
+
+  /**
+   * OcCancelacionTombstone without action
+   */
+  export type OcCancelacionTombstoneDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OcCancelacionTombstone
+     */
+    select?: OcCancelacionTombstoneSelect<ExtArgs> | null
   }
 
 
@@ -9018,6 +10092,1094 @@ export namespace Prisma {
 
 
   /**
+   * Model OutboxEvento
+   */
+
+  export type AggregateOutboxEvento = {
+    _count: OutboxEventoCountAggregateOutputType | null
+    _avg: OutboxEventoAvgAggregateOutputType | null
+    _sum: OutboxEventoSumAggregateOutputType | null
+    _min: OutboxEventoMinAggregateOutputType | null
+    _max: OutboxEventoMaxAggregateOutputType | null
+  }
+
+  export type OutboxEventoAvgAggregateOutputType = {
+    orden_global: number | null
+    event_version: number | null
+    aggregate_seq: number | null
+    intentos: number | null
+  }
+
+  export type OutboxEventoSumAggregateOutputType = {
+    orden_global: bigint | null
+    event_version: number | null
+    aggregate_seq: number | null
+    intentos: number | null
+  }
+
+  export type OutboxEventoMinAggregateOutputType = {
+    id_evento: string | null
+    orden_global: bigint | null
+    event_id: string | null
+    event_type: string | null
+    event_version: number | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    aggregate_type: string | null
+    aggregate_id: string | null
+    aggregate_seq: number | null
+    usuario_id: string | null
+    correlation_id: string | null
+    estado: string | null
+    intentos: number | null
+    proximo_intento_en: Date | null
+    ultimo_error: string | null
+    created_at: Date | null
+    publicado_en: Date | null
+  }
+
+  export type OutboxEventoMaxAggregateOutputType = {
+    id_evento: string | null
+    orden_global: bigint | null
+    event_id: string | null
+    event_type: string | null
+    event_version: number | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    aggregate_type: string | null
+    aggregate_id: string | null
+    aggregate_seq: number | null
+    usuario_id: string | null
+    correlation_id: string | null
+    estado: string | null
+    intentos: number | null
+    proximo_intento_en: Date | null
+    ultimo_error: string | null
+    created_at: Date | null
+    publicado_en: Date | null
+  }
+
+  export type OutboxEventoCountAggregateOutputType = {
+    id_evento: number
+    orden_global: number
+    event_id: number
+    event_type: number
+    event_version: number
+    tenant_id: number
+    proyecto_id: number
+    aggregate_type: number
+    aggregate_id: number
+    aggregate_seq: number
+    usuario_id: number
+    correlation_id: number
+    payload: number
+    estado: number
+    intentos: number
+    proximo_intento_en: number
+    ultimo_error: number
+    created_at: number
+    publicado_en: number
+    _all: number
+  }
+
+
+  export type OutboxEventoAvgAggregateInputType = {
+    orden_global?: true
+    event_version?: true
+    aggregate_seq?: true
+    intentos?: true
+  }
+
+  export type OutboxEventoSumAggregateInputType = {
+    orden_global?: true
+    event_version?: true
+    aggregate_seq?: true
+    intentos?: true
+  }
+
+  export type OutboxEventoMinAggregateInputType = {
+    id_evento?: true
+    orden_global?: true
+    event_id?: true
+    event_type?: true
+    event_version?: true
+    tenant_id?: true
+    proyecto_id?: true
+    aggregate_type?: true
+    aggregate_id?: true
+    aggregate_seq?: true
+    usuario_id?: true
+    correlation_id?: true
+    estado?: true
+    intentos?: true
+    proximo_intento_en?: true
+    ultimo_error?: true
+    created_at?: true
+    publicado_en?: true
+  }
+
+  export type OutboxEventoMaxAggregateInputType = {
+    id_evento?: true
+    orden_global?: true
+    event_id?: true
+    event_type?: true
+    event_version?: true
+    tenant_id?: true
+    proyecto_id?: true
+    aggregate_type?: true
+    aggregate_id?: true
+    aggregate_seq?: true
+    usuario_id?: true
+    correlation_id?: true
+    estado?: true
+    intentos?: true
+    proximo_intento_en?: true
+    ultimo_error?: true
+    created_at?: true
+    publicado_en?: true
+  }
+
+  export type OutboxEventoCountAggregateInputType = {
+    id_evento?: true
+    orden_global?: true
+    event_id?: true
+    event_type?: true
+    event_version?: true
+    tenant_id?: true
+    proyecto_id?: true
+    aggregate_type?: true
+    aggregate_id?: true
+    aggregate_seq?: true
+    usuario_id?: true
+    correlation_id?: true
+    payload?: true
+    estado?: true
+    intentos?: true
+    proximo_intento_en?: true
+    ultimo_error?: true
+    created_at?: true
+    publicado_en?: true
+    _all?: true
+  }
+
+  export type OutboxEventoAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which OutboxEvento to aggregate.
+     */
+    where?: OutboxEventoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OutboxEventos to fetch.
+     */
+    orderBy?: OutboxEventoOrderByWithRelationInput | OutboxEventoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: OutboxEventoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OutboxEventos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OutboxEventos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned OutboxEventos
+    **/
+    _count?: true | OutboxEventoCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: OutboxEventoAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: OutboxEventoSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: OutboxEventoMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: OutboxEventoMaxAggregateInputType
+  }
+
+  export type GetOutboxEventoAggregateType<T extends OutboxEventoAggregateArgs> = {
+        [P in keyof T & keyof AggregateOutboxEvento]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateOutboxEvento[P]>
+      : GetScalarType<T[P], AggregateOutboxEvento[P]>
+  }
+
+
+
+
+  export type OutboxEventoGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OutboxEventoWhereInput
+    orderBy?: OutboxEventoOrderByWithAggregationInput | OutboxEventoOrderByWithAggregationInput[]
+    by: OutboxEventoScalarFieldEnum[] | OutboxEventoScalarFieldEnum
+    having?: OutboxEventoScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: OutboxEventoCountAggregateInputType | true
+    _avg?: OutboxEventoAvgAggregateInputType
+    _sum?: OutboxEventoSumAggregateInputType
+    _min?: OutboxEventoMinAggregateInputType
+    _max?: OutboxEventoMaxAggregateInputType
+  }
+
+  export type OutboxEventoGroupByOutputType = {
+    id_evento: string
+    orden_global: bigint
+    event_id: string
+    event_type: string
+    event_version: number
+    tenant_id: string
+    proyecto_id: string
+    aggregate_type: string
+    aggregate_id: string
+    aggregate_seq: number
+    usuario_id: string | null
+    correlation_id: string | null
+    payload: JsonValue
+    estado: string
+    intentos: number
+    proximo_intento_en: Date
+    ultimo_error: string | null
+    created_at: Date
+    publicado_en: Date | null
+    _count: OutboxEventoCountAggregateOutputType | null
+    _avg: OutboxEventoAvgAggregateOutputType | null
+    _sum: OutboxEventoSumAggregateOutputType | null
+    _min: OutboxEventoMinAggregateOutputType | null
+    _max: OutboxEventoMaxAggregateOutputType | null
+  }
+
+  type GetOutboxEventoGroupByPayload<T extends OutboxEventoGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<OutboxEventoGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof OutboxEventoGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], OutboxEventoGroupByOutputType[P]>
+            : GetScalarType<T[P], OutboxEventoGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type OutboxEventoSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_evento?: boolean
+    orden_global?: boolean
+    event_id?: boolean
+    event_type?: boolean
+    event_version?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    aggregate_type?: boolean
+    aggregate_id?: boolean
+    aggregate_seq?: boolean
+    usuario_id?: boolean
+    correlation_id?: boolean
+    payload?: boolean
+    estado?: boolean
+    intentos?: boolean
+    proximo_intento_en?: boolean
+    ultimo_error?: boolean
+    created_at?: boolean
+    publicado_en?: boolean
+  }, ExtArgs["result"]["outboxEvento"]>
+
+  export type OutboxEventoSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_evento?: boolean
+    orden_global?: boolean
+    event_id?: boolean
+    event_type?: boolean
+    event_version?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    aggregate_type?: boolean
+    aggregate_id?: boolean
+    aggregate_seq?: boolean
+    usuario_id?: boolean
+    correlation_id?: boolean
+    payload?: boolean
+    estado?: boolean
+    intentos?: boolean
+    proximo_intento_en?: boolean
+    ultimo_error?: boolean
+    created_at?: boolean
+    publicado_en?: boolean
+  }, ExtArgs["result"]["outboxEvento"]>
+
+  export type OutboxEventoSelectScalar = {
+    id_evento?: boolean
+    orden_global?: boolean
+    event_id?: boolean
+    event_type?: boolean
+    event_version?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    aggregate_type?: boolean
+    aggregate_id?: boolean
+    aggregate_seq?: boolean
+    usuario_id?: boolean
+    correlation_id?: boolean
+    payload?: boolean
+    estado?: boolean
+    intentos?: boolean
+    proximo_intento_en?: boolean
+    ultimo_error?: boolean
+    created_at?: boolean
+    publicado_en?: boolean
+  }
+
+
+  export type $OutboxEventoPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "OutboxEvento"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id_evento: string
+      orden_global: bigint
+      event_id: string
+      event_type: string
+      event_version: number
+      tenant_id: string
+      proyecto_id: string
+      aggregate_type: string
+      aggregate_id: string
+      aggregate_seq: number
+      usuario_id: string | null
+      correlation_id: string | null
+      payload: Prisma.JsonValue
+      estado: string
+      intentos: number
+      proximo_intento_en: Date
+      ultimo_error: string | null
+      created_at: Date
+      publicado_en: Date | null
+    }, ExtArgs["result"]["outboxEvento"]>
+    composites: {}
+  }
+
+  type OutboxEventoGetPayload<S extends boolean | null | undefined | OutboxEventoDefaultArgs> = $Result.GetResult<Prisma.$OutboxEventoPayload, S>
+
+  type OutboxEventoCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<OutboxEventoFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: OutboxEventoCountAggregateInputType | true
+    }
+
+  export interface OutboxEventoDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['OutboxEvento'], meta: { name: 'OutboxEvento' } }
+    /**
+     * Find zero or one OutboxEvento that matches the filter.
+     * @param {OutboxEventoFindUniqueArgs} args - Arguments to find a OutboxEvento
+     * @example
+     * // Get one OutboxEvento
+     * const outboxEvento = await prisma.outboxEvento.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends OutboxEventoFindUniqueArgs>(args: SelectSubset<T, OutboxEventoFindUniqueArgs<ExtArgs>>): Prisma__OutboxEventoClient<$Result.GetResult<Prisma.$OutboxEventoPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one OutboxEvento that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {OutboxEventoFindUniqueOrThrowArgs} args - Arguments to find a OutboxEvento
+     * @example
+     * // Get one OutboxEvento
+     * const outboxEvento = await prisma.outboxEvento.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends OutboxEventoFindUniqueOrThrowArgs>(args: SelectSubset<T, OutboxEventoFindUniqueOrThrowArgs<ExtArgs>>): Prisma__OutboxEventoClient<$Result.GetResult<Prisma.$OutboxEventoPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first OutboxEvento that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OutboxEventoFindFirstArgs} args - Arguments to find a OutboxEvento
+     * @example
+     * // Get one OutboxEvento
+     * const outboxEvento = await prisma.outboxEvento.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends OutboxEventoFindFirstArgs>(args?: SelectSubset<T, OutboxEventoFindFirstArgs<ExtArgs>>): Prisma__OutboxEventoClient<$Result.GetResult<Prisma.$OutboxEventoPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first OutboxEvento that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OutboxEventoFindFirstOrThrowArgs} args - Arguments to find a OutboxEvento
+     * @example
+     * // Get one OutboxEvento
+     * const outboxEvento = await prisma.outboxEvento.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends OutboxEventoFindFirstOrThrowArgs>(args?: SelectSubset<T, OutboxEventoFindFirstOrThrowArgs<ExtArgs>>): Prisma__OutboxEventoClient<$Result.GetResult<Prisma.$OutboxEventoPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more OutboxEventos that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OutboxEventoFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all OutboxEventos
+     * const outboxEventos = await prisma.outboxEvento.findMany()
+     * 
+     * // Get first 10 OutboxEventos
+     * const outboxEventos = await prisma.outboxEvento.findMany({ take: 10 })
+     * 
+     * // Only select the `id_evento`
+     * const outboxEventoWithId_eventoOnly = await prisma.outboxEvento.findMany({ select: { id_evento: true } })
+     * 
+     */
+    findMany<T extends OutboxEventoFindManyArgs>(args?: SelectSubset<T, OutboxEventoFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OutboxEventoPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a OutboxEvento.
+     * @param {OutboxEventoCreateArgs} args - Arguments to create a OutboxEvento.
+     * @example
+     * // Create one OutboxEvento
+     * const OutboxEvento = await prisma.outboxEvento.create({
+     *   data: {
+     *     // ... data to create a OutboxEvento
+     *   }
+     * })
+     * 
+     */
+    create<T extends OutboxEventoCreateArgs>(args: SelectSubset<T, OutboxEventoCreateArgs<ExtArgs>>): Prisma__OutboxEventoClient<$Result.GetResult<Prisma.$OutboxEventoPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many OutboxEventos.
+     * @param {OutboxEventoCreateManyArgs} args - Arguments to create many OutboxEventos.
+     * @example
+     * // Create many OutboxEventos
+     * const outboxEvento = await prisma.outboxEvento.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends OutboxEventoCreateManyArgs>(args?: SelectSubset<T, OutboxEventoCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many OutboxEventos and returns the data saved in the database.
+     * @param {OutboxEventoCreateManyAndReturnArgs} args - Arguments to create many OutboxEventos.
+     * @example
+     * // Create many OutboxEventos
+     * const outboxEvento = await prisma.outboxEvento.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many OutboxEventos and only return the `id_evento`
+     * const outboxEventoWithId_eventoOnly = await prisma.outboxEvento.createManyAndReturn({ 
+     *   select: { id_evento: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends OutboxEventoCreateManyAndReturnArgs>(args?: SelectSubset<T, OutboxEventoCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OutboxEventoPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a OutboxEvento.
+     * @param {OutboxEventoDeleteArgs} args - Arguments to delete one OutboxEvento.
+     * @example
+     * // Delete one OutboxEvento
+     * const OutboxEvento = await prisma.outboxEvento.delete({
+     *   where: {
+     *     // ... filter to delete one OutboxEvento
+     *   }
+     * })
+     * 
+     */
+    delete<T extends OutboxEventoDeleteArgs>(args: SelectSubset<T, OutboxEventoDeleteArgs<ExtArgs>>): Prisma__OutboxEventoClient<$Result.GetResult<Prisma.$OutboxEventoPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one OutboxEvento.
+     * @param {OutboxEventoUpdateArgs} args - Arguments to update one OutboxEvento.
+     * @example
+     * // Update one OutboxEvento
+     * const outboxEvento = await prisma.outboxEvento.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends OutboxEventoUpdateArgs>(args: SelectSubset<T, OutboxEventoUpdateArgs<ExtArgs>>): Prisma__OutboxEventoClient<$Result.GetResult<Prisma.$OutboxEventoPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more OutboxEventos.
+     * @param {OutboxEventoDeleteManyArgs} args - Arguments to filter OutboxEventos to delete.
+     * @example
+     * // Delete a few OutboxEventos
+     * const { count } = await prisma.outboxEvento.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends OutboxEventoDeleteManyArgs>(args?: SelectSubset<T, OutboxEventoDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more OutboxEventos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OutboxEventoUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many OutboxEventos
+     * const outboxEvento = await prisma.outboxEvento.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends OutboxEventoUpdateManyArgs>(args: SelectSubset<T, OutboxEventoUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one OutboxEvento.
+     * @param {OutboxEventoUpsertArgs} args - Arguments to update or create a OutboxEvento.
+     * @example
+     * // Update or create a OutboxEvento
+     * const outboxEvento = await prisma.outboxEvento.upsert({
+     *   create: {
+     *     // ... data to create a OutboxEvento
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the OutboxEvento we want to update
+     *   }
+     * })
+     */
+    upsert<T extends OutboxEventoUpsertArgs>(args: SelectSubset<T, OutboxEventoUpsertArgs<ExtArgs>>): Prisma__OutboxEventoClient<$Result.GetResult<Prisma.$OutboxEventoPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of OutboxEventos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OutboxEventoCountArgs} args - Arguments to filter OutboxEventos to count.
+     * @example
+     * // Count the number of OutboxEventos
+     * const count = await prisma.outboxEvento.count({
+     *   where: {
+     *     // ... the filter for the OutboxEventos we want to count
+     *   }
+     * })
+    **/
+    count<T extends OutboxEventoCountArgs>(
+      args?: Subset<T, OutboxEventoCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], OutboxEventoCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a OutboxEvento.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OutboxEventoAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends OutboxEventoAggregateArgs>(args: Subset<T, OutboxEventoAggregateArgs>): Prisma.PrismaPromise<GetOutboxEventoAggregateType<T>>
+
+    /**
+     * Group by OutboxEvento.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OutboxEventoGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends OutboxEventoGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: OutboxEventoGroupByArgs['orderBy'] }
+        : { orderBy?: OutboxEventoGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, OutboxEventoGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetOutboxEventoGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the OutboxEvento model
+   */
+  readonly fields: OutboxEventoFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for OutboxEvento.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__OutboxEventoClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the OutboxEvento model
+   */ 
+  interface OutboxEventoFieldRefs {
+    readonly id_evento: FieldRef<"OutboxEvento", 'String'>
+    readonly orden_global: FieldRef<"OutboxEvento", 'BigInt'>
+    readonly event_id: FieldRef<"OutboxEvento", 'String'>
+    readonly event_type: FieldRef<"OutboxEvento", 'String'>
+    readonly event_version: FieldRef<"OutboxEvento", 'Int'>
+    readonly tenant_id: FieldRef<"OutboxEvento", 'String'>
+    readonly proyecto_id: FieldRef<"OutboxEvento", 'String'>
+    readonly aggregate_type: FieldRef<"OutboxEvento", 'String'>
+    readonly aggregate_id: FieldRef<"OutboxEvento", 'String'>
+    readonly aggregate_seq: FieldRef<"OutboxEvento", 'Int'>
+    readonly usuario_id: FieldRef<"OutboxEvento", 'String'>
+    readonly correlation_id: FieldRef<"OutboxEvento", 'String'>
+    readonly payload: FieldRef<"OutboxEvento", 'Json'>
+    readonly estado: FieldRef<"OutboxEvento", 'String'>
+    readonly intentos: FieldRef<"OutboxEvento", 'Int'>
+    readonly proximo_intento_en: FieldRef<"OutboxEvento", 'DateTime'>
+    readonly ultimo_error: FieldRef<"OutboxEvento", 'String'>
+    readonly created_at: FieldRef<"OutboxEvento", 'DateTime'>
+    readonly publicado_en: FieldRef<"OutboxEvento", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * OutboxEvento findUnique
+   */
+  export type OutboxEventoFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OutboxEvento
+     */
+    select?: OutboxEventoSelect<ExtArgs> | null
+    /**
+     * Filter, which OutboxEvento to fetch.
+     */
+    where: OutboxEventoWhereUniqueInput
+  }
+
+  /**
+   * OutboxEvento findUniqueOrThrow
+   */
+  export type OutboxEventoFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OutboxEvento
+     */
+    select?: OutboxEventoSelect<ExtArgs> | null
+    /**
+     * Filter, which OutboxEvento to fetch.
+     */
+    where: OutboxEventoWhereUniqueInput
+  }
+
+  /**
+   * OutboxEvento findFirst
+   */
+  export type OutboxEventoFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OutboxEvento
+     */
+    select?: OutboxEventoSelect<ExtArgs> | null
+    /**
+     * Filter, which OutboxEvento to fetch.
+     */
+    where?: OutboxEventoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OutboxEventos to fetch.
+     */
+    orderBy?: OutboxEventoOrderByWithRelationInput | OutboxEventoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for OutboxEventos.
+     */
+    cursor?: OutboxEventoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OutboxEventos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OutboxEventos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OutboxEventos.
+     */
+    distinct?: OutboxEventoScalarFieldEnum | OutboxEventoScalarFieldEnum[]
+  }
+
+  /**
+   * OutboxEvento findFirstOrThrow
+   */
+  export type OutboxEventoFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OutboxEvento
+     */
+    select?: OutboxEventoSelect<ExtArgs> | null
+    /**
+     * Filter, which OutboxEvento to fetch.
+     */
+    where?: OutboxEventoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OutboxEventos to fetch.
+     */
+    orderBy?: OutboxEventoOrderByWithRelationInput | OutboxEventoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for OutboxEventos.
+     */
+    cursor?: OutboxEventoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OutboxEventos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OutboxEventos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OutboxEventos.
+     */
+    distinct?: OutboxEventoScalarFieldEnum | OutboxEventoScalarFieldEnum[]
+  }
+
+  /**
+   * OutboxEvento findMany
+   */
+  export type OutboxEventoFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OutboxEvento
+     */
+    select?: OutboxEventoSelect<ExtArgs> | null
+    /**
+     * Filter, which OutboxEventos to fetch.
+     */
+    where?: OutboxEventoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OutboxEventos to fetch.
+     */
+    orderBy?: OutboxEventoOrderByWithRelationInput | OutboxEventoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing OutboxEventos.
+     */
+    cursor?: OutboxEventoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OutboxEventos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OutboxEventos.
+     */
+    skip?: number
+    distinct?: OutboxEventoScalarFieldEnum | OutboxEventoScalarFieldEnum[]
+  }
+
+  /**
+   * OutboxEvento create
+   */
+  export type OutboxEventoCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OutboxEvento
+     */
+    select?: OutboxEventoSelect<ExtArgs> | null
+    /**
+     * The data needed to create a OutboxEvento.
+     */
+    data: XOR<OutboxEventoCreateInput, OutboxEventoUncheckedCreateInput>
+  }
+
+  /**
+   * OutboxEvento createMany
+   */
+  export type OutboxEventoCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many OutboxEventos.
+     */
+    data: OutboxEventoCreateManyInput | OutboxEventoCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * OutboxEvento createManyAndReturn
+   */
+  export type OutboxEventoCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OutboxEvento
+     */
+    select?: OutboxEventoSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many OutboxEventos.
+     */
+    data: OutboxEventoCreateManyInput | OutboxEventoCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * OutboxEvento update
+   */
+  export type OutboxEventoUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OutboxEvento
+     */
+    select?: OutboxEventoSelect<ExtArgs> | null
+    /**
+     * The data needed to update a OutboxEvento.
+     */
+    data: XOR<OutboxEventoUpdateInput, OutboxEventoUncheckedUpdateInput>
+    /**
+     * Choose, which OutboxEvento to update.
+     */
+    where: OutboxEventoWhereUniqueInput
+  }
+
+  /**
+   * OutboxEvento updateMany
+   */
+  export type OutboxEventoUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update OutboxEventos.
+     */
+    data: XOR<OutboxEventoUpdateManyMutationInput, OutboxEventoUncheckedUpdateManyInput>
+    /**
+     * Filter which OutboxEventos to update
+     */
+    where?: OutboxEventoWhereInput
+  }
+
+  /**
+   * OutboxEvento upsert
+   */
+  export type OutboxEventoUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OutboxEvento
+     */
+    select?: OutboxEventoSelect<ExtArgs> | null
+    /**
+     * The filter to search for the OutboxEvento to update in case it exists.
+     */
+    where: OutboxEventoWhereUniqueInput
+    /**
+     * In case the OutboxEvento found by the `where` argument doesn't exist, create a new OutboxEvento with this data.
+     */
+    create: XOR<OutboxEventoCreateInput, OutboxEventoUncheckedCreateInput>
+    /**
+     * In case the OutboxEvento was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<OutboxEventoUpdateInput, OutboxEventoUncheckedUpdateInput>
+  }
+
+  /**
+   * OutboxEvento delete
+   */
+  export type OutboxEventoDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OutboxEvento
+     */
+    select?: OutboxEventoSelect<ExtArgs> | null
+    /**
+     * Filter which OutboxEvento to delete.
+     */
+    where: OutboxEventoWhereUniqueInput
+  }
+
+  /**
+   * OutboxEvento deleteMany
+   */
+  export type OutboxEventoDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which OutboxEventos to delete
+     */
+    where?: OutboxEventoWhereInput
+  }
+
+  /**
+   * OutboxEvento without action
+   */
+  export type OutboxEventoDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OutboxEvento
+     */
+    select?: OutboxEventoSelect<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -9072,6 +11234,19 @@ export namespace Prisma {
   };
 
   export type MovimientoPresupuestalScalarFieldEnum = (typeof MovimientoPresupuestalScalarFieldEnum)[keyof typeof MovimientoPresupuestalScalarFieldEnum]
+
+
+  export const OcCancelacionTombstoneScalarFieldEnum: {
+    tenant_id: 'tenant_id',
+    oc_id: 'oc_id',
+    proyecto_id: 'proyecto_id',
+    oc_codigo: 'oc_codigo',
+    origen: 'origen',
+    usuario_id: 'usuario_id',
+    created_at: 'created_at'
+  };
+
+  export type OcCancelacionTombstoneScalarFieldEnum = (typeof OcCancelacionTombstoneScalarFieldEnum)[keyof typeof OcCancelacionTombstoneScalarFieldEnum]
 
 
   export const ProgramaPagosScalarFieldEnum: {
@@ -9168,12 +11343,44 @@ export namespace Prisma {
   export type DetallePagoOCScalarFieldEnum = (typeof DetallePagoOCScalarFieldEnum)[keyof typeof DetallePagoOCScalarFieldEnum]
 
 
+  export const OutboxEventoScalarFieldEnum: {
+    id_evento: 'id_evento',
+    orden_global: 'orden_global',
+    event_id: 'event_id',
+    event_type: 'event_type',
+    event_version: 'event_version',
+    tenant_id: 'tenant_id',
+    proyecto_id: 'proyecto_id',
+    aggregate_type: 'aggregate_type',
+    aggregate_id: 'aggregate_id',
+    aggregate_seq: 'aggregate_seq',
+    usuario_id: 'usuario_id',
+    correlation_id: 'correlation_id',
+    payload: 'payload',
+    estado: 'estado',
+    intentos: 'intentos',
+    proximo_intento_en: 'proximo_intento_en',
+    ultimo_error: 'ultimo_error',
+    created_at: 'created_at',
+    publicado_en: 'publicado_en'
+  };
+
+  export type OutboxEventoScalarFieldEnum = (typeof OutboxEventoScalarFieldEnum)[keyof typeof OutboxEventoScalarFieldEnum]
+
+
   export const SortOrder: {
     asc: 'asc',
     desc: 'desc'
   };
 
   export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
+
+
+  export const JsonNullValueInput: {
+    JsonNull: typeof JsonNull
+  };
+
+  export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
   export const QueryMode: {
@@ -9190,6 +11397,15 @@ export namespace Prisma {
   };
 
   export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+  export const JsonNullValueFilter: {
+    DbNull: typeof DbNull,
+    JsonNull: typeof JsonNull,
+    AnyNull: typeof AnyNull
+  };
+
+  export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 
 
   /**
@@ -9247,6 +11463,20 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'BigInt'
+   */
+  export type BigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt'>
+    
+
+
+  /**
+   * Reference to a field of type 'BigInt[]'
+   */
+  export type ListBigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt[]'>
+    
+
+
+  /**
    * Reference to a field of type 'Int'
    */
   export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
@@ -9257,6 +11487,27 @@ export namespace Prisma {
    * Reference to a field of type 'Int[]'
    */
   export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Json'
+   */
+  export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+    
+
+
+  /**
+   * Reference to a field of type 'Float'
+   */
+  export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
+    
+
+
+  /**
+   * Reference to a field of type 'Float[]'
+   */
+  export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
     
   /**
    * Deep Input Types
@@ -9485,6 +11736,69 @@ export namespace Prisma {
     usuario_id?: UuidWithAggregatesFilter<"MovimientoPresupuestal"> | string
     fecha_registro?: DateTimeWithAggregatesFilter<"MovimientoPresupuestal"> | Date | string
     notas?: StringNullableWithAggregatesFilter<"MovimientoPresupuestal"> | string | null
+  }
+
+  export type OcCancelacionTombstoneWhereInput = {
+    AND?: OcCancelacionTombstoneWhereInput | OcCancelacionTombstoneWhereInput[]
+    OR?: OcCancelacionTombstoneWhereInput[]
+    NOT?: OcCancelacionTombstoneWhereInput | OcCancelacionTombstoneWhereInput[]
+    tenant_id?: UuidFilter<"OcCancelacionTombstone"> | string
+    oc_id?: UuidFilter<"OcCancelacionTombstone"> | string
+    proyecto_id?: UuidFilter<"OcCancelacionTombstone"> | string
+    oc_codigo?: StringNullableFilter<"OcCancelacionTombstone"> | string | null
+    origen?: StringFilter<"OcCancelacionTombstone"> | string
+    usuario_id?: UuidFilter<"OcCancelacionTombstone"> | string
+    created_at?: DateTimeFilter<"OcCancelacionTombstone"> | Date | string
+  }
+
+  export type OcCancelacionTombstoneOrderByWithRelationInput = {
+    tenant_id?: SortOrder
+    oc_id?: SortOrder
+    proyecto_id?: SortOrder
+    oc_codigo?: SortOrderInput | SortOrder
+    origen?: SortOrder
+    usuario_id?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type OcCancelacionTombstoneWhereUniqueInput = Prisma.AtLeast<{
+    tenant_id_oc_id?: OcCancelacionTombstoneTenant_idOc_idCompoundUniqueInput
+    AND?: OcCancelacionTombstoneWhereInput | OcCancelacionTombstoneWhereInput[]
+    OR?: OcCancelacionTombstoneWhereInput[]
+    NOT?: OcCancelacionTombstoneWhereInput | OcCancelacionTombstoneWhereInput[]
+    tenant_id?: UuidFilter<"OcCancelacionTombstone"> | string
+    oc_id?: UuidFilter<"OcCancelacionTombstone"> | string
+    proyecto_id?: UuidFilter<"OcCancelacionTombstone"> | string
+    oc_codigo?: StringNullableFilter<"OcCancelacionTombstone"> | string | null
+    origen?: StringFilter<"OcCancelacionTombstone"> | string
+    usuario_id?: UuidFilter<"OcCancelacionTombstone"> | string
+    created_at?: DateTimeFilter<"OcCancelacionTombstone"> | Date | string
+  }, "tenant_id_oc_id">
+
+  export type OcCancelacionTombstoneOrderByWithAggregationInput = {
+    tenant_id?: SortOrder
+    oc_id?: SortOrder
+    proyecto_id?: SortOrder
+    oc_codigo?: SortOrderInput | SortOrder
+    origen?: SortOrder
+    usuario_id?: SortOrder
+    created_at?: SortOrder
+    _count?: OcCancelacionTombstoneCountOrderByAggregateInput
+    _max?: OcCancelacionTombstoneMaxOrderByAggregateInput
+    _min?: OcCancelacionTombstoneMinOrderByAggregateInput
+  }
+
+  export type OcCancelacionTombstoneScalarWhereWithAggregatesInput = {
+    AND?: OcCancelacionTombstoneScalarWhereWithAggregatesInput | OcCancelacionTombstoneScalarWhereWithAggregatesInput[]
+    OR?: OcCancelacionTombstoneScalarWhereWithAggregatesInput[]
+    NOT?: OcCancelacionTombstoneScalarWhereWithAggregatesInput | OcCancelacionTombstoneScalarWhereWithAggregatesInput[]
+    tenant_id?: UuidWithAggregatesFilter<"OcCancelacionTombstone"> | string
+    oc_id?: UuidWithAggregatesFilter<"OcCancelacionTombstone"> | string
+    proyecto_id?: UuidWithAggregatesFilter<"OcCancelacionTombstone"> | string
+    oc_codigo?: StringNullableWithAggregatesFilter<"OcCancelacionTombstone"> | string | null
+    origen?: StringWithAggregatesFilter<"OcCancelacionTombstone"> | string
+    usuario_id?: UuidWithAggregatesFilter<"OcCancelacionTombstone"> | string
+    created_at?: DateTimeWithAggregatesFilter<"OcCancelacionTombstone"> | Date | string
   }
 
   export type ProgramaPagosWhereInput = {
@@ -9969,6 +12283,132 @@ export namespace Prisma {
     concepto_clave?: StringNullableWithAggregatesFilter<"DetallePagoOC"> | string | null
   }
 
+  export type OutboxEventoWhereInput = {
+    AND?: OutboxEventoWhereInput | OutboxEventoWhereInput[]
+    OR?: OutboxEventoWhereInput[]
+    NOT?: OutboxEventoWhereInput | OutboxEventoWhereInput[]
+    id_evento?: UuidFilter<"OutboxEvento"> | string
+    orden_global?: BigIntFilter<"OutboxEvento"> | bigint | number
+    event_id?: UuidFilter<"OutboxEvento"> | string
+    event_type?: StringFilter<"OutboxEvento"> | string
+    event_version?: IntFilter<"OutboxEvento"> | number
+    tenant_id?: UuidFilter<"OutboxEvento"> | string
+    proyecto_id?: UuidFilter<"OutboxEvento"> | string
+    aggregate_type?: StringFilter<"OutboxEvento"> | string
+    aggregate_id?: UuidFilter<"OutboxEvento"> | string
+    aggregate_seq?: IntFilter<"OutboxEvento"> | number
+    usuario_id?: UuidNullableFilter<"OutboxEvento"> | string | null
+    correlation_id?: StringNullableFilter<"OutboxEvento"> | string | null
+    payload?: JsonFilter<"OutboxEvento">
+    estado?: StringFilter<"OutboxEvento"> | string
+    intentos?: IntFilter<"OutboxEvento"> | number
+    proximo_intento_en?: DateTimeFilter<"OutboxEvento"> | Date | string
+    ultimo_error?: StringNullableFilter<"OutboxEvento"> | string | null
+    created_at?: DateTimeFilter<"OutboxEvento"> | Date | string
+    publicado_en?: DateTimeNullableFilter<"OutboxEvento"> | Date | string | null
+  }
+
+  export type OutboxEventoOrderByWithRelationInput = {
+    id_evento?: SortOrder
+    orden_global?: SortOrder
+    event_id?: SortOrder
+    event_type?: SortOrder
+    event_version?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    aggregate_type?: SortOrder
+    aggregate_id?: SortOrder
+    aggregate_seq?: SortOrder
+    usuario_id?: SortOrderInput | SortOrder
+    correlation_id?: SortOrderInput | SortOrder
+    payload?: SortOrder
+    estado?: SortOrder
+    intentos?: SortOrder
+    proximo_intento_en?: SortOrder
+    ultimo_error?: SortOrderInput | SortOrder
+    created_at?: SortOrder
+    publicado_en?: SortOrderInput | SortOrder
+  }
+
+  export type OutboxEventoWhereUniqueInput = Prisma.AtLeast<{
+    id_evento?: string
+    orden_global?: bigint | number
+    tenant_id_event_id?: OutboxEventoTenant_idEvent_idCompoundUniqueInput
+    tenant_id_aggregate_type_aggregate_id_aggregate_seq?: OutboxEventoTenant_idAggregate_typeAggregate_idAggregate_seqCompoundUniqueInput
+    AND?: OutboxEventoWhereInput | OutboxEventoWhereInput[]
+    OR?: OutboxEventoWhereInput[]
+    NOT?: OutboxEventoWhereInput | OutboxEventoWhereInput[]
+    event_id?: UuidFilter<"OutboxEvento"> | string
+    event_type?: StringFilter<"OutboxEvento"> | string
+    event_version?: IntFilter<"OutboxEvento"> | number
+    tenant_id?: UuidFilter<"OutboxEvento"> | string
+    proyecto_id?: UuidFilter<"OutboxEvento"> | string
+    aggregate_type?: StringFilter<"OutboxEvento"> | string
+    aggregate_id?: UuidFilter<"OutboxEvento"> | string
+    aggregate_seq?: IntFilter<"OutboxEvento"> | number
+    usuario_id?: UuidNullableFilter<"OutboxEvento"> | string | null
+    correlation_id?: StringNullableFilter<"OutboxEvento"> | string | null
+    payload?: JsonFilter<"OutboxEvento">
+    estado?: StringFilter<"OutboxEvento"> | string
+    intentos?: IntFilter<"OutboxEvento"> | number
+    proximo_intento_en?: DateTimeFilter<"OutboxEvento"> | Date | string
+    ultimo_error?: StringNullableFilter<"OutboxEvento"> | string | null
+    created_at?: DateTimeFilter<"OutboxEvento"> | Date | string
+    publicado_en?: DateTimeNullableFilter<"OutboxEvento"> | Date | string | null
+  }, "id_evento" | "tenant_id_event_id" | "tenant_id_aggregate_type_aggregate_id_aggregate_seq" | "orden_global">
+
+  export type OutboxEventoOrderByWithAggregationInput = {
+    id_evento?: SortOrder
+    orden_global?: SortOrder
+    event_id?: SortOrder
+    event_type?: SortOrder
+    event_version?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    aggregate_type?: SortOrder
+    aggregate_id?: SortOrder
+    aggregate_seq?: SortOrder
+    usuario_id?: SortOrderInput | SortOrder
+    correlation_id?: SortOrderInput | SortOrder
+    payload?: SortOrder
+    estado?: SortOrder
+    intentos?: SortOrder
+    proximo_intento_en?: SortOrder
+    ultimo_error?: SortOrderInput | SortOrder
+    created_at?: SortOrder
+    publicado_en?: SortOrderInput | SortOrder
+    _count?: OutboxEventoCountOrderByAggregateInput
+    _avg?: OutboxEventoAvgOrderByAggregateInput
+    _max?: OutboxEventoMaxOrderByAggregateInput
+    _min?: OutboxEventoMinOrderByAggregateInput
+    _sum?: OutboxEventoSumOrderByAggregateInput
+  }
+
+  export type OutboxEventoScalarWhereWithAggregatesInput = {
+    AND?: OutboxEventoScalarWhereWithAggregatesInput | OutboxEventoScalarWhereWithAggregatesInput[]
+    OR?: OutboxEventoScalarWhereWithAggregatesInput[]
+    NOT?: OutboxEventoScalarWhereWithAggregatesInput | OutboxEventoScalarWhereWithAggregatesInput[]
+    id_evento?: UuidWithAggregatesFilter<"OutboxEvento"> | string
+    orden_global?: BigIntWithAggregatesFilter<"OutboxEvento"> | bigint | number
+    event_id?: UuidWithAggregatesFilter<"OutboxEvento"> | string
+    event_type?: StringWithAggregatesFilter<"OutboxEvento"> | string
+    event_version?: IntWithAggregatesFilter<"OutboxEvento"> | number
+    tenant_id?: UuidWithAggregatesFilter<"OutboxEvento"> | string
+    proyecto_id?: UuidWithAggregatesFilter<"OutboxEvento"> | string
+    aggregate_type?: StringWithAggregatesFilter<"OutboxEvento"> | string
+    aggregate_id?: UuidWithAggregatesFilter<"OutboxEvento"> | string
+    aggregate_seq?: IntWithAggregatesFilter<"OutboxEvento"> | number
+    usuario_id?: UuidNullableWithAggregatesFilter<"OutboxEvento"> | string | null
+    correlation_id?: StringNullableWithAggregatesFilter<"OutboxEvento"> | string | null
+    payload?: JsonWithAggregatesFilter<"OutboxEvento">
+    estado?: StringWithAggregatesFilter<"OutboxEvento"> | string
+    intentos?: IntWithAggregatesFilter<"OutboxEvento"> | number
+    proximo_intento_en?: DateTimeWithAggregatesFilter<"OutboxEvento"> | Date | string
+    ultimo_error?: StringNullableWithAggregatesFilter<"OutboxEvento"> | string | null
+    created_at?: DateTimeWithAggregatesFilter<"OutboxEvento"> | Date | string
+    publicado_en?: DateTimeNullableWithAggregatesFilter<"OutboxEvento"> | Date | string | null
+  }
+
   export type PresupuestoAsignadoCreateInput = {
     id_presupuesto?: string
     tenant_id: string
@@ -10233,6 +12673,76 @@ export namespace Prisma {
     usuario_id?: StringFieldUpdateOperationsInput | string
     fecha_registro?: DateTimeFieldUpdateOperationsInput | Date | string
     notas?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type OcCancelacionTombstoneCreateInput = {
+    tenant_id: string
+    oc_id: string
+    proyecto_id: string
+    oc_codigo?: string | null
+    origen: string
+    usuario_id: string
+    created_at?: Date | string
+  }
+
+  export type OcCancelacionTombstoneUncheckedCreateInput = {
+    tenant_id: string
+    oc_id: string
+    proyecto_id: string
+    oc_codigo?: string | null
+    origen: string
+    usuario_id: string
+    created_at?: Date | string
+  }
+
+  export type OcCancelacionTombstoneUpdateInput = {
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    oc_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    oc_codigo?: NullableStringFieldUpdateOperationsInput | string | null
+    origen?: StringFieldUpdateOperationsInput | string
+    usuario_id?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OcCancelacionTombstoneUncheckedUpdateInput = {
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    oc_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    oc_codigo?: NullableStringFieldUpdateOperationsInput | string | null
+    origen?: StringFieldUpdateOperationsInput | string
+    usuario_id?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OcCancelacionTombstoneCreateManyInput = {
+    tenant_id: string
+    oc_id: string
+    proyecto_id: string
+    oc_codigo?: string | null
+    origen: string
+    usuario_id: string
+    created_at?: Date | string
+  }
+
+  export type OcCancelacionTombstoneUpdateManyMutationInput = {
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    oc_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    oc_codigo?: NullableStringFieldUpdateOperationsInput | string | null
+    origen?: StringFieldUpdateOperationsInput | string
+    usuario_id?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OcCancelacionTombstoneUncheckedUpdateManyInput = {
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    oc_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    oc_codigo?: NullableStringFieldUpdateOperationsInput | string | null
+    origen?: StringFieldUpdateOperationsInput | string
+    usuario_id?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ProgramaPagosCreateInput = {
@@ -10793,6 +13303,160 @@ export namespace Prisma {
     concepto_clave?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
+  export type OutboxEventoCreateInput = {
+    id_evento?: string
+    orden_global?: bigint | number
+    event_id: string
+    event_type: string
+    event_version?: number
+    tenant_id: string
+    proyecto_id: string
+    aggregate_type: string
+    aggregate_id: string
+    aggregate_seq: number
+    usuario_id?: string | null
+    correlation_id?: string | null
+    payload: JsonNullValueInput | InputJsonValue
+    estado?: string
+    intentos?: number
+    proximo_intento_en?: Date | string
+    ultimo_error?: string | null
+    created_at?: Date | string
+    publicado_en?: Date | string | null
+  }
+
+  export type OutboxEventoUncheckedCreateInput = {
+    id_evento?: string
+    orden_global?: bigint | number
+    event_id: string
+    event_type: string
+    event_version?: number
+    tenant_id: string
+    proyecto_id: string
+    aggregate_type: string
+    aggregate_id: string
+    aggregate_seq: number
+    usuario_id?: string | null
+    correlation_id?: string | null
+    payload: JsonNullValueInput | InputJsonValue
+    estado?: string
+    intentos?: number
+    proximo_intento_en?: Date | string
+    ultimo_error?: string | null
+    created_at?: Date | string
+    publicado_en?: Date | string | null
+  }
+
+  export type OutboxEventoUpdateInput = {
+    id_evento?: StringFieldUpdateOperationsInput | string
+    orden_global?: BigIntFieldUpdateOperationsInput | bigint | number
+    event_id?: StringFieldUpdateOperationsInput | string
+    event_type?: StringFieldUpdateOperationsInput | string
+    event_version?: IntFieldUpdateOperationsInput | number
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    aggregate_type?: StringFieldUpdateOperationsInput | string
+    aggregate_id?: StringFieldUpdateOperationsInput | string
+    aggregate_seq?: IntFieldUpdateOperationsInput | number
+    usuario_id?: NullableStringFieldUpdateOperationsInput | string | null
+    correlation_id?: NullableStringFieldUpdateOperationsInput | string | null
+    payload?: JsonNullValueInput | InputJsonValue
+    estado?: StringFieldUpdateOperationsInput | string
+    intentos?: IntFieldUpdateOperationsInput | number
+    proximo_intento_en?: DateTimeFieldUpdateOperationsInput | Date | string
+    ultimo_error?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    publicado_en?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type OutboxEventoUncheckedUpdateInput = {
+    id_evento?: StringFieldUpdateOperationsInput | string
+    orden_global?: BigIntFieldUpdateOperationsInput | bigint | number
+    event_id?: StringFieldUpdateOperationsInput | string
+    event_type?: StringFieldUpdateOperationsInput | string
+    event_version?: IntFieldUpdateOperationsInput | number
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    aggregate_type?: StringFieldUpdateOperationsInput | string
+    aggregate_id?: StringFieldUpdateOperationsInput | string
+    aggregate_seq?: IntFieldUpdateOperationsInput | number
+    usuario_id?: NullableStringFieldUpdateOperationsInput | string | null
+    correlation_id?: NullableStringFieldUpdateOperationsInput | string | null
+    payload?: JsonNullValueInput | InputJsonValue
+    estado?: StringFieldUpdateOperationsInput | string
+    intentos?: IntFieldUpdateOperationsInput | number
+    proximo_intento_en?: DateTimeFieldUpdateOperationsInput | Date | string
+    ultimo_error?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    publicado_en?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type OutboxEventoCreateManyInput = {
+    id_evento?: string
+    orden_global?: bigint | number
+    event_id: string
+    event_type: string
+    event_version?: number
+    tenant_id: string
+    proyecto_id: string
+    aggregate_type: string
+    aggregate_id: string
+    aggregate_seq: number
+    usuario_id?: string | null
+    correlation_id?: string | null
+    payload: JsonNullValueInput | InputJsonValue
+    estado?: string
+    intentos?: number
+    proximo_intento_en?: Date | string
+    ultimo_error?: string | null
+    created_at?: Date | string
+    publicado_en?: Date | string | null
+  }
+
+  export type OutboxEventoUpdateManyMutationInput = {
+    id_evento?: StringFieldUpdateOperationsInput | string
+    orden_global?: BigIntFieldUpdateOperationsInput | bigint | number
+    event_id?: StringFieldUpdateOperationsInput | string
+    event_type?: StringFieldUpdateOperationsInput | string
+    event_version?: IntFieldUpdateOperationsInput | number
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    aggregate_type?: StringFieldUpdateOperationsInput | string
+    aggregate_id?: StringFieldUpdateOperationsInput | string
+    aggregate_seq?: IntFieldUpdateOperationsInput | number
+    usuario_id?: NullableStringFieldUpdateOperationsInput | string | null
+    correlation_id?: NullableStringFieldUpdateOperationsInput | string | null
+    payload?: JsonNullValueInput | InputJsonValue
+    estado?: StringFieldUpdateOperationsInput | string
+    intentos?: IntFieldUpdateOperationsInput | number
+    proximo_intento_en?: DateTimeFieldUpdateOperationsInput | Date | string
+    ultimo_error?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    publicado_en?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type OutboxEventoUncheckedUpdateManyInput = {
+    id_evento?: StringFieldUpdateOperationsInput | string
+    orden_global?: BigIntFieldUpdateOperationsInput | bigint | number
+    event_id?: StringFieldUpdateOperationsInput | string
+    event_type?: StringFieldUpdateOperationsInput | string
+    event_version?: IntFieldUpdateOperationsInput | number
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    aggregate_type?: StringFieldUpdateOperationsInput | string
+    aggregate_id?: StringFieldUpdateOperationsInput | string
+    aggregate_seq?: IntFieldUpdateOperationsInput | number
+    usuario_id?: NullableStringFieldUpdateOperationsInput | string | null
+    correlation_id?: NullableStringFieldUpdateOperationsInput | string | null
+    payload?: JsonNullValueInput | InputJsonValue
+    estado?: StringFieldUpdateOperationsInput | string
+    intentos?: IntFieldUpdateOperationsInput | number
+    proximo_intento_en?: DateTimeFieldUpdateOperationsInput | Date | string
+    ultimo_error?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    publicado_en?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
   export type UuidFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -11138,6 +13802,41 @@ export namespace Prisma {
 
   export type MovimientoPresupuestalSumOrderByAggregateInput = {
     monto?: SortOrder
+  }
+
+  export type OcCancelacionTombstoneTenant_idOc_idCompoundUniqueInput = {
+    tenant_id: string
+    oc_id: string
+  }
+
+  export type OcCancelacionTombstoneCountOrderByAggregateInput = {
+    tenant_id?: SortOrder
+    oc_id?: SortOrder
+    proyecto_id?: SortOrder
+    oc_codigo?: SortOrder
+    origen?: SortOrder
+    usuario_id?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type OcCancelacionTombstoneMaxOrderByAggregateInput = {
+    tenant_id?: SortOrder
+    oc_id?: SortOrder
+    proyecto_id?: SortOrder
+    oc_codigo?: SortOrder
+    origen?: SortOrder
+    usuario_id?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type OcCancelacionTombstoneMinOrderByAggregateInput = {
+    tenant_id?: SortOrder
+    oc_id?: SortOrder
+    proyecto_id?: SortOrder
+    oc_codigo?: SortOrder
+    origen?: SortOrder
+    usuario_id?: SortOrder
+    created_at?: SortOrder
   }
 
   export type DateTimeNullableFilter<$PrismaModel = never> = {
@@ -11503,6 +14202,197 @@ export namespace Prisma {
     saldo_oc_despues?: SortOrder
   }
 
+  export type BigIntFilter<$PrismaModel = never> = {
+    equals?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    in?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    notIn?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    lt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    lte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    not?: NestedBigIntFilter<$PrismaModel> | bigint | number
+  }
+
+  export type IntFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntFilter<$PrismaModel> | number
+  }
+  export type JsonFilter<$PrismaModel = never> = 
+    | PatchUndefined<
+        Either<Required<JsonFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type OutboxEventoTenant_idEvent_idCompoundUniqueInput = {
+    tenant_id: string
+    event_id: string
+  }
+
+  export type OutboxEventoTenant_idAggregate_typeAggregate_idAggregate_seqCompoundUniqueInput = {
+    tenant_id: string
+    aggregate_type: string
+    aggregate_id: string
+    aggregate_seq: number
+  }
+
+  export type OutboxEventoCountOrderByAggregateInput = {
+    id_evento?: SortOrder
+    orden_global?: SortOrder
+    event_id?: SortOrder
+    event_type?: SortOrder
+    event_version?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    aggregate_type?: SortOrder
+    aggregate_id?: SortOrder
+    aggregate_seq?: SortOrder
+    usuario_id?: SortOrder
+    correlation_id?: SortOrder
+    payload?: SortOrder
+    estado?: SortOrder
+    intentos?: SortOrder
+    proximo_intento_en?: SortOrder
+    ultimo_error?: SortOrder
+    created_at?: SortOrder
+    publicado_en?: SortOrder
+  }
+
+  export type OutboxEventoAvgOrderByAggregateInput = {
+    orden_global?: SortOrder
+    event_version?: SortOrder
+    aggregate_seq?: SortOrder
+    intentos?: SortOrder
+  }
+
+  export type OutboxEventoMaxOrderByAggregateInput = {
+    id_evento?: SortOrder
+    orden_global?: SortOrder
+    event_id?: SortOrder
+    event_type?: SortOrder
+    event_version?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    aggregate_type?: SortOrder
+    aggregate_id?: SortOrder
+    aggregate_seq?: SortOrder
+    usuario_id?: SortOrder
+    correlation_id?: SortOrder
+    estado?: SortOrder
+    intentos?: SortOrder
+    proximo_intento_en?: SortOrder
+    ultimo_error?: SortOrder
+    created_at?: SortOrder
+    publicado_en?: SortOrder
+  }
+
+  export type OutboxEventoMinOrderByAggregateInput = {
+    id_evento?: SortOrder
+    orden_global?: SortOrder
+    event_id?: SortOrder
+    event_type?: SortOrder
+    event_version?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    aggregate_type?: SortOrder
+    aggregate_id?: SortOrder
+    aggregate_seq?: SortOrder
+    usuario_id?: SortOrder
+    correlation_id?: SortOrder
+    estado?: SortOrder
+    intentos?: SortOrder
+    proximo_intento_en?: SortOrder
+    ultimo_error?: SortOrder
+    created_at?: SortOrder
+    publicado_en?: SortOrder
+  }
+
+  export type OutboxEventoSumOrderByAggregateInput = {
+    orden_global?: SortOrder
+    event_version?: SortOrder
+    aggregate_seq?: SortOrder
+    intentos?: SortOrder
+  }
+
+  export type BigIntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    in?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    notIn?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    lt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    lte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    not?: NestedBigIntWithAggregatesFilter<$PrismaModel> | bigint | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedBigIntFilter<$PrismaModel>
+    _min?: NestedBigIntFilter<$PrismaModel>
+    _max?: NestedBigIntFilter<$PrismaModel>
+  }
+
+  export type IntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
+  }
+  export type JsonWithAggregatesFilter<$PrismaModel = never> = 
+    | PatchUndefined<
+        Either<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedJsonFilter<$PrismaModel>
+    _max?: NestedJsonFilter<$PrismaModel>
+  }
+
   export type MovimientoPresupuestalCreateNestedManyWithoutPresupuestoInput = {
     create?: XOR<MovimientoPresupuestalCreateWithoutPresupuestoInput, MovimientoPresupuestalUncheckedCreateWithoutPresupuestoInput> | MovimientoPresupuestalCreateWithoutPresupuestoInput[] | MovimientoPresupuestalUncheckedCreateWithoutPresupuestoInput[]
     connectOrCreate?: MovimientoPresupuestalCreateOrConnectWithoutPresupuestoInput | MovimientoPresupuestalCreateOrConnectWithoutPresupuestoInput[]
@@ -11757,6 +14647,22 @@ export namespace Prisma {
     update?: XOR<XOR<PagoOCUpdateToOneWithWhereWithoutDetallesInput, PagoOCUpdateWithoutDetallesInput>, PagoOCUncheckedUpdateWithoutDetallesInput>
   }
 
+  export type BigIntFieldUpdateOperationsInput = {
+    set?: bigint | number
+    increment?: bigint | number
+    decrement?: bigint | number
+    multiply?: bigint | number
+    divide?: bigint | number
+  }
+
+  export type IntFieldUpdateOperationsInput = {
+    set?: number
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
   export type NestedUuidFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -11979,6 +14885,82 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedBoolFilter<$PrismaModel>
     _max?: NestedBoolFilter<$PrismaModel>
+  }
+
+  export type NestedBigIntFilter<$PrismaModel = never> = {
+    equals?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    in?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    notIn?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    lt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    lte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    not?: NestedBigIntFilter<$PrismaModel> | bigint | number
+  }
+
+  export type NestedBigIntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    in?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    notIn?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    lt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    lte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    not?: NestedBigIntWithAggregatesFilter<$PrismaModel> | bigint | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedBigIntFilter<$PrismaModel>
+    _min?: NestedBigIntFilter<$PrismaModel>
+    _max?: NestedBigIntFilter<$PrismaModel>
+  }
+
+  export type NestedFloatFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel>
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatFilter<$PrismaModel> | number
+  }
+
+  export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
+  }
+  export type NestedJsonFilter<$PrismaModel = never> = 
+    | PatchUndefined<
+        Either<Required<NestedJsonFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<NestedJsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>
+
+  export type NestedJsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
   export type MovimientoPresupuestalCreateWithoutPresupuestoInput = {
@@ -12955,6 +15937,10 @@ export namespace Prisma {
      */
     export type MovimientoPresupuestalArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = MovimientoPresupuestalDefaultArgs<ExtArgs>
     /**
+     * @deprecated Use OcCancelacionTombstoneDefaultArgs instead
+     */
+    export type OcCancelacionTombstoneArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = OcCancelacionTombstoneDefaultArgs<ExtArgs>
+    /**
      * @deprecated Use ProgramaPagosDefaultArgs instead
      */
     export type ProgramaPagosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ProgramaPagosDefaultArgs<ExtArgs>
@@ -12974,6 +15960,10 @@ export namespace Prisma {
      * @deprecated Use DetallePagoOCDefaultArgs instead
      */
     export type DetallePagoOCArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = DetallePagoOCDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use OutboxEventoDefaultArgs instead
+     */
+    export type OutboxEventoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = OutboxEventoDefaultArgs<ExtArgs>
 
   /**
    * Batch Payload for updateMany & deleteMany & createMany

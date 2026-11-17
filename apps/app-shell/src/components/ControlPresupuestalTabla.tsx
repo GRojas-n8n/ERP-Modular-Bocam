@@ -48,11 +48,19 @@ interface Props {
   partidas: PartidaCP[];
   sinPartidaComprometido?: number;
   sinPartidaPagado?: number;
+  onVerTrazabilidad?: (conceptoId: string) => void;
 }
 
-export function ControlPresupuestalTabla({ partidas, sinPartidaComprometido = 0, sinPartidaPagado = 0 }: Props) {
+export function ControlPresupuestalTabla({ partidas, sinPartidaComprometido = 0, sinPartidaPagado = 0, onVerTrazabilidad }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [drillDown, setDrillDown] = useState<Record<string, DrillDownState>>({});
+  const [busqueda, setBusqueda] = useState('');
+
+  const termino = busqueda.trim().toLowerCase();
+  const partidasFiltradas = termino
+    ? partidas.filter(p => p.clave.toLowerCase().includes(termino) || p.descripcion.toLowerCase().includes(termino))
+    : partidas;
+  const mostrarSinPartida = (sinPartidaComprometido + sinPartidaPagado) > 0 && (!termino || '[sin partida asignada]'.includes(termino));
 
   const toggleExpand = async (conceptoId: string) => {
     if (expandedId === conceptoId) {
@@ -110,7 +118,15 @@ export function ControlPresupuestalTabla({ partidas, sinPartidaComprometido = 0,
   };
 
   return (
-    <TableScrollShadow className="rounded-2xl border border-border/30">
+    <div className="space-y-3">
+      <input
+        type="text"
+        value={busqueda}
+        onChange={e => setBusqueda(e.target.value)}
+        placeholder="Buscar por clave o descripción..."
+        className="w-full max-w-xs rounded-xl border border-border/40 bg-muted/30 px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500/40"
+      />
+      <TableScrollShadow className="rounded-2xl border border-border/30">
       <table className="w-full text-xs">
         <thead>
           <tr className="border-b border-border/30 bg-muted/30">
@@ -126,7 +142,7 @@ export function ControlPresupuestalTabla({ partidas, sinPartidaComprometido = 0,
           </tr>
         </thead>
         <tbody className="divide-y divide-border/20">
-          {partidas.map(p => {
+          {partidasFiltradas.map(p => {
             const isRisk = p.comprometido > p.presupuestado * 0.9;
             const expanded = expandedId === p.concepto_id;
             const dd = drillDown[p.concepto_id];
@@ -137,7 +153,21 @@ export function ControlPresupuestalTabla({ partidas, sinPartidaComprometido = 0,
                   onClick={() => void toggleExpand(p.concepto_id)}
                 >
                   <td className="px-4 py-2.5 text-muted-foreground">{expanded ? '▾' : '▸'}</td>
-                  <td className="px-4 py-2.5 font-mono font-bold text-foreground">{p.clave}</td>
+                  <td className="px-4 py-2.5 font-mono font-bold text-foreground">
+                    <div className="flex items-center gap-2">
+                      {p.clave}
+                      {onVerTrazabilidad && (
+                        <button
+                          type="button"
+                          onClick={e => { e.stopPropagation(); onVerTrazabilidad(p.concepto_id); }}
+                          className="rounded-md border border-border/40 px-1.5 py-0.5 font-sans text-[9px] font-bold uppercase tracking-wide text-indigo-600 hover:bg-indigo-500/10"
+                          title="Ver en Trazabilidad"
+                        >
+                          Ver en Trazabilidad
+                        </button>
+                      )}
+                    </div>
+                  </td>
                   <td className="px-4 py-2.5 text-foreground max-w-[220px] truncate">{p.descripcion}</td>
                   <td className="px-4 py-2.5 text-muted-foreground">{p.categoria_predominante ?? '—'}</td>
                   <td className="px-4 py-2.5 text-right font-mono font-bold text-foreground">{formatMXN(p.presupuestado)}</td>
@@ -188,7 +218,7 @@ export function ControlPresupuestalTabla({ partidas, sinPartidaComprometido = 0,
               </React.Fragment>
             );
           })}
-          {(sinPartidaComprometido + sinPartidaPagado) > 0 && (
+          {mostrarSinPartida && (
             <tr className="bg-muted/10 italic">
               <td className="px-4 py-2.5"></td>
               <td className="px-4 py-2.5 font-mono text-muted-foreground text-[10px]">—</td>
@@ -208,8 +238,16 @@ export function ControlPresupuestalTabla({ partidas, sinPartidaComprometido = 0,
               </td>
             </tr>
           )}
+          {partidas.length > 0 && partidasFiltradas.length === 0 && !mostrarSinPartida && (
+            <tr>
+              <td colSpan={9} className="px-5 py-12 text-center text-xs text-muted-foreground">
+                No hay partidas que coincidan con el filtro.
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
-    </TableScrollShadow>
+      </TableScrollShadow>
+    </div>
   );
 }

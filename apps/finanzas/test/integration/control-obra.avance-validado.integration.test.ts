@@ -112,60 +112,25 @@ async function main() {
 
     await publishEvent();
 
-    // Verificar que el pago existe en BD (creado por este handler o el servicio de prod)
-    await waitFor(async () => {
-      const pagos = await withCtx((tx) => tx.programaPagos.findMany({
-        where: {
-          tenant_id: seeded.tenantId,
-          referencia_modulo: 'control-obra',
-          referencia_entidad: 'AvanceFisicoValidado',
-          referencia_id: avanceId,
-        },
-      }));
-
-      assert.equal(pagos.length, 1);
-      assert.equal(Number(pagos[0].monto_programado), 3650);
-      assert.equal(pagos[0].estado, 'PENDIENTE');
-    });
-
-    // El handler del test puede ver 'created' o 'idempotent' dependiendo de si el servicio
-    // de producción en Docker procesó el evento primero (ambos comparten el mismo exchange)
+    // El avance validado certifica obra; el documento cobrable es la estimación. No genera dinero
+    // (antes creaba un pago programado por el importe). openspec: cuentas-por-cobrar-estimaciones.
     await waitFor(async () => {
       assert.ok(
         capturedLogs.some((line) =>
-          (line.includes('"action":"finanzas.event.avance_fisico_validado.created"') ||
-           line.includes('"action":"finanzas.event.avance_fisico_validado.idempotent"')) &&
+          line.includes('"action":"finanzas.event.avance_fisico_validado.sin_efecto_financiero"') &&
           line.includes(`"correlation_id":"${correlationId}"`)
         )
       );
     });
 
-    await publishEvent();
+    const pagos = await withCtx((tx) => tx.programaPagos.count({ where: { tenant_id: seeded.tenantId } }));
+    const cxc = await withCtx((tx) => tx.cuentaPorCobrar.count({ where: { tenant_id: seeded.tenantId } }));
+    const movimientos = await withCtx((tx) => tx.movimientoPresupuestal.count({ where: { tenant_id: seeded.tenantId } }));
+    assert.equal(pagos, 0);
+    assert.equal(cxc, 0);
+    assert.equal(movimientos, 0);
 
-    // Verificar idempotencia: sigue habiendo exactamente 1 pago
-    await waitFor(async () => {
-      const pagos = await withCtx((tx) => tx.programaPagos.findMany({
-        where: {
-          tenant_id: seeded.tenantId,
-          referencia_modulo: 'control-obra',
-          referencia_entidad: 'AvanceFisicoValidado',
-          referencia_id: avanceId,
-        },
-      }));
-
-      assert.equal(pagos.length, 1);
-    });
-
-    // El handler registra idempotencia en la segunda llamada
-    await waitFor(async () => {
-      const idempotentLogs = capturedLogs.filter((line) =>
-        line.includes('"action":"finanzas.event.avance_fisico_validado.idempotent"') &&
-        line.includes(`"correlation_id":"${correlationId}"`)
-      );
-      assert.ok(idempotentLogs.length >= 1);
-    });
-
-    console.log('ok - integracion real control-obra avance validado -> finanzas crea proyeccion preliminar con idempotencia');
+    console.log('ok - integracion real control-obra avance validado -> finanzas sin efecto financiero');
   } finally {
     await publisher.close();
     await consumer.close();

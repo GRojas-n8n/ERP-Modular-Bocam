@@ -99,3 +99,49 @@ test('enviarOrdenCompraEmail: SMTP no configurado (sin transporter y sin env var
     if (originales.pass !== undefined) process.env.SMTP_PASS = originales.pass;
   }
 });
+
+// ── Regresión de seguridad de nodemailer (bump a >= 9.1.1) ───────────────────
+// Spec: openspec/changes/bump-dependencias-cve-multer-nodemailer-express/
+// GHSA-wmmp-3585-3rmp (IDN/Punycode) y GHSA-cc9r-2j5m-2m83 (comentarios RFC 5322):
+// el destinatario real del envelope debe ser el dominio que el usuario escribió,
+// nunca otro dominio derivado de un parseo incorrecto de la dirección.
+
+async function enviarYCapturarEnvelope(emailContacto: string): Promise<{ enviado: boolean; para: string[] }> {
+  let para: string[] = [];
+  const transporter = nodemailer.createTransport({ jsonTransport: true });
+  const originalSendMail = transporter.sendMail.bind(transporter);
+  transporter.sendMail = (async (mailOptions: any) => {
+    const info: any = await originalSendMail(mailOptions);
+    para = info.envelope.to;
+    return info;
+  }) as typeof transporter.sendMail;
+
+  const ordenes: OrdenCompraResumenEmail[] = [
+    { codigo: 'OC-AUTO-9-1', fecha_emision: new Date('2026-07-10'), subtotal: 1000, iva: 160, total: 1160 },
+  ];
+  const result = await enviarOrdenCompraEmail(
+    { ...proveedor, email_contacto: emailContacto },
+    ordenes,
+    [fakePdf('OC-AUTO-9-1')],
+    transporter,
+  );
+  return { enviado: result.enviado, para };
+}
+
+test('enviarOrdenCompraEmail: dominio IDN (unicode) se procesa y sale en punycode, sin excepción', async () => {
+  const r = await enviarYCapturarEnvelope('compras@ñandú.example');
+  assert.equal(r.enviado, true);
+  assert.deepEqual(r.para, ['compras@xn--and-6ma2c.example']);
+});
+
+test('enviarOrdenCompraEmail: dominio ya en punycode se conserva tal cual', async () => {
+  const r = await enviarYCapturarEnvelope('compras@xn--and-6ma2c.example');
+  assert.equal(r.enviado, true);
+  assert.deepEqual(r.para, ['compras@xn--and-6ma2c.example']);
+});
+
+test('enviarOrdenCompraEmail: un comentario RFC 5322 con otra dirección NO agrega ni cambia el destinatario del envelope', async () => {
+  const r = await enviarYCapturarEnvelope('compras@buena.example (x@mala.example)');
+  assert.equal(r.enviado, true);
+  assert.deepEqual(r.para, ['compras@buena.example']);
+});

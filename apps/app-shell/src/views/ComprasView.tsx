@@ -328,6 +328,12 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const [pendientesGT, setPendientesGT] = useState<ComparativaLocal[]>([]);
   const [filtroEstadoCiclo, setFiltroEstadoCiclo] = useState<string>('todos');
   const [proveedoresList, setProveedoresList] = useState<ProveedorCatalogo[]>([]);
+  // Proveedores ARCHIVADO — cargados aparte (opt-in) para no filtrar a los
+  // selectores que ya leen proveedoresList (cotización, agregar manualmente
+  // a un cuadro). Ver openspec/changes/archivar-proveedores/design.md, Decisión 2.
+  const [proveedoresArchivados, setProveedoresArchivados] = useState<ProveedorCatalogo[]>([]);
+  const [mostrarArchivados, setMostrarArchivados] = useState(false);
+  const [archivandoProveedorId, setArchivandoProveedorId] = useState<string | null>(null);
   const [proveedoresSearch, setProveedoresSearch] = useState('');
   const [showProveedorForm, setShowProveedorForm] = useState(false);
   const [editingProveedor, setEditingProveedor] = useState<ProveedorCatalogo | null>(null);
@@ -337,6 +343,30 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const [docsLoading, setDocsLoading] = useState(false);
   const [docTipoUpload, setDocTipoUpload] = useState('OTRO');
   const docFileRef = useRef<HTMLInputElement>(null);
+  // Confirmar destino antes de subir un documento de proveedor — ver
+  // openspec/changes/modal-confirmacion-antes-de-subir-archivos.
+  const [pendingDocProveedor, setPendingDocProveedor] = useState<File | null>(null);
+  const subirDocProveedor = async () => {
+    const file = pendingDocProveedor;
+    if (!file || !docsProveedorId) return;
+    setPendingDocProveedor(null);
+    const fd = new FormData();
+    fd.append('archivo', file);
+    fd.append('tipo_doc', docTipoUpload);
+    fd.append('nombre_doc', file.name);
+    try {
+      const res = await api.post(`/api/v1/compras/proveedores/${docsProveedorId}/documentos`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setDocsProveedor(prev => ({
+        ...prev,
+        [docsProveedorId]: [res.data.data, ...(prev[docsProveedorId] ?? [])],
+      }));
+      notify({ title: 'Documento subido', type: 'success' });
+    } catch (err: any) {
+      notify({ title: err.response?.data?.message ?? 'Error al subir', type: 'error' });
+    }
+  };
   // ── Calificaciones de proveedor ───────────────────────────────────────────
   const [calHistorialId, setCalHistorialId] = useState<string | null>(null);
   const [calHistorial, setCalHistorial] = useState<Record<string, any[]>>({});
@@ -411,11 +441,17 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   }
   const [cpResumen, setCpResumen] = useState<ResumenCP | null>(null);
   const [cpResumenLoading, setCpResumenLoading] = useState(false);
+  // Mensaje informativo cuando no hay resumen por estado del presupuesto en
+  // GT (no confundir con errores de conexión, que siguen silenciosos — el
+  // widget es opcional). Ver
+  // openspec/changes/control-presupuestal-estado-presupuesto-visible.
+  const [cpResumenMensaje, setCpResumenMensaje] = useState<string | null>(null);
 
   const loadCpResumen = async () => {
     const proyectoId = currentProjectId || user?.projects?.[0]?.id;
     if (!proyectoId) return;
     setCpResumenLoading(true);
+    setCpResumenMensaje(null);
     try {
       const res = await api.get(`/api/v1/compras/reportes/control-presupuestal?proyectoId=${proyectoId}`);
       const d = res.data.data ?? res.data;
@@ -427,7 +463,13 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
         pct_ejercido:        d.pct_ejercido,
         parcial:             d.parcial,
       });
-    } catch { /* silencioso — widget opcional */ }
+    } catch (err: any) {
+      setCpResumen(null);
+      const code = err.response?.data?.error?.code;
+      if (code === 'GT_NO_PRESUPUESTO') setCpResumenMensaje('Sin presupuesto activo para este proyecto.');
+      else if (code === 'GT_PRESUPUESTO_PENDIENTE_APROBACION') setCpResumenMensaje('Presupuesto del proyecto pendiente de aprobación en Gerencia Técnica.');
+      // otros errores (conexión, timeout, 500): silencioso, como antes — widget opcional
+    }
     finally { setCpResumenLoading(false); }
   };
 
@@ -717,6 +759,49 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   useEffect(() => { if (activeTab === 'trazabilidad') { loadTrazabilidad(); void loadCpResumen(); } }, [activeTab, currentProjectId]);
   useEffect(() => { if (activeTab === 'ordenes-compra') { void loadOrdenesCompra(); } }, [activeTab, currentProjectId]);
   useEffect(() => { if (activeTab === 'admin-purga' && isAdminRole) { void loadPurgaResumen(); } }, [activeTab, currentProjectId, isAdminRole]);
+
+  // ── Ciclo de vida: Archivar / Activar Proveedor ───────────────────────────
+  // Ver openspec/changes/archivar-proveedores.
+  const fetchProveedoresArchivados = async () => {
+    try {
+      const res = await comprasApi.getProveedoresIncluirArchivados();
+      const todos: ProveedorCatalogo[] = res.data?.data || [];
+      setProveedoresArchivados(todos.filter(p => p.estatus === 'ARCHIVADO'));
+    } catch {
+      notify({ title: 'No se pudieron cargar los proveedores archivados', type: 'error' });
+    }
+  };
+  useEffect(() => {
+    if (activeTab === 'proveedores' && mostrarArchivados) void fetchProveedoresArchivados();
+  }, [activeTab, mostrarArchivados, currentProjectId]);
+
+  const handleArchivarProveedor = async (p: ProveedorCatalogo) => {
+    setArchivandoProveedorId(p.id_proveedor);
+    try {
+      await comprasApi.archivarProveedor(p.id_proveedor);
+      setProveedoresList(list => list.filter(x => x.id_proveedor !== p.id_proveedor));
+      setProveedoresArchivados(list => [...list, { ...p, estatus: 'ARCHIVADO' }]);
+      notify({ title: 'Proveedor archivado', type: 'success' });
+    } catch {
+      notify({ title: 'No se pudo archivar el proveedor', type: 'error' });
+    } finally {
+      setArchivandoProveedorId(null);
+    }
+  };
+
+  const handleActivarProveedor = async (p: ProveedorCatalogo) => {
+    setArchivandoProveedorId(p.id_proveedor);
+    try {
+      await comprasApi.activarProveedor(p.id_proveedor);
+      setProveedoresArchivados(list => list.filter(x => x.id_proveedor !== p.id_proveedor));
+      setProveedoresList(list => [...list, { ...p, estatus: 'ACTIVO' }]);
+      notify({ title: 'Proveedor activado', type: 'success' });
+    } catch {
+      notify({ title: 'No se pudo activar el proveedor', type: 'error' });
+    } finally {
+      setArchivandoProveedorId(null);
+    }
+  };
 
   // ── Importación masiva de Proveedores ─────────────────────────────────────
   const handleImportProveedoresFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1619,7 +1704,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
             Nueva Requisicion
           </Button>
         )}
-        {activeTab === 'proveedores' && isProcurement && (
+        {activeTab === 'proveedores' && puedeImportarProveedores && (
           <div className="flex items-center gap-3">
             {puedeImportarProveedores && (
               <>
@@ -2297,15 +2382,26 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                     </button>
                   )}
                 </div>
+                {isProcurement && (
+                  <label className="flex shrink-0 items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    <input
+                      type="checkbox"
+                      checked={mostrarArchivados}
+                      onChange={e => setMostrarArchivados(e.target.checked)}
+                      className="h-4 w-4 rounded border-border/60"
+                    />
+                    Mostrar archivados
+                  </label>
+                )}
               </div>
-              {proveedoresList.filter(p => {
+              {(mostrarArchivados ? [...proveedoresList, ...proveedoresArchivados] : proveedoresList).filter(p => {
                 const q = proveedoresSearch.toLowerCase();
                 return !q || p.razon_social.toLowerCase().includes(q) || p.rfc_tax_id.toLowerCase().includes(q);
               }).length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-border/50 p-12 text-center">
                   <IconShoppingCart className="mx-auto mb-3 h-10 w-10 text-muted-foreground/20" />
                   <p className="text-sm font-bold text-muted-foreground">Sin proveedores registrados</p>
-                  {isProcurement && <p className="mt-1 text-xs text-muted-foreground/70">Crea el primero con el botón "Nuevo Proveedor"</p>}
+                  {puedeImportarProveedores && <p className="mt-1 text-xs text-muted-foreground/70">Crea el primero con el botón "Nuevo Proveedor"</p>}
                 </div>
               ) : (
                 <TableScrollShadow className="rounded-2xl border border-border/50">
@@ -2317,18 +2413,21 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                         <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Tipo</th>
                         <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Crédito</th>
                         <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Score</th>
-                        {isProcurement && <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest text-muted-foreground">Acciones</th>}
+                        {puedeImportarProveedores && <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest text-muted-foreground">Acciones</th>}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border/30">
-                      {proveedoresList.filter(p => {
+                      {(mostrarArchivados ? [...proveedoresList, ...proveedoresArchivados] : proveedoresList).filter(p => {
                         const q = proveedoresSearch.toLowerCase();
                         return !q || p.razon_social.toLowerCase().includes(q) || p.rfc_tax_id.toLowerCase().includes(q);
                       }).map(p => (
-                        <tr key={p.id_proveedor} className="bg-background hover:bg-muted/20 transition-colors">
+                        <tr key={p.id_proveedor} className={`bg-background hover:bg-muted/20 transition-colors ${p.estatus === 'ARCHIVADO' ? 'opacity-50' : ''}`}>
                           <td className="px-4 py-3">
                             <p className="font-semibold text-foreground">{p.razon_social}</p>
                             <p className="text-[10px] text-muted-foreground">{p.rfc_tax_id}</p>
+                            {p.estatus === 'ARCHIVADO' && (
+                              <span className="mt-1 inline-block rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground">📦 Archivado</span>
+                            )}
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex flex-wrap gap-1">
@@ -2373,7 +2472,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                               <span className="text-[10px] text-muted-foreground/40">—</span>
                             )}
                           </td>
-                          {isProcurement && (
+                          {puedeImportarProveedores && (
                             <td className="px-4 py-3 text-right">
                               <div className="flex items-center justify-end gap-1">
                                 <button
@@ -2412,6 +2511,25 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                                 >
                                   Editar
                                 </button>
+                                {p.estatus === 'ARCHIVADO' ? (
+                                  <button
+                                    type="button"
+                                    disabled={archivandoProveedorId === p.id_proveedor}
+                                    onClick={() => void handleActivarProveedor(p)}
+                                    className="rounded-lg border border-emerald-500/30 px-2 py-1 text-[10px] font-bold text-emerald-600 hover:bg-emerald-500/10 transition-colors disabled:opacity-50"
+                                  >
+                                    Activar
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    disabled={archivandoProveedorId === p.id_proveedor}
+                                    onClick={() => void handleArchivarProveedor(p)}
+                                    className="rounded-lg border border-border/50 px-2 py-1 text-[10px] font-bold text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-colors disabled:opacity-50"
+                                  >
+                                    📦 Archivar
+                                  </button>
+                                )}
                               </div>
                             </td>
                           )}
@@ -2843,6 +2961,11 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                 {cpResumenLoading && !cpResumen && (
                   <div className="rounded-2xl border border-border/30 bg-card p-4 text-center text-[10px] text-muted-foreground">
                     Cargando resumen presupuestal…
+                  </div>
+                )}
+                {!cpResumenLoading && !cpResumen && cpResumenMensaje && (
+                  <div className="rounded-2xl border border-border/30 bg-card p-4 text-center text-[10px] text-muted-foreground">
+                    {cpResumenMensaje}
                   </div>
                 )}
 
@@ -4149,32 +4272,26 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                 </Select>
               </FormField>
               <input ref={docFileRef} type="file" accept=".pdf,.xml,.jpg,.jpeg,.png" className="hidden"
-                onChange={async (e) => {
+                onChange={(e) => {
                   const file = e.target.files?.[0];
+                  if (docFileRef.current) docFileRef.current.value = '';
                   if (!file || !docsProveedorId) return;
-                  const fd = new FormData();
-                  fd.append('archivo', file);
-                  fd.append('tipo_doc', docTipoUpload);
-                  fd.append('nombre_doc', file.name);
-                  try {
-                    const res = await api.post(`/api/v1/compras/proveedores/${docsProveedorId}/documentos`, fd, {
-                      headers: { 'Content-Type': 'multipart/form-data' },
-                    });
-                    setDocsProveedor(prev => ({
-                      ...prev,
-                      [docsProveedorId]: [res.data.data, ...(prev[docsProveedorId] ?? [])],
-                    }));
-                    notify({ title: 'Documento subido', type: 'success' });
-                  } catch (err: any) {
-                    notify({ title: err.response?.data?.message ?? 'Error al subir', type: 'error' });
-                  } finally {
-                    if (docFileRef.current) docFileRef.current.value = '';
-                  }
+                  setPendingDocProveedor(file);
                 }}
               />
               <Button onClick={() => docFileRef.current?.click()} className="w-full rounded-xl border-2 border-dashed !border-emerald-600 !bg-emerald-500/10 text-sm font-semibold !text-emerald-700 hover:!bg-emerald-500/20">
                 + Seleccionar archivo (PDF, XML, JPG, PNG — máx. 10 MB)
               </Button>
+
+              <ConfirmCriticalActionDialog
+                open={!!pendingDocProveedor}
+                title="Confirmar carga de archivo"
+                projectName={currentProjectName}
+                fileName={pendingDocProveedor?.name}
+                destination="Compras → Proveedores"
+                onConfirm={() => void subirDocProveedor()}
+                onCancel={() => setPendingDocProveedor(null)}
+              />
             </div>
           )}
         </div>
@@ -4191,24 +4308,25 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
           <FormField label="RFC / Tax ID" required>
             <Input
               placeholder="Ej: XAXX010101000"
+              maxLength={20}
               value={proveedorForm.rfc_tax_id}
               onChange={e => setProveedorForm(f => ({ ...f, rfc_tax_id: e.target.value }))}
-              disabled={!!editingProveedor}
             />
           </FormField>
           <FormField label="Razón Social" required>
             <Input
               placeholder="Nombre o razón social del proveedor"
+              maxLength={255}
               value={proveedorForm.razon_social}
               onChange={e => setProveedorForm(f => ({ ...f, razon_social: e.target.value }))}
             />
           </FormField>
           <div className="grid grid-cols-2 gap-3">
             <FormField label="Email">
-              <Input type="email" placeholder="contacto@empresa.com" value={proveedorForm.email_contacto} onChange={e => setProveedorForm(f => ({ ...f, email_contacto: e.target.value }))} />
+              <Input type="email" placeholder="contacto@empresa.com" maxLength={100} value={proveedorForm.email_contacto} onChange={e => setProveedorForm(f => ({ ...f, email_contacto: e.target.value }))} />
             </FormField>
             <FormField label="Teléfono">
-              <Input placeholder="(55) 1234-5678" value={proveedorForm.telefono} onChange={e => setProveedorForm(f => ({ ...f, telefono: e.target.value }))} />
+              <Input placeholder="(55) 1234-5678" maxLength={20} value={proveedorForm.telefono} onChange={e => setProveedorForm(f => ({ ...f, telefono: e.target.value }))} />
             </FormField>
           </div>
           <FormField label="Estatus">
@@ -4222,7 +4340,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
           <p className="pt-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Logística</p>
           <div className="grid grid-cols-2 gap-3">
             <FormField label="Ciudad">
-              <Input placeholder="Ciudad de operación" value={proveedorForm.ciudad} onChange={e => setProveedorForm(f => ({ ...f, ciudad: e.target.value }))} />
+              <Input placeholder="Ciudad de operación" maxLength={100} value={proveedorForm.ciudad} onChange={e => setProveedorForm(f => ({ ...f, ciudad: e.target.value }))} />
             </FormField>
             <FormField label="Ubicación">
               <Select value={proveedorForm.tipo_ubicacion} onChange={e => setProveedorForm(f => ({ ...f, tipo_ubicacion: e.target.value }))}>
@@ -4331,7 +4449,8 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                   }
                   setShowProveedorForm(false);
                 } catch (err: any) {
-                  notify({ title: err.response?.data?.message ?? 'Error al guardar proveedor', type: 'error' });
+                  const data = err.response?.data;
+                  notify({ title: data?.message ?? data?.error?.message ?? 'Error al guardar proveedor', type: 'error' });
                 } finally {
                   setFormLoading(false);
                 }

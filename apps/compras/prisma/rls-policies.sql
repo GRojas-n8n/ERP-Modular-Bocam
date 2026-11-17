@@ -217,3 +217,32 @@ DROP POLICY IF EXISTS rls_alertas_oc_error_context ON "alertas_oc_error";
 CREATE POLICY rls_alertas_oc_error_context ON "alertas_oc_error"
     USING (tenant_id = current_tenant_id() AND proyecto_id = current_proyecto_id())
     WITH CHECK (tenant_id = current_tenant_id() AND proyecto_id = current_proyecto_id());
+
+-- ─── OUTBOX DE EVENTOS (tenant + proyecto, más el despachador interno) ──────
+-- Change fix-ingresos-almacen-por-recepcion-oc. Una sesión ordinaria solo ve las filas de su tenant y
+-- proyecto. El despachador del outbox corre sin contexto de tenant (recorre filas de todos los tenants), por
+-- lo que la MISMA política única admite además la variable de sesión interna app.internal_worker = 'outbox',
+-- que solo fija el código del despachador. Una sola política combinada: dos políticas PERMISSIVE se
+-- combinarían con OR y abrirían la tabla.
+-- >>> OUTBOX_EVENTOS
+-- Se comparan los GUC con NULLIF(..., ''): tras una transacción con set_config(..., true) el GUC queda en ''
+-- en esa conexión del pool, y ''::uuid lanzaría un error antes de evaluar la rama del despachador.
+ALTER TABLE outbox_eventos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE outbox_eventos FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS rls_outbox_eventos_context ON outbox_eventos;
+CREATE POLICY rls_outbox_eventos_context ON outbox_eventos
+    USING (
+        current_setting('app.internal_worker', true) = 'outbox'
+        OR (
+            tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+            AND proyecto_id = NULLIF(current_setting('app.current_proyecto_id', true), '')::uuid
+        )
+    )
+    WITH CHECK (
+        current_setting('app.internal_worker', true) = 'outbox'
+        OR (
+            tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+            AND proyecto_id = NULLIF(current_setting('app.current_proyecto_id', true), '')::uuid
+        )
+    );
+-- <<< OUTBOX_EVENTOS

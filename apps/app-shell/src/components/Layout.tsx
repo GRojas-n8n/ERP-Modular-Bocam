@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Button, cn, getProjectColor } from '@bocam/ui-core';
 import { CambiarPasswordDialog } from './CambiarPasswordDialog';
 import {
@@ -75,6 +76,14 @@ export type SubItem = {
   label: string;
   icon: React.FC<{ className?: string }>;
   roles?: string[];
+  /**
+   * Si el subItem vive en un grupo distinto al que realmente lo renderiza
+   * (ej. "Proyectos" bajo Gerencia Técnica navegando a Administración),
+   * `targetView` indica el NavItem.id real al que hay que saltar. El
+   * sidebar termina resaltando ese grupo destino, no el de origen — ver
+   * openspec/changes/acceso-proyectos-gt-control-obra.
+   */
+  targetView?: string;
 };
 
 export type NavItem = {
@@ -100,6 +109,8 @@ export const ALL_NAV_ITEMS: NavItem[] = [
       { id: 'control-presupuestal', label: 'Control Presupuestal', icon: IconWallet },
       { id: 'transferencias',       label: 'Transferencias',       icon: IconArrowRight },
       { id: 'trazabilidad',         label: 'Trazabilidad',         icon: IconActivity },
+      // Ver openspec/changes/acceso-proyectos-gt-control-obra.
+      { id: 'proyectos',      label: 'Proyectos',         icon: IconBriefcase, targetView: 'admin' },
     ],
   },
   {
@@ -144,6 +155,10 @@ export const ALL_NAV_ITEMS: NavItem[] = [
       { id: 'presupuesto-partida', label: 'Presupuesto por Partida', icon: IconWallet },
       { id: 'programacion',  label: 'Programación',      icon: IconFileText },
       { id: 'configuracion', label: 'Configuración',     icon: IconBriefcase },
+      // Solo control_obra/control_proyectos/admin ven este salto — 'director'
+      // (también roles del grupo padre) queda fuera a propósito, no estaba
+      // en el pedido original. Ver openspec/changes/acceso-proyectos-gt-control-obra.
+      { id: 'proyectos', label: 'Proyectos', icon: IconBriefcase, targetView: 'admin', roles: ['admin', 'control_proyectos', 'control_obra'] },
     ],
   },
   {
@@ -197,7 +212,7 @@ export const ALL_NAV_ITEMS: NavItem[] = [
     roles: ['admin', 'gerencia_tecnica', 'control_proyectos'],
     subItems: [
       { id: 'usuarios',   label: 'Usuarios',           icon: IconUsers,       roles: ['admin'] },
-      { id: 'proyectos',  label: 'Proyectos',           icon: IconBriefcase,  roles: ['admin', 'gerencia_tecnica', 'control_proyectos'] },
+      { id: 'proyectos',  label: 'Proyectos',           icon: IconBriefcase,  roles: ['admin', 'gerencia_tecnica', 'control_proyectos', 'control_obra'] },
       { id: 'categorias', label: 'Categorías de Gasto', icon: IconTrendingUp, roles: ['admin'] },
     ],
   },
@@ -221,6 +236,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
   );
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false);
+  const projectTriggerRef = useRef<HTMLButtonElement>(null);
+  const [projectDropdownPos, setProjectDropdownPos] = useState<{ top: number; left: number; width: number } | null>(null);
 
   useEffect(() => {
     if (!isMobileNavOpen) return undefined;
@@ -231,15 +248,113 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
     return () => { document.body.style.overflow = prev; window.removeEventListener('keydown', onEsc); };
   }, [isMobileNavOpen]);
 
-  // Cerrar dropdown al hacer clic fuera
+  // Cerrar dropdown al hacer clic fuera; recalcular posición del panel
+  // portal (createPortal a document.body — ver
+  // openspec/changes/fix-dropdown-proyecto-transparente) al abrirlo, y
+  // cerrarlo en scroll/resize en vez de reposicionarlo (más simple y
+  // suficiente para este patrón de overlay).
   useEffect(() => {
-    if (!isProjectDropdownOpen) return undefined;
+    if (!isProjectDropdownOpen) { setProjectDropdownPos(null); return undefined; }
+    if (projectTriggerRef.current) {
+      const rect = projectTriggerRef.current.getBoundingClientRect();
+      setProjectDropdownPos({ top: rect.bottom + 8, left: rect.left, width: Math.max(rect.width, 240) });
+    }
     const onClickOutside = () => setIsProjectDropdownOpen(false);
     const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') setIsProjectDropdownOpen(false); };
+    const onScrollOrResize = () => setIsProjectDropdownOpen(false);
     setTimeout(() => window.addEventListener('click', onClickOutside), 0);
     window.addEventListener('keydown', onEsc);
-    return () => { window.removeEventListener('click', onClickOutside); window.removeEventListener('keydown', onEsc); };
+    window.addEventListener('scroll', onScrollOrResize, true);
+    window.addEventListener('resize', onScrollOrResize);
+    return () => {
+      window.removeEventListener('click', onClickOutside);
+      window.removeEventListener('keydown', onEsc);
+      window.removeEventListener('scroll', onScrollOrResize, true);
+      window.removeEventListener('resize', onScrollOrResize);
+    };
   }, [isProjectDropdownOpen]);
+
+  // Submenú lateral (flyout en escritorio, acordeón sin cambios en mobile —
+  // ver openspec/changes/sidebar-submenu-flyout-lateral). Se abre
+  // automáticamente para el módulo activo (cubre navegación normal y saltos
+  // cross-grupo vía SubItem.targetView); clic-fuera/Escape solo lo oculta
+  // (no cambia currentView).
+  //
+  // El flyout se renderiza vía portal a document.body (igual que el
+  // dropdown de proyecto — ver openspec/changes/fix-dropdown-proyecto-transparente):
+  // <nav> tiene overflow-y-auto y el <aside> desktop tiene overflow-hidden,
+  // así que un simple `position: absolute` quedaba recortado dentro del
+  // ancho del sidebar en vez de flotar sobre el contenido. Ver
+  // openspec/changes/fix-submenu-flyout-recortado-por-sidebar.
+  const [openSubmenuId, setOpenSubmenuId] = useState<string | null>(null);
+  const [isDesktop, setIsDesktop] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 768);
+  const [submenuPos, setSubmenuPos] = useState<{ top: number; left: number } | null>(null);
+  const submenuTriggerRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+
+  useEffect(() => {
+    const onResize = () => setIsDesktop(window.innerWidth >= 768);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  useEffect(() => { setOpenSubmenuId(currentView); }, [currentView]);
+
+  useEffect(() => {
+    if (!openSubmenuId || !isDesktop) { setSubmenuPos(null); return; }
+    const el = submenuTriggerRefs.current[openSubmenuId];
+    if (el) {
+      const rect = el.getBoundingClientRect();
+      setSubmenuPos({ top: rect.top, left: rect.right + 8 });
+    }
+  }, [openSubmenuId, isDesktop]);
+
+  useEffect(() => {
+    if (!openSubmenuId) return undefined;
+    const onClickOutside = (e: MouseEvent) => {
+      if (!(e.target as Element).closest('[data-submenu-flyout]')) setOpenSubmenuId(null);
+    };
+    const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpenSubmenuId(null); };
+    const onScrollOrResize = () => setOpenSubmenuId(null);
+    setTimeout(() => window.addEventListener('click', onClickOutside), 0);
+    window.addEventListener('keydown', onEsc);
+    window.addEventListener('scroll', onScrollOrResize, true);
+    window.addEventListener('resize', onScrollOrResize);
+    return () => {
+      window.removeEventListener('click', onClickOutside);
+      window.removeEventListener('keydown', onEsc);
+      window.removeEventListener('scroll', onScrollOrResize, true);
+      window.removeEventListener('resize', onScrollOrResize);
+    };
+  }, [openSubmenuId]);
+
+  const renderSubItemButtons = (items: SubItem[]) => items.map(sub => {
+    const subActive = currentSubView === sub.id;
+    return (
+      <button
+        key={sub.id}
+        onClick={() => {
+          if (sub.targetView) onNavigate(sub.targetView);
+          else setOpenSubmenuId(null);
+          onSubNavigate(sub.id);
+        }}
+        className={cn(
+          'group relative flex w-full items-center gap-2 rounded-lg pl-7 pr-3 py-2 text-xs font-medium transition-all duration-150',
+          subActive
+            ? 'bg-muted/80 text-primary'
+            : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
+        )}
+      >
+        {subActive && (
+          <div
+            className="absolute left-[10px] top-1/2 -translate-y-1/2 h-4 w-0.5 rounded-full"
+            style={{ background: 'hsl(var(--primary))' }}
+          />
+        )}
+        <sub.icon className={cn('h-3.5 w-3.5 shrink-0', subActive ? 'opacity-100' : 'opacity-50 group-hover:opacity-80')} />
+        <span className="truncate">{sub.label}</span>
+      </button>
+    );
+  });
 
   const handleNavigate = (view: string) => {
     const item = ALL_NAV_ITEMS.find(i => i.id === view);
@@ -372,9 +487,10 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
           const hasSubItems = visibleSubItems.length > 0;
 
           return (
-            <div key={item.id}>
+            <div key={item.id} className="relative">
               <button
-                onClick={() => handleNavigate(item.id)}
+                ref={el => { submenuTriggerRefs.current[item.id] = el; }}
+                onClick={() => { handleNavigate(item.id); setOpenSubmenuId(item.id); }}
                 className={cn(
                   'group relative flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200',
                   active
@@ -393,41 +509,36 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
                 )}
               </button>
 
-              {/* Sub-items: visibles cuando el módulo padre está activo */}
-              {active && hasSubItems && (
+              {/* Sub-items — acordeón vertical, solo en mobile (sin cambios).
+                  En escritorio se renderizan como panel flotante vía portal,
+                  más abajo. */}
+              {active && hasSubItems && !isDesktop && (
                 <div className="relative mt-0.5 mb-1 ml-4">
-                  {/* Línea vertical conectora */}
                   <div
                     className="absolute left-3 top-1 bottom-1 w-px"
                     style={{ background: 'hsl(var(--border))' }}
                   />
                   <div className="flex flex-col gap-0.5">
-                    {visibleSubItems.map(sub => {
-                      const subActive = currentSubView === sub.id;
-                      return (
-                        <button
-                          key={sub.id}
-                          onClick={() => onSubNavigate(sub.id)}
-                          className={cn(
-                            'group relative flex w-full items-center gap-2 rounded-lg pl-7 pr-3 py-2 text-xs font-medium transition-all duration-150',
-                            subActive
-                              ? 'bg-muted/80 text-primary'
-                              : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
-                          )}
-                        >
-                          {subActive && (
-                            <div
-                              className="absolute left-[10px] top-1/2 -translate-y-1/2 h-4 w-0.5 rounded-full"
-                              style={{ background: 'hsl(var(--primary))' }}
-                            />
-                          )}
-                          <sub.icon className={cn('h-3.5 w-3.5 shrink-0', subActive ? 'opacity-100' : 'opacity-50 group-hover:opacity-80')} />
-                          <span className="truncate">{sub.label}</span>
-                        </button>
-                      );
-                    })}
+                    {renderSubItemButtons(visibleSubItems)}
                   </div>
                 </div>
+              )}
+
+              {/* Sub-items — panel flotante en escritorio, vía portal a
+                  document.body (no debe ser descendiente de <nav>/<aside>,
+                  que recortan con overflow — ver
+                  openspec/changes/fix-submenu-flyout-recortado-por-sidebar). */}
+              {isDesktop && hasSubItems && openSubmenuId === item.id && submenuPos && createPortal(
+                <div
+                  data-submenu-flyout
+                  className="fixed z-30 w-56 rounded-xl border border-border/40 bg-[hsl(var(--card))] p-1.5 shadow-xl"
+                  style={{ top: submenuPos.top, left: submenuPos.left }}
+                >
+                  <div className="flex flex-col gap-0.5">
+                    {renderSubItemButtons(visibleSubItems)}
+                  </div>
+                </div>,
+                document.body
               )}
             </div>
           );
@@ -538,16 +649,17 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
 
             <div className="flex flex-1 items-center gap-1.5 text-xs font-semibold text-muted-foreground min-w-0">
               <IconBriefcase className="h-3.5 w-3.5 shrink-0 opacity-50" />
-              <span className="hidden sm:inline opacity-60 shrink-0">Proyectos</span>
+              <span className="hidden sm:inline opacity-80 shrink-0">Proyectos</span>
               <IconChevronRight className="h-3 w-3 opacity-30 shrink-0" />
 
               {/* ── Selector de proyecto ── */}
               <div className="relative min-w-0 flex-1">
                 <button
+                  ref={projectTriggerRef}
                   type="button"
                   onClick={e => { e.stopPropagation(); setIsProjectDropdownOpen(o => !o); }}
                   className={cn(
-                    'flex w-full items-center gap-1.5 rounded-md border-l-4 px-2 py-1 max-w-full transition-all hover:opacity-80 text-foreground',
+                    'flex w-full items-center gap-1.5 rounded-md border-l-4 px-2 py-1 max-w-full transition-all hover:opacity-80 text-foreground glow-primary',
                     currentProjectColor.border,
                     currentProjectColor.bgSoft
                   )}
@@ -570,11 +682,20 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
                   )}
                 </button>
 
-                {/* Dropdown */}
-                {isProjectDropdownOpen && projects.length > 1 && (
+                {/* Dropdown — portal a document.body: el panel no debe ser
+                    descendiente del <header> (glass-elevated / backdrop-filter),
+                    o Chromium lo recompone como transparente al sobresalir del
+                    header. Ver openspec/changes/fix-dropdown-proyecto-transparente. */}
+                {isProjectDropdownOpen && projects.length > 1 && projectDropdownPos && createPortal(
                   <div
-                    className="absolute top-full left-0 mt-2 z-50 min-w-[240px] rounded-xl border shadow-xl overflow-hidden"
-                    style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}
+                    className="fixed z-50 rounded-xl border shadow-xl overflow-hidden"
+                    style={{
+                      top: projectDropdownPos.top,
+                      left: projectDropdownPos.left,
+                      width: projectDropdownPos.width,
+                      background: 'hsl(var(--card))',
+                      borderColor: 'hsl(var(--border))',
+                    }}
                     onClick={e => e.stopPropagation()}
                   >
                     <div className="px-3 py-2 border-b" style={{ borderColor: 'hsl(var(--border))' }}>
@@ -612,7 +733,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
                         </button>
                       );
                     })}
-                  </div>
+                  </div>,
+                  document.body
                 )}
               </div>
             </div>

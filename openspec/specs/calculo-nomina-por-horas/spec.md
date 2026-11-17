@@ -1,4 +1,10 @@
-## ADDED Requirements
+# calculo-nomina-por-horas Specification
+
+## Purpose
+
+Define cómo el motor de pre-nómina calcula el salario de los empleados por horas reales según su modo de asistencia, con acumulador semanal de horas extra dobles y triples, el desglose en el detalle de la pre-nómina y su presentación en Personal.
+
+## Requirements
 
 ### Requirement: Motor de nómina usa modo_asistencia para elegir algoritmo de cálculo
 Al calcular pre-nómina, el motor SHALL detectar el `modo_asistencia` de cada empleado y aplicar el algoritmo correspondiente. Empleados `JORNADA_COMPLETA` se calculan por días (comportamiento actual). Empleados `POR_HORAS` se calculan por horas reales.

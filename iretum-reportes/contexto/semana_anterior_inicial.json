@@ -1,0 +1,46 @@
+{
+  "construccion": null,
+  "semana": "19 al 23 de octubre de 2026",
+  "lectura": "Avance de construcción reportado: 80%. Base del sistema sólida; Compras, Finanzas y Almacén son las áreas más avanzadas y probadas. El sistema está en etapa de consolidación, sin módulos cerrados formalmente.",
+  "bloqueos": [
+    {
+      "bloqueo": "Regla de «Marcar salida» sin definir",
+      "impacto": "No se puede corregir la asistencia de Residencia",
+      "responsable": "Gerencia Técnica"
+    },
+    {
+      "bloqueo": "Trabajo de JR-01 sin respaldo ni revisión",
+      "impacto": "Riesgo de pérdida; no puede integrarse",
+      "responsable": "Germán y Aldahir"
+    },
+    {
+      "bloqueo": "11 solicitudes de cambio sin revisar",
+      "impacto": "Mejoras terminadas que no llegan a los usuarios",
+      "responsable": "Germán"
+    }
+  ],
+  "plan_siguiente": [
+    {
+      "accion": "Registrar y respaldar el trabajo de JR-01 y abrir su solicitud de revisión",
+      "responsable": "Aldahir"
+    },
+    {
+      "accion": "Revisar e integrar las 2 solicitudes de cambio listas (pruebas de mensajería y aviso garantizado en Finanzas)",
+      "responsable": "Germán"
+    },
+    {
+      "accion": "Ejecutar la auditoría integral de Residencia con Nexo IA en modo solo lectura",
+      "responsable": "Germán"
+    },
+    {
+      "accion": "Corregir «Marcar salida» en cuanto se confirme la regla",
+      "responsable": "Aldahir, con revisión de Germán"
+    }
+  ],
+  "decisiones_solicitadas": [
+    "Confirmar la regla de «Marcar salida» en asistencia",
+    "Autorizar el texto de ayuda de «Guardar avances por estimación»",
+    "Aprobar el índice de madurez como forma oficial de reportar el avance"
+  ],
+  "aclaracion_avance": "El alcance original reportado se mantiene en el porcentaje de construcción de DATOS.avance.construccion_alcance_original. A partir de esta semana se incorporan al seguimiento Almacén, Residencia, Calidad, Asistente y Reportes (DATOS.avance.construccion_modulos_incorporados); el ERP completo queda en DATOS.avance.construccion_global."
+}

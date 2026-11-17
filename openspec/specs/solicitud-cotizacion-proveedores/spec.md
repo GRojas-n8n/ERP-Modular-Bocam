@@ -164,8 +164,7 @@ El panel "Solicitud de Cotización" SHALL permitir marcar `estado` (`RESPONDIO`,
   archivo en esa ruta) y solo procesa `estado`/`notas_proveedor`
 
 ### Requirement: El correo de invitación a cotizar SHALL adjuntar las fichas técnicas de los insumos de la requisición
-Cuando el sistema envía el correo de Solicitud de Cotización a un
-proveedor invitado, SHALL adjuntar las fichas técnicas ya asociadas a
+Cuando el sistema envía el correo de Solicitud de Cotización a un proveedor invitado, SHALL adjuntar las fichas técnicas ya asociadas a
 cada insumo de la requisición (si existen), para que el proveedor tenga
 las especificaciones sin tener que solicitarlas por separado. Si no puede
 resolver las fichas de un insumo (el servicio de Gerencia Técnica no

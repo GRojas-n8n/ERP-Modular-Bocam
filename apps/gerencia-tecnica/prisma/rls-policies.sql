@@ -35,7 +35,7 @@ $$ LANGUAGE plpgsql STABLE;
 -- 2. HABILITAR RLS EN TABLAS DEL MÓDULO
 -- ═══════════════════════════════════════════════════════════════════════════
 
--- Tabla: insumos (Maestra — aislamiento por tenant_id)
+-- Tabla: insumos (Maestra operativa — aislamiento por tenant_id + proyecto_id)
 ALTER TABLE insumos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE insumos FORCE ROW LEVEL SECURITY;
 
@@ -52,31 +52,33 @@ ALTER TABLE conceptos FORCE ROW LEVEL SECURITY;
 -- ═══════════════════════════════════════════════════════════════════════════
 
 -- ─── INSUMOS ────────────────────────────────────────────────────────────────
--- Solo lectura/escritura de insumos que pertenezcan al tenant actual.
+-- Aislamiento estricto por tenant y proyecto. La ausencia de proyecto nunca
+-- se interpreta como acceso consolidado.
 DROP POLICY IF EXISTS rls_insumos_tenant ON insumos;
-CREATE POLICY rls_insumos_tenant ON insumos
+DROP POLICY IF EXISTS rls_insumos_context ON insumos;
+CREATE POLICY rls_insumos_context ON insumos
     FOR ALL
-    USING (tenant_id = get_current_tenant_id())
-    WITH CHECK (tenant_id = get_current_tenant_id());
+    USING (
+        tenant_id = get_current_tenant_id()
+        AND proyecto_id = get_current_proyecto_id()
+    )
+    WITH CHECK (
+        tenant_id = get_current_tenant_id()
+        AND proyecto_id = get_current_proyecto_id()
+    );
 
 -- ─── PRESUPUESTOS BASE ─────────────────────────────────────────────────────
--- Aislamiento por tenant. Si hay proyecto en contexto, también filtra por proyecto.
+-- Aislamiento estricto por tenant y proyecto.
 DROP POLICY IF EXISTS rls_presupuestos_tenant ON presupuestos_base;
 CREATE POLICY rls_presupuestos_tenant ON presupuestos_base
     FOR ALL
     USING (
         tenant_id = get_current_tenant_id()
-        AND (
-            get_current_proyecto_id() IS NULL
-            OR proyecto_id = get_current_proyecto_id()
-        )
+        AND proyecto_id = get_current_proyecto_id()
     )
     WITH CHECK (
         tenant_id = get_current_tenant_id()
-        AND (
-            get_current_proyecto_id() IS NULL
-            OR proyecto_id = get_current_proyecto_id()
-        )
+        AND proyecto_id = get_current_proyecto_id()
     );
 
 -- ─── CONCEPTOS ──────────────────────────────────────────────────────────────
@@ -86,25 +88,19 @@ CREATE POLICY rls_conceptos_tenant ON conceptos
     FOR ALL
     USING (
         tenant_id = get_current_tenant_id()
-        AND (
-            get_current_proyecto_id() IS NULL
-            OR proyecto_id = get_current_proyecto_id()
-        )
+        AND proyecto_id = get_current_proyecto_id()
     )
     WITH CHECK (
         tenant_id = get_current_tenant_id()
-        AND (
-            get_current_proyecto_id() IS NULL
-            OR proyecto_id = get_current_proyecto_id()
-        )
+        AND proyecto_id = get_current_proyecto_id()
     );
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 4. COMENTARIOS DE AUDITORÍA
 -- ═══════════════════════════════════════════════════════════════════════════
 
-COMMENT ON POLICY rls_insumos_tenant ON insumos IS
-    'Aislamiento Multi-Tenant por tenant_id. Módulo: Gerencia Técnica.';
+COMMENT ON POLICY rls_insumos_context ON insumos IS
+    'Aislamiento Multi-Tenant + Multi-Proyecto estricto. Módulo: Gerencia Técnica.';
 COMMENT ON POLICY rls_presupuestos_tenant ON presupuestos_base IS
     'Aislamiento Multi-Tenant + Multi-Proyecto. Módulo: Gerencia Técnica.';
 COMMENT ON POLICY rls_conceptos_tenant ON conceptos IS
@@ -237,3 +233,21 @@ COMMENT ON POLICY rls_capitulos_context ON capitulos IS
     'Aislamiento Multi-Tenant + Multi-Proyecto (hereda de presupuesto). Módulo: Gerencia Técnica.';
 COMMENT ON POLICY rls_conceptos_catalogo_tenant ON conceptos_catalogo IS
     'Aislamiento Multi-Tenant. Catálogo maestro reutilizable entre proyectos del tenant. Módulo: Gerencia Técnica.';
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- 7. TABLA AGREGADA POR eliminacion-admin-archivos-importaciones-gt (2026-08-28)
+-- ═══════════════════════════════════════════════════════════════════════════
+
+-- ─── LOTES DE IMPORTACIÓN (solo tenant — un lote de Explosión de Insumos
+-- puede tocar insumos de distintos proyecto_id legacy sin proyecto atribuible;
+-- el propio Insumo ya aplica su aislamiento tenant+proyecto vía rls_insumos_context) ──
+ALTER TABLE lotes_importacion ENABLE ROW LEVEL SECURITY;
+ALTER TABLE lotes_importacion FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS rls_lotes_importacion_tenant ON lotes_importacion;
+CREATE POLICY rls_lotes_importacion_tenant ON lotes_importacion
+    FOR ALL
+    USING (tenant_id = get_current_tenant_id())
+    WITH CHECK (tenant_id = get_current_tenant_id());
+
+COMMENT ON POLICY rls_lotes_importacion_tenant ON lotes_importacion IS
+    'Aislamiento Multi-Tenant. Módulo: Gerencia Técnica.';
