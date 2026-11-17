@@ -34,6 +34,9 @@ import { listarCuentasPorCobrar, parsearCobro, parsearFiltroCxc, registrarCobro,
 import { ErrorPresupuesto, registrarMovimientoManual, sincronizarPartidasGt, TIPOS_MOVIMIENTO_MANUAL, transferirPresupuesto } from './presupuesto-blindado';
 import { modoEventos, VARIABLE_MODO_EVENTOS } from './outbox-eventos';
 import {
+  actualizarCuentaBancaria, crearCuentaBancaria, cuentaPublica, listarMovimientos, registrarAjuste, validarAjuste, validarAltaCuenta,
+} from './tesoreria';
+import {
   configurarDespachadorOutbox,
   configurarLimpiezaOutbox,
   consultarBacklog,
@@ -1195,39 +1198,23 @@ app.get('/api/v1/finanzas/cuentas-bancarias',
           orderBy: { banco: 'asc' },
         });
       });
-      res.json(createApiResponse(data, tenantId, proyectoId, getCorrelationId(req)));
+      // Número de cuenta y CLABE enmascarados (openspec: libro-bancario).
+      res.json(createApiResponse(data.map(cuentaPublica), tenantId, proyectoId, getCorrelationId(req)));
     } catch (error: any) {
       responderError(req, res, error, 'finanzas.cuentas.list_error', 'Error al listar cuentas bancarias');
     }
   }
 );
 
+// Alta de cuenta. El saldo inicial queda como movimiento SALDO_INICIAL del libro bancario y respeta el límite de
+// autoridad (openspec: libro-bancario).
 app.post('/api/v1/finanzas/cuentas-bancarias',
   requireRoles('finanzas', 'admin'),
   async (req: Request, res: Response) => {
     try {
-      const { tenantId, proyectoId, userId } = req.securityContext;
-      const { banco, numero_cuenta, clabe, alias, moneda, saldo, proyecto_id } = req.body;
-      if (!banco || !numero_cuenta || !alias) {
-        return res.status(400).json(createApiError('FIN_MISSING_FIELDS', 'banco, numero_cuenta y alias son obligatorios.', undefined, getCorrelationId(req)));
-      }
-      if (proyecto_id !== undefined && proyecto_id !== null && !esUuid(proyecto_id)) {
-        return res.status(400).json(createApiError('FIN_INVALID_REFERENCE', 'proyecto_id debe ser un UUID válido.', undefined, getCorrelationId(req)));
-      }
-      const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
-        return (prisma as any).cuentaBancaria.create({
-          data: {
-            tenant_id:     tenantId,
-            proyecto_id:   proyecto_id ?? null,
-            banco,
-            numero_cuenta,
-            clabe:         clabe ?? null,
-            alias,
-            moneda:        moneda ?? 'MXN',
-            saldo:         saldo ? Number(saldo) : 0,
-          },
-        });
-      });
+      const { tenantId, proyectoId, userId, limiteAprobacion } = req.securityContext;
+      const alta = validarAltaCuenta(req.body, limiteAprobacion);
+      const data = await crearCuentaBancaria({ tenantId, proyectoId, userId }, alta);
       res.status(201).json(createApiResponse(data, tenantId, proyectoId, getCorrelationId(req)));
     } catch (error: any) {
       responderError(req, res, error, 'finanzas.cuentas.create_error', 'Error al crear la cuenta bancaria');
@@ -1235,34 +1222,50 @@ app.post('/api/v1/finanzas/cuentas-bancarias',
   }
 );
 
+// Edición de datos de la cuenta. El saldo ya no se acepta: 400 FIN_SALDO_NO_EDITABLE (openspec: libro-bancario).
 app.patch('/api/v1/finanzas/cuentas-bancarias/:id',
   requireRoles('finanzas', 'admin'),
   async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
       const { tenantId, proyectoId, userId } = req.securityContext;
-      if (!esUuid(id)) {
-        return res.status(400).json(createApiError('FIN_INVALID_REFERENCE', 'El id de la cuenta debe ser un UUID válido.', undefined, getCorrelationId(req)));
-      }
-      const { banco, numero_cuenta, clabe, alias, moneda, saldo } = req.body;
-      const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
-        const existe = await prisma.cuentaBancaria.findFirst({ where: { id_cuenta: id, tenant_id: tenantId }, select: { id_cuenta: true } });
-        if (!existe) throw new ErrorFinanzas(404, 'FIN_CUENTA_NO_ENCONTRADA', 'Cuenta bancaria no encontrada.');
-        return prisma.cuentaBancaria.update({
-          where: { id_cuenta: id },
-          data: {
-            ...(banco         !== undefined ? { banco }         : {}),
-            ...(numero_cuenta !== undefined ? { numero_cuenta } : {}),
-            ...(clabe         !== undefined ? { clabe }         : {}),
-            ...(alias         !== undefined ? { alias }         : {}),
-            ...(moneda        !== undefined ? { moneda }        : {}),
-            ...(saldo         !== undefined ? { saldo: Number(saldo) } : {}),
-          },
-        });
-      });
+      const data = await actualizarCuentaBancaria({ tenantId, proyectoId, userId }, req.params.id, req.body);
       res.json(createApiResponse(data, tenantId, proyectoId, getCorrelationId(req)));
     } catch (error: any) {
       responderError(req, res, error, 'finanzas.cuentas.update_error', 'Error al actualizar la cuenta bancaria');
+    }
+  }
+);
+
+// Ajuste de saldo con motivo y folio idempotente; límite de autoridad (openspec: libro-bancario).
+app.post('/api/v1/finanzas/cuentas-bancarias/:id/ajustes',
+  requireRoles('finanzas', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId, limiteAprobacion } = req.securityContext;
+      const ajuste = validarAjuste(req.body);
+      const data = await registrarAjuste({ tenantId, proyectoId, userId }, req.params.id, ajuste, limiteAprobacion);
+      if (!data.idempotente) {
+        logInfo(req, 'finanzas', 'finanzas.cuenta_bancaria.ajuste', 'Ajuste de saldo registrado en el libro bancario', {
+          cuenta_id: req.params.id, tipo: data.tipo, monto: data.monto, folio: data.referencia, saldo_posterior: data.saldo_posterior,
+        });
+      }
+      res.status(data.idempotente ? 200 : 201).json(createApiResponse(data, tenantId, proyectoId, getCorrelationId(req)));
+    } catch (error: any) {
+      responderError(req, res, error, 'finanzas.cuentas.ajuste_error', 'Error al registrar el ajuste bancario');
+    }
+  }
+);
+
+// Libro bancario de una cuenta: más reciente primero; ?limit=, ?cursor=, ?origen= (openspec: libro-bancario).
+app.get('/api/v1/finanzas/cuentas-bancarias/:id/movimientos',
+  requireRoles('finanzas', 'admin', 'director'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const r = await listarMovimientos({ tenantId, proyectoId, userId }, req.params.id, req.query);
+      responderPagina(res, r, tenantId, proyectoId, getCorrelationId(req));
+    } catch (error: any) {
+      responderError(req, res, error, 'finanzas.cuentas.movimientos_error', 'Error al consultar el libro bancario');
     }
   }
 );
@@ -1281,7 +1284,7 @@ app.delete('/api/v1/finanzas/cuentas-bancarias/:id',
         if (!existe) throw new ErrorFinanzas(404, 'FIN_CUENTA_NO_ENCONTRADA', 'Cuenta bancaria no encontrada.');
         const tiene = await prisma.pagoOC.count({ where: { cuenta_id: id } });
         if (tiene > 0) throw new ErrorFinanzas(409, 'FIN_CUENTA_CON_PAGOS', 'No se puede eliminar: la cuenta tiene pagos registrados.');
-        return prisma.cuentaBancaria.update({ where: { id_cuenta: id }, data: { activa: false } });
+        return cuentaPublica(await prisma.cuentaBancaria.update({ where: { id_cuenta: id }, data: { activa: false } }));
       });
       res.json(createApiResponse(data, tenantId, proyectoId, getCorrelationId(req)));
     } catch (error: any) {

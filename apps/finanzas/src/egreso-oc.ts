@@ -19,6 +19,7 @@
  * No hay HTTP ni publicación de eventos dentro de la transacción: el llamador publica después del commit.
  */
 
+import { randomUUID } from 'node:crypto';
 import { Prisma } from './generated/prisma';
 import { createTenantContext } from './db';
 import { esUuid } from './compromiso-oc';
@@ -183,10 +184,11 @@ function mismoContenido(pago: any, e: EgresoOcEntrada): boolean {
   return e.detalles.every((d) => previos.get(d.oc_id) === d.monto_aplicado.toFixed(2));
 }
 
-async function descontarFuente(tx: Tx, tenantId: string, e: EgresoOcEntrada): Promise<void> {
+async function descontarFuente(tx: Tx, tenantId: string, userId: string, pagoId: string, e: EgresoOcEntrada): Promise<void> {
   const total = e.monto_total.toFixed(2);
   if (e.fuente === 'CUENTA_BANCARIA') {
-    await descontarCuentaBancaria(tx, tenantId, e.proyecto_id, e.cuenta_id!, e.monto_total);
+    await descontarCuentaBancaria(tx, tenantId, e.proyecto_id, e.cuenta_id!, e.monto_total,
+      { origen: 'EGRESO_OC', origenId: pagoId, referencia: e.referencia, usuarioId: userId });
     return;
   }
   const n = await tx.$executeRaw`
@@ -315,10 +317,13 @@ export async function registrarEgresoOc(
       return { oc, monto: d.monto_aplicado, saldoAntes: saldo, saldoDespues: saldo.minus(d.monto_aplicado) };
     });
 
-    await descontarFuente(tx, ctx.tenantId, e);
+    // El id del egreso se fija antes de mover la cuenta: el libro bancario lo guarda como origen (libro-bancario).
+    const pagoId = randomUUID();
+    await descontarFuente(tx, ctx.tenantId, ctx.userId, pagoId, e);
 
     const pago = await tx.pagoOC.create({
       data: {
+        id_pago: pagoId,
         tenant_id: ctx.tenantId,
         proyecto_id: e.proyecto_id,
         fuente: e.fuente,
