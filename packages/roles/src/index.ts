@@ -79,6 +79,7 @@ export const ROLES: readonly DefinicionRol[] = [
     estado: 'asignable',
     nota: 'Inventario, movimientos y activos fijos.',
   },
+  { id: 'seguridad_hse',    label: 'Seguridad HSE',           estado: 'asignable' },
 
   // ── Reconocidos pero sin endpoints propios ───────────────────────────────
   // Los módulos existen en el menú, pero sus servicios exigen otros roles.
@@ -88,12 +89,6 @@ export const ROLES: readonly DefinicionRol[] = [
     label: 'Contabilidad',
     estado: 'sin-backend',
     nota: 'El servicio de Contabilidad exige admin o finanzas; este rol todavía no abre nada.',
-  },
-  {
-    id: 'seguridad_hse',
-    label: 'Seguridad HSE',
-    estado: 'sin-backend',
-    nota: 'El servicio de Seguridad todavía no comprueba este rol en sus endpoints.',
   },
   {
     id: 'ventas',

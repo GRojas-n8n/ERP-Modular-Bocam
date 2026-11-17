@@ -105,6 +105,30 @@ test('todo rol asignable puede seleccionarse al crear un usuario', () => {
   );
 });
 
+test('ningún rol marcado sin-backend está ya exigido por el backend', () => {
+  // Reproduce el lapso de rbac-seguridad-rol-catalogo-desactualizado: un fix
+  // de backend (df8b858) agregó requireRoles('seguridad_hse', ...) a
+  // apps/seguridad sin actualizar el catálogo, que siguió anunciando el rol
+  // como sin-backend con una nota ya falsa.
+  const backend = rolesExigidosPorBackend();
+  const desactualizados: string[] = [];
+
+  for (const rol of ROLES) {
+    if (rol.estado !== 'sin-backend') continue;
+    const servicios = backend.get(rol.id);
+    if (servicios && servicios.length > 0) {
+      desactualizados.push(`${rol.id} (ya exigido por ${servicios.join(', ')})`);
+    }
+  }
+
+  assert.deepEqual(
+    desactualizados,
+    [],
+    `Roles marcados sin-backend que ya están protegidos por el backend real:\n  ${desactualizados.join('\n  ')}\n` +
+      "Actualiza su estado a 'asignable' en packages/roles/src/index.ts."
+  );
+});
+
 test('los alias declaran un rol canónico que existe', () => {
   for (const rol of ROLES) {
     if (rol.estado !== 'alias') continue;
