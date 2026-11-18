@@ -7,6 +7,10 @@ on:
       - develop
   pull_request:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # ── Cobertura RLS ──────────────────────────────────────────────────────────
   # Chequeo estático, independiente de Postgres/RabbitMQ: falla si algún
@@ -16,7 +20,7 @@ jobs:
   # openspec/specs/despliegue-completo-microservicios/spec.md.
   rls-coverage:
     name: Cobertura RLS (estática)
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, iretum]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,7 +29,7 @@ jobs:
         run: node scripts/ci/check-rls-coverage.js
 
   backend-e2e:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, iretum]
 
     services:
       postgres:
