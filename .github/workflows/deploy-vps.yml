@@ -53,15 +53,15 @@ env:
 jobs:
   deploy:
     name: Build + Deploy (Docker)
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, iretum]
 
     steps:
       # ── 1. Configurar SSH ──────────────────────────────────
       - name: Configurar llave SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
+          echo "${{ secrets.VPS_SSH_KEY }}" > "$RUNNER_TEMP/deploy_key"
+          chmod 600 "$RUNNER_TEMP/deploy_key"
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
 
       # ── 2. Actualizar el repo en el VPS ─────────────────────
@@ -70,28 +70,28 @@ jobs:
       # descartarlos en silencio (no se usa `reset --hard`).
       - name: Git pull en el VPS
         run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+          ssh -i "$RUNNER_TEMP/deploy_key" -o StrictHostKeyChecking=no \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
             "cd ${{ env.VPS_REPO_PATH }} && git fetch origin main && git merge --ff-only origin/main"
 
       # ── 3. Build de la imagen Docker EN el VPS ─────────────
       - name: docker compose build app-shell
         run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+          ssh -i "$RUNNER_TEMP/deploy_key" -o StrictHostKeyChecking=no \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
             "cd ${{ env.VPS_REPO_PATH }} && docker compose -f docker-compose.vps.yml build app-shell"
 
       # ── 4. Recrear el contenedor con la imagen nueva ───────
       - name: docker compose up -d app-shell
         run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+          ssh -i "$RUNNER_TEMP/deploy_key" -o StrictHostKeyChecking=no \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
             "cd ${{ env.VPS_REPO_PATH }} && docker compose -f docker-compose.vps.yml up -d app-shell"
 
       # ── 5. Esperar healthcheck del contenedor ──────────────
       - name: Verificar healthcheck del contenedor
         run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+          ssh -i "$RUNNER_TEMP/deploy_key" -o StrictHostKeyChecking=no \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
             'for i in $(seq 1 30); do
                STATUS=$(docker inspect -f "{{.State.Health.Status}}" bocam-vps-app-shell 2>/dev/null || echo "starting")

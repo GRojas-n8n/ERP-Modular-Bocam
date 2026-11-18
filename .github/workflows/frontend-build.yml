@@ -21,10 +21,14 @@ on:
       - "packages/ui-core/**"
       - "docker/Dockerfile.app-shell"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: tsc -b + vite build
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, iretum]
 
     steps:
       - name: Checkout

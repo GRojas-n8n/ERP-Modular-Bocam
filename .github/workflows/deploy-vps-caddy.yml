@@ -54,22 +54,22 @@ env:
 jobs:
   deploy:
     name: Recrear contenedor Caddy
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, iretum]
 
     steps:
       # ── 1. Configurar SSH ──────────────────────────────────
       - name: Configurar llave SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
+          echo "${{ secrets.VPS_SSH_KEY }}" > "$RUNNER_TEMP/deploy_key"
+          chmod 600 "$RUNNER_TEMP/deploy_key"
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
 
       # ── 2. Actualizar el repo en el VPS ─────────────────────
       # Fast-forward only, igual que los otros dos workflows de deploy.
       - name: Git pull en el VPS
         run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+          ssh -i "$RUNNER_TEMP/deploy_key" -o StrictHostKeyChecking=no \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
             "cd ${{ env.VPS_REPO_PATH }} && git fetch origin main && git merge --ff-only origin/main"
 
@@ -78,14 +78,14 @@ jobs:
       # explicación arriba (bind mount de archivo atado al inodo viejo).
       - name: docker compose up -d --force-recreate caddy
         run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+          ssh -i "$RUNNER_TEMP/deploy_key" -o StrictHostKeyChecking=no \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
             "cd ${{ env.VPS_REPO_PATH }} && docker compose -f docker-compose.vps.yml up -d --force-recreate caddy"
 
       # ── 4. Confirmar que el contenedor nuevo cargó el Caddyfile correcto ──
       - name: Validar que el contenedor ve el Caddyfile actual del repo
         run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+          ssh -i "$RUNNER_TEMP/deploy_key" -o StrictHostKeyChecking=no \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
             "cd ${{ env.VPS_REPO_PATH }} && sleep 2 && \
              REPO_MD5=\$(md5sum docker/Caddyfile | awk '{print \$1}') && \
