@@ -21,6 +21,9 @@ export interface OcCreadaPayload {
   requisicion_id: string | null;
   concepto_id: string | null;
   items: OcCreadaItem[];
+  /** Aditivo (openspec: oc-creada-subtotal-iva). null si la OC no los trae. total = subtotal + iva. */
+  subtotal: number | null;
+  iva: number | null;
 }
 
 export interface OcCanceladaPayload {
@@ -32,7 +35,7 @@ export interface OcCanceladaPayload {
 }
 
 export function buildOcCreadaPayload(params: {
-  oc: { id_orden: string; codigo: string; total: Decimalish; proveedor_id: string };
+  oc: { id_orden: string; codigo: string; total: Decimalish; proveedor_id: string; subtotal?: Decimalish | null; iva?: Decimalish | null };
   proyectoId: string;
   presupuestoId: string;
   requisicionId?: string | null;
@@ -49,6 +52,8 @@ export function buildOcCreadaPayload(params: {
     requisicion_id: params.requisicionId || null,
     concepto_id:    params.conceptoId || null,
     items:          params.items,
+    subtotal:       params.oc.subtotal ? params.oc.subtotal.toNumber() : null,
+    iva:            params.oc.iva ? params.oc.iva.toNumber() : null,
   };
 }
 

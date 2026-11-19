@@ -62,3 +62,20 @@ test('oc_creada y oc_cancelada comparten oc_id, codigo, total y presupuesto_id',
     assert.equal(a[campo], b[campo], campo);
   }
 });
+
+// openspec: oc-creada-subtotal-iva. Contabilidad separa costo e IVA en la póliza de pasivo.
+test('oc_creada publica subtotal e iva cuando la OC los trae, y total = subtotal + iva', () => {
+  const p = buildOcCreadaPayload({
+    oc: { ...oc, subtotal: dec(1000), iva: dec(160) },
+    proyectoId: 'p', presupuestoId: oc.presupuesto_id, items: [],
+  });
+  assert.equal(p.subtotal, 1000);
+  assert.equal(p.iva, 160);
+  assert.equal(p.total, 1160);
+});
+
+test('oc_creada sin subtotal ni iva (OC antigua) publica null, no inventa montos', () => {
+  const p = creada();
+  assert.equal(p.subtotal, null);
+  assert.equal(p.iva, null);
+});
