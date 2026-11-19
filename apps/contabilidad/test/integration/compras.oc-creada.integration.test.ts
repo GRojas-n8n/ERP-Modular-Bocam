@@ -76,6 +76,7 @@ async function main() {
         codigo: 'OC-CONT-001',
         total: 245000,
         proveedor_id: 'proveedor-uuid-demo',
+        proveedor_nombre: 'Proveedora Demo, S.A. de C.V.',
         presupuesto_id: randomUUID(),
       },
     });
@@ -91,6 +92,8 @@ async function main() {
       assert.equal(asiento.tipo_poliza, 'PASIVO_PROYECTADO');
       assert.equal(asiento.estatus, 'PROYECTADO');
       assert.ok(asiento.folio_poliza.startsWith('POL-PAS-'));
+      // openspec: contabilidad-beneficiario-pasivo-proyectado: el nombre, no el id del proveedor.
+      assert.equal(asiento.beneficiario, 'Proveedora Demo, S.A. de C.V.');
     });
 
     assert.equal(receivedGeneratedEvents.length, 1);

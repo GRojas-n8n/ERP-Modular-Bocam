@@ -37,6 +37,11 @@ export interface OrdenCompraCreadaPayload {
   total: number;
   proveedor_id: string;
   presupuesto_id: string;
+  /** Aditivo desde oc-creada-con-nombre-proveedor (#193). Puede faltar en eventos antiguos. */
+  proveedor_nombre?: string | null;
+  /** Aditivo desde oc-creada-subtotal-iva. null si la OC no los trae. */
+  subtotal?: number | null;
+  iva?: number | null;
 }
 
 export interface OrdenCompraCanceladaPayload {
