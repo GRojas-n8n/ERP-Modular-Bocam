@@ -2661,7 +2661,7 @@ app.get('/api/v1/compras/comparativas', async (req: Request, res: Response) => {
 
 // GET pendientes-evaluacion — bandeja del Residente
 app.get('/api/v1/compras/comparativas/pendientes-evaluacion',
-  requireRoles('residencia', 'control_obra', 'superintendent'),
+  requireRoles('residencia', 'control_obra', 'superintendent', 'admin'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
@@ -2684,7 +2684,7 @@ app.get('/api/v1/compras/comparativas/pendientes-evaluacion',
 
 // GET pendientes-gt — bandeja del Gerente Técnico
 app.get('/api/v1/compras/comparativas/pendientes-gt',
-  requireRoles('gerencia_tecnica', 'superintendent'),
+  requireRoles('gerencia_tecnica', 'superintendent', 'admin'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
@@ -3935,7 +3935,7 @@ app.patch('/api/v1/compras/comparativas/:id/evaluar-especificaciones',
 
 // 2.3 PATCH enviar-gt — Residente/Compras envía al Gerente Técnico
 app.patch('/api/v1/compras/comparativas/:id/enviar-gt',
-  requireRoles('residencia', 'control_obra', 'procurement', 'superintendent'),
+  requireRoles('residencia', 'control_obra', 'procurement', 'superintendent', 'admin'),
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;

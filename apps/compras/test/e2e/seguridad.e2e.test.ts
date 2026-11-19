@@ -62,12 +62,36 @@ async function testProjectForbidden() {
   console.log('ok - compras bloquea acceso a proyecto no autorizado');
 }
 
+// openspec: compras-admin-flujo-comparativa. admin firma (POST /firmar) y aprueba en GT (PATCH /revisar-gt),
+// así que también debe poder enviar el cuadro a GT y ver las dos bandejas. Antes respondían 403 AUTH_FORBIDDEN.
+async function testAdminFlujoComparativa() {
+  const token = signTenantToken({
+    userId: 'user-admin',
+    tenantId: 'tenant-seguridad-compras',
+    proyectoId: 'proyecto-seguridad-compras',
+    roles: ['admin'],
+    projects: ['proyecto-seguridad-compras'],
+  });
+  const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+  const rutas: Array<[string, string]> = [
+    ['PATCH', '/api/v1/compras/comparativas/00000000-0000-4000-8000-000000000000/enviar-gt'],
+    ['GET', '/api/v1/compras/comparativas/pendientes-evaluacion'],
+    ['GET', '/api/v1/compras/comparativas/pendientes-gt'],
+  ];
+  for (const [method, path] of rutas) {
+    const response = await fetch(`${comprasBaseUrl}${path}`, { method, headers, body: method === 'GET' ? undefined : '{}' });
+    assert.notEqual(response.status, 403, `${method} ${path} no debe rechazar a admin por rol`);
+  }
+  console.log('ok - compras permite a admin enviar el cuadro a GT y ver las bandejas');
+}
+
 async function main() {
   await setup();
 
   try {
     await testRoleForbidden();
     await testProjectForbidden();
+    await testAdminFlujoComparativa();
   } finally {
     await stopHttpApp(comprasServer);
   }
