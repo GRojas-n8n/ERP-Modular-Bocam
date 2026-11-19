@@ -1290,7 +1290,10 @@ export async function handleOrdenCompraCreadaEvent(event: BocamEvent<OrdenCompra
     folioPoliza: buildFolioByPrefix('POL-PAS', payload.oc_id),
     concepto: `Pasivo proyectado por ${payload.codigo}`,
     montoTotal: payload.total,
-    beneficiario: payload.proveedor_id,
+    // Nombre del proveedor; el id solo si el evento no lo trae (openspec: contabilidad-beneficiario-pasivo-proyectado).
+    beneficiario: (typeof payload.proveedor_nombre === 'string' && payload.proveedor_nombre.trim())
+      ? payload.proveedor_nombre.trim().slice(0, 255)
+      : payload.proveedor_id,
     referenciaModulo: 'compras',
     referenciaEntidad: 'OrdenCompra',
     referenciaId: payload.oc_id,
