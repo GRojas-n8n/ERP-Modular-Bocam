@@ -34,6 +34,40 @@ interface TenantContextType extends AppState {
 
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
 
+/** proyecto_id del payload de un JWT, sin verificar firma (solo para elegir el proyecto de la pantalla). */
+export function proyectoDelToken(token: string | null): string | null {
+  try {
+    const parte = token?.split('.')[1];
+    if (!parte) return null;
+    const json = atob(parte.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(parte.length / 4) * 4, '='));
+    const pid = JSON.parse(json)?.proyecto_id;
+    return typeof pid === 'string' && pid ? pid : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Proyecto que debe mostrar la pantalla: el del JWT si el usuario tiene acceso a él. Si no, el primero de su
+ * lista, y se alinea el JWT con switch-project para que pantalla y servidor operen en el mismo proyecto.
+ */
+async function resolverProyectoActivo(token: string | null, proyectos: ProjectAccess[]): Promise<string | null> {
+  const delToken = proyectoDelToken(token);
+  if (delToken && proyectos.some(p => p.id === delToken)) return delToken;
+  const primero = proyectos[0]?.id || null;
+  if (!primero) return null;
+  try {
+    const sw = await switchProjectApi(primero);
+    if (sw?.data?.access_token) {
+      setTokens(sw.data.access_token, localStorage.getItem('iretum_refresh_token') || '');
+    }
+    return primero;
+  } catch {
+    // Sin alinear el JWT no se muestra otro proyecto: se queda el del token (o ninguno).
+    return delToken;
+  }
+}
+
 export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, setState] = useState<AppState>({
     tenant: null,
@@ -75,7 +109,10 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           limiteAprobacion: data.limite_aprobacion,
         };
 
-        const activeProject = data.projects[0]?.id || null;
+        // El JWT conserva el último proyecto elegido; la pantalla debe mostrar ese mismo proyecto
+        // (openspec: proyecto-activo-desde-jwt). Si ya no está en su lista, se cae al primero y se
+        // alinea el JWT con switch-project para que pantalla y servidor operen en el mismo proyecto.
+        const activeProject = await resolverProyectoActivo(token, (data.projects ?? []) as ProjectAccess[]);
 
         if (tenant.primaryColor) {
           document.documentElement.style.setProperty('--brand-primary', tenant.primaryColor);
@@ -139,7 +176,8 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         projects: userData.projects as ProjectAccess[],
       };
 
-      const activeProject = userData.projects[0]?.id || null;
+      // Mismo criterio que al recargar (openspec: proyecto-activo-desde-jwt).
+      const activeProject = await resolverProyectoActivo(access_token, (userData.projects ?? []) as ProjectAccess[]);
 
       if (tenant.primaryColor) {
         document.documentElement.style.setProperty('--brand-primary', tenant.primaryColor);

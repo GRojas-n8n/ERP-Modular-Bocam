@@ -147,9 +147,10 @@ const DashboardEjecutivo: React.FC<{ onNavigate: (v: string) => void; isDemo: bo
     setState(setPersonal)(r3 as PromiseSettledResult<{ data: { data: ResumenPersonal } }>);
     setState(setSeguridad)(r4 as PromiseSettledResult<{ data: { data: ResumenSeguridad } }>);
     setState(setCalidad)(r5 as PromiseSettledResult<{ data: { data: ResumenCalidad } }>);
-    // finanzas/dashboard devuelve { data: { resumenPresupuestal: {...} } }
+    // finanzas/dashboard devuelve el contrato estándar { kpis, alertas, actividad_reciente }
+    // (openspec: dashboard-ejecutivo-finanzas-kpis).
     if (r6.status === 'fulfilled') {
-      const rp = r6.value.data?.data?.resumenPresupuestal;
+      const rp = r6.value.data?.data?.kpis;
       if (rp) setFinanzas({ data: { total_autorizado: rp.total_autorizado, total_ejercido: rp.total_ejercido, total_comprometido: rp.total_comprometido, porcentaje_ejercido: rp.porcentaje_ejercido }, loading: false, error: false });
       else setFinanzas({ data: null, loading: false, error: true });
     } else {
